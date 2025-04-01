@@ -47,7 +47,7 @@ export const SidebarSection = (): JSX.Element => {
     {
       icon: <FileTextIcon className="w-4 h-4 text-pink-400" />,
       label: "Relatório",
-      path: "/billing",
+      path: "/files",
     },
     {
       icon: <BarChart2Icon className="w-4 h-4 text-red-400" />,

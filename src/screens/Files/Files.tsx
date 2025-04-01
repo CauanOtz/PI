@@ -1,16 +1,22 @@
 import React from "react";
 import { SidebarSection } from "../../components/layout/SidebarSection";
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { 
   FileTextIcon, 
   FolderIcon, 
   SearchIcon, 
   DownloadIcon,
   PlusIcon,
-  MoreVerticalIcon
+  MoreVerticalIcon,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { CreateReportModal } from "../../components/modals/CreateReportModal";
+import { EditReportModal } from "../../components/modals/EditReportModal";
+import { DeleteConfirmationModal } from "../../components/modals/DeleteConfirmationModal";
+import { toast } from "sonner";
 
 interface Report {
   id: string;
@@ -53,10 +59,13 @@ export const Files = (): JSX.Element => {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [selectedCategory, setSelectedCategory] = React.useState("Todos");
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
+  const [reportToEdit, setReportToEdit] = React.useState<Report | null>(null);
+  const [reportToDelete, setReportToDelete] = React.useState<Report | null>(null);
+  const [reports, setReports] = React.useState<Report[]>(mockReports);
 
   const categories = ["Todos", "Desempenho", "Frequência", "Planos", "Outros"];
 
-  const filteredReports = mockReports.filter(report => {
+  const filteredReports = reports.filter(report => {
     const matchesSearch = report.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "Todos" || report.category === selectedCategory;
     return matchesSearch && matchesCategory;
@@ -65,6 +74,32 @@ export const Files = (): JSX.Element => {
   const handleCreateReport = (data: any) => {
     console.log("New report data:", data);
     // Here you would typically handle the file upload and creation
+  };
+
+  const handleEdit = (report: Report) => {
+    setReportToEdit(report);
+  };
+
+  const handleDelete = (report: Report) => {
+    setReportToDelete(report);
+  };
+
+  const handleEditSubmit = (data: any) => {
+    if (reportToEdit) {
+      setReports(prev => prev.map(report => 
+        report.id === reportToEdit.id
+          ? { ...report, ...data }
+          : report
+      ));
+      toast.success("Relatório atualizado com sucesso!");
+    }
+  };
+
+  const handleDeleteConfirm = () => {
+    if (reportToDelete) {
+      setReports(prev => prev.filter(report => report.id !== reportToDelete.id));
+      toast.success("Relatório excluído com sucesso!");
+    }
   };
 
   return (
@@ -136,9 +171,39 @@ export const Files = (): JSX.Element => {
                       </span>
                     </div>
                   </div>
-                  <button className="text-gray-400 hover:text-gray-600">
-                    <MoreVerticalIcon className="w-5 h-5" />
-                  </button>
+                  <DropdownMenu.Root>
+                    <DropdownMenu.Trigger asChild>
+                      <button className="text-gray-400 hover:text-gray-600 focus:outline-none">
+                        <MoreVerticalIcon className="w-5 h-5" />
+                      </button>
+                    </DropdownMenu.Trigger>
+
+                    <DropdownMenu.Portal>
+                      <DropdownMenu.Content 
+                        className="min-w-[180px] bg-white rounded-md shadow-lg border border-gray-100 py-1 z-50"
+                        align="end"
+                        sideOffset={5}
+                      >
+                        <DropdownMenu.Item 
+                          className="flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 cursor-pointer"
+                          onClick={() => handleEdit(report)}
+                        >
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Editar Relatório
+                        </DropdownMenu.Item>
+                        
+                        <DropdownMenu.Separator className="h-px bg-gray-100 my-1" />
+                        
+                        <DropdownMenu.Item 
+                          className="flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
+                          onClick={() => handleDelete(report)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Excluir Relatório
+                        </DropdownMenu.Item>
+                      </DropdownMenu.Content>
+                    </DropdownMenu.Portal>
+                  </DropdownMenu.Root>
                 </div>
                 <div className="flex items-center justify-between mt-4 pt-4 border-t">
                   <span className="text-sm text-gray-500">
@@ -158,6 +223,19 @@ export const Files = (): JSX.Element => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateReport}
+      />
+      <EditReportModal
+        isOpen={!!reportToEdit}
+        onClose={() => setReportToEdit(null)}
+        onSubmit={handleEditSubmit}
+        report={reportToEdit!}
+      />
+      <DeleteConfirmationModal
+        isOpen={!!reportToDelete}
+        onClose={() => setReportToDelete(null)}
+        onConfirm={handleDeleteConfirm}
+        title="Excluir Relatório"
+        description={`Tem certeza que deseja excluir o relatório "${reportToDelete?.name}"? Esta ação não pode ser desfeita.`}
       />
     </div>
   );
