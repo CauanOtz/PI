@@ -1,5 +1,5 @@
 import React from "react";
-import { SidebarSection } from "../Teachers/sections/SidebarSection";
+import { SidebarSection } from "../../components/layout/SidebarSection";
 import { 
   FileTextIcon, 
   FolderIcon, 

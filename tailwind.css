@@ -104,3 +104,26 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+/* FullCalendar custom styles */
+.fc {
+  --fc-border-color: #e5e7eb;
+  --fc-button-bg-color: #2563eb;
+  --fc-button-border-color: #2563eb;
+  --fc-button-hover-bg-color: #1d4ed8;
+  --fc-button-hover-border-color: #1d4ed8;
+  --fc-button-active-bg-color: #1e40af;
+  --fc-button-active-border-color: #1e40af;
+}
+
+.fc .fc-button {
+  @apply text-sm font-medium;
+}
+
+.fc .fc-toolbar-title {
+  @apply text-xl font-semibold;
+}
+
+.fc .fc-event {
+  @apply cursor-pointer;
+}

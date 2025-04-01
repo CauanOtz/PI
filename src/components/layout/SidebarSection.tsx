@@ -1,13 +1,14 @@
 import {
   BarChart2Icon,
   CreditCardIcon,
-  FileTextIcon, // Add this import
+  FileTextIcon,
   HomeIcon,
   SettingsIcon,
   SparklesIcon,
   UsersIcon,
   GraduationCapIcon,
   ClipboardCheckIcon,
+  CalendarIcon, // Add this import
 } from "lucide-react";
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -15,8 +16,8 @@ import {
   Avatar,
   AvatarFallback,
   AvatarImage,
-} from "../../../../components/ui/avatar";
-import { Separator } from "../../../../components/ui/separator";
+} from "../ui/avatar";
+import { Separator } from "../ui/separator";
 
 export const SidebarSection = (): JSX.Element => {
   const navigate = useNavigate();
@@ -28,7 +29,6 @@ export const SidebarSection = (): JSX.Element => {
       label: "Dashboard",
       path: "/dashboard",
     },
-    
     {
       icon: <ClipboardCheckIcon className="w-4 h-4 text-yellow-400" />,
       label: "Presença",
@@ -40,20 +40,27 @@ export const SidebarSection = (): JSX.Element => {
       path: "/students",
     },
     {
+      icon: <CalendarIcon className="w-4 h-4 text-green-400" />, // Add calendar item
+      label: "Calendário",
+      path: "/calendar",
+    },
+    {
       icon: <FileTextIcon className="w-4 h-4 text-pink-400" />,
       label: "Relatório",
       path: "/billing",
-    },
-    {
-      icon: <SettingsIcon className="w-4 h-4 text-orange-400" />,
-      label: "Configurações",
-      path: "/settings",
     },
     {
       icon: <BarChart2Icon className="w-4 h-4 text-red-400" />,
       label: "Avaliações",
       path: "/exams",
     },
+    
+    {
+      icon: <SettingsIcon className="w-4 h-4 text-orange-400" />,
+      label: "Configurações",
+      path: "/settings",
+    },
+    
   ];
 
   return (

@@ -4,6 +4,7 @@ import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label} from "../ui/label";
 import { FileTextIcon, UploadIcon } from "lucide-react";
+import { toast } from "sonner";
 
 interface CreateReportModalProps {
   isOpen: boolean;
@@ -30,10 +31,41 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
 
   const categories = ["Desempenho", "Frequência", "Planos", "Outros"];
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
-    onClose();
+    
+    try {
+      // Validate file size (example: max 10MB)
+      if (formData.file && formData.file.size > 10 * 1024 * 1024) {
+        toast.error("Arquivo muito grande. O tamanho máximo permitido é 10MB.");
+        return;
+      }
+
+      // Validate file type
+      const allowedTypes = ['.pdf', '.doc', '.docx', '.xls', '.xlsx'];
+      const fileExtension = formData.file?.name.toLowerCase().slice((formData.file?.name.lastIndexOf(".") || 0));
+      if (formData.file && !allowedTypes.includes(fileExtension || '')) {
+        toast.error("Tipo de arquivo não suportado. Use PDF, DOC, DOCX, XLS ou XLSX.");
+        return;
+      }
+
+      await onSubmit(formData);
+      toast.success("Relatório criado com sucesso!");
+      onClose();
+      
+      // Reset form
+      setFormData({
+        name: "",
+        category: "Desempenho",
+        file: null,
+      });
+    } catch (error) {
+      toast.error(
+        error instanceof Error 
+          ? error.message 
+          : "Erro ao criar relatório. Tente novamente."
+      );
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
