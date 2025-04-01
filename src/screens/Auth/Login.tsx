@@ -23,7 +23,7 @@ export const Login = () => {
 
   const onSubmit = (data: LoginForm) => {
     console.log(data);
-    navigate("/teachers");
+    navigate("/dashboard");
   };
 
   return (
