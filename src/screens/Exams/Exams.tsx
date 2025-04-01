@@ -19,6 +19,12 @@ interface Exam {
   weight: number;
 }
 
+// Helper function to format date
+const formatDate = (dateString: string) => {
+  const [year, month, day] = dateString.split('-').map(Number);
+  return new Date(year, month - 1, day).toLocaleDateString();
+};
+
 export const Exams = (): JSX.Element => {
   const [exams, setExams] = useState<Exam[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -138,7 +144,7 @@ export const Exams = (): JSX.Element => {
                           <div className="text-sm text-gray-500 sm:hidden">{exam.subject}</div>
                           <div className="text-sm text-gray-500 md:hidden">{exam.class}</div>
                           <div className="text-sm text-gray-500 sm:hidden">
-                            {new Date(exam.date).toLocaleDateString()}
+                            {formatDate(exam.date)}
                           </div>
                           <div className="text-sm text-gray-500 lg:hidden">
                             Nota: {exam.maxScore} | Peso: {exam.weight}
@@ -148,7 +154,7 @@ export const Exams = (): JSX.Element => {
                       <td className="p-4 hidden sm:table-cell">{exam.subject}</td>
                       <td className="p-4 hidden md:table-cell">{exam.class}</td>
                       <td className="p-4 hidden sm:table-cell">
-                        {new Date(exam.date).toLocaleDateString()}
+                        {formatDate(exam.date)}
                       </td>
                       <td className="p-4 text-center hidden lg:table-cell">{exam.maxScore}</td>
                       <td className="p-4 text-center hidden lg:table-cell">{exam.weight}</td>
