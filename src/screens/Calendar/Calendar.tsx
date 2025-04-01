@@ -87,49 +87,67 @@ export const Calendar = (): JSX.Element => {
   }
 
   return (
-    <div className="bg-white flex flex-row justify-center w-full">
+    <div className="bg-white flex flex-row justify-center w-full mt-16">
       <div className="bg-white overflow-hidden w-full max-w-[1440px] relative">
         <SidebarSection />
         
-        <div className="flex flex-col ml-[283px] p-8">
-          <div className="flex justify-between items-center mb-6">
+        <div className="flex flex-col p-4 sm:p-6 lg:p-8 lg:ml-[283px]">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div>
-              <h1 className="text-2xl font-bold">Calendário</h1>
+              <h1 className="text-xl sm:text-2xl font-bold">Calendário</h1>
               <p className="text-gray-600 mt-1">Gerencie suas tarefas e eventos</p>
             </div>
             <Button 
               onClick={() => setIsModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
             >
               <Plus className="w-4 h-4 mr-2" />
               Nova Tarefa
             </Button>
           </div>
 
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <FullCalendar
-              plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              headerToolbar={{
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
-              }}
-              locale={ptBRLocale}
-              events={tasks}
-              dateClick={handleDateClick}
-              eventClick={handleEventClick}
-              height="auto"
-              editable={true}
-              selectable={true}
-              weekends={true}
-            />
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 overflow-x-auto">
+            <div className="min-w-[800px]">
+              <FullCalendar
+                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                initialView="dayGridMonth"
+                headerToolbar={{
+                  left: 'prev,next today',
+                  center: 'title',
+                  right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                }}
+                views={{
+                  dayGridMonth: {
+                    titleFormat: { year: 'numeric', month: 'long' }
+                  },
+                  timeGridWeek: {
+                    titleFormat: { year: 'numeric', month: 'long', day: '2-digit' }
+                  },
+                  timeGridDay: {
+                    titleFormat: { year: 'numeric', month: 'long', day: '2-digit' }
+                  }
+                }}
+                locale={ptBRLocale}
+                events={tasks}
+                dateClick={handleDateClick}
+                eventClick={handleEventClick}
+                height="auto"
+                editable={true}
+                selectable={true}
+                weekends={true}
+                windowResize={function(arg) {
+                  if (arg.view.type === 'dayGridMonth' && window.innerWidth < 768) {
+                    arg.view.calendar.changeView('timeGridDay');
+                  }
+                }}
+              />
+            </div>
           </div>
         </div>
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="w-[95%] max-w-[425px] p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Nova Tarefa</DialogTitle>
           </DialogHeader>
@@ -156,7 +174,7 @@ export const Calendar = (): JSX.Element => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="start">Início</Label>
                 <Input
@@ -165,6 +183,7 @@ export const Calendar = (): JSX.Element => {
                   value={newTask.start}
                   onChange={(e) => setNewTask(prev => ({ ...prev, start: e.target.value }))}
                   required
+                  className="w-full"
                 />
               </div>
 
@@ -176,15 +195,24 @@ export const Calendar = (): JSX.Element => {
                   value={newTask.end}
                   onChange={(e) => setNewTask(prev => ({ ...prev, end: e.target.value }))}
                   required
+                  className="w-full"
                 />
               </div>
             </div>
 
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsModalOpen(false)}
+                className="w-full sm:w-auto"
+              >
                 Cancelar
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              <Button 
+                type="submit" 
+                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+              >
                 Adicionar Tarefa
               </Button>
             </DialogFooter>

@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Login } from "./screens/Auth/Login";
 import { Register } from "./screens/Auth/Register";
+import { ForgotPassword}  from "./screens/Auth/ForgotPassword";
 import { Attendance } from "./screens/Attendance/Attendance";
 import { Dashboard } from "./screens/Dashboard/Dashboard";
 import { Students } from "./screens/Students/Students";
@@ -19,6 +20,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/students" element={<Students />} />

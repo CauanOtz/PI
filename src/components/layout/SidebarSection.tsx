@@ -8,9 +8,10 @@ import {
   UsersIcon,
   GraduationCapIcon,
   ClipboardCheckIcon,
-  CalendarIcon, // Add this import
+  CalendarIcon,
+  Menu,
 } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Avatar,
@@ -22,6 +23,7 @@ import { Separator } from "../ui/separator";
 export const SidebarSection = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isOpen, setIsOpen] = useState(false);
 
   const navItems = [
     {
@@ -40,7 +42,7 @@ export const SidebarSection = (): JSX.Element => {
       path: "/students",
     },
     {
-      icon: <CalendarIcon className="w-4 h-4 text-green-400" />, // Add calendar item
+      icon: <CalendarIcon className="w-4 h-4 text-green-400" />,
       label: "Calendário",
       path: "/calendar",
     },
@@ -54,64 +56,90 @@ export const SidebarSection = (): JSX.Element => {
       label: "Avaliações",
       path: "/exams",
     },
-    
     {
       icon: <SettingsIcon className="w-4 h-4 text-orange-400" />,
       label: "Configurações",
       path: "/settings",
     },
-    
   ];
 
   return (
-    <nav className="w-[241px] h-screen fixed left-0 top-0 bg-[#152259] flex flex-col">
-      <div className="flex justify-center mt-[26px]">
-        <Avatar className="w-[65px] h-[65px]">
-          <AvatarImage src="/ellipse-6.png" alt="Logo da escola" />
-          <AvatarFallback>ES</AvatarFallback>
-        </Avatar>
-      </div>
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-white shadow-md"
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <Menu className="w-6 h-6" />
+      </button>
 
-      <div className="mx-[25px] mt-3 rounded-lg py-2.5">
-        <div className="flex items-center justify-center gap-4">
-          <span className="font-['Kumbh_Sans',Helvetica] font-semibold text-white text-sm">
-            Escola
-          </span>
-        </div>
-      </div>
+      {/* Backdrop for mobile */}
+      {isOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
 
-      <Separator className="mt-[30px] bg-white/10" />
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed top-0 left-0 z-40 h-screen transition-transform duration-300
+          lg:translate-x-0 lg:w-[283px] bg-[#152259]
+          ${isOpen ? "translate-x-0" : "-translate-x-full"}
+          w-[280px]
+        `}
+      >
+        <nav className="h-screen flex flex-col p-6">
+          <div className="flex justify-center">
+            <Avatar className="w-[65px] h-[65px]">
+              <AvatarImage src="/ellipse-6.png" alt="Logo da escola" />
+              <AvatarFallback>ES</AvatarFallback>
+            </Avatar>
+          </div>
 
-      <div className="flex flex-col px-[25px] mt-[15px] gap-2">
-        {navItems.map((item) => (
-          <button
-            key={item.path}
-            onClick={() => navigate(item.path)}
-            className={`flex items-center h-10 px-4 rounded w-full ${
-              location.pathname === item.path
-                ? "bg-projectsecondary-300"
-                : "bg-transparent hover:bg-projectsecondary-300/50"
-            }`}
-          >
-            {item.icon}
-            <span className="ml-4 font-['Kumbh_Sans',Helvetica] font-semibold text-white text-sm">
-              {item.label}
-            </span>
-          </button>
-        ))}
-      </div>
+          <div className="mx-[25px] mt-3 rounded-lg py-2.5">
+            <div className="flex items-center justify-center gap-4">
+              <span className="font-['Kumbh_Sans',Helvetica] font-semibold text-white text-sm">
+                Escola
+              </span>
+            </div>
+          </div>
 
-      <div className="mt-auto mb-8 mx-[25px]">
-        <button
-          onClick={() => navigate("/")}
-          className="flex items-center h-10 px-4 rounded w-full hover:bg-projectsecondary-300/50"
-        >
-          <SparklesIcon className="w-4 h-4 text-red-400" />
-          <span className="ml-4 font-['Kumbh_Sans',Helvetica] font-semibold text-white text-sm">
-            Sair
-          </span>
-        </button>
-      </div>
-    </nav>
+          <Separator className="mt-[30px] bg-white/10" />
+
+          <div className="flex flex-col px-[25px] mt-[15px] gap-2">
+            {navItems.map((item) => (
+              <button
+                key={item.path}
+                onClick={() => navigate(item.path)}
+                className={`flex items-center h-10 px-4 rounded w-full ${
+                  location.pathname === item.path
+                    ? "bg-projectsecondary-300"
+                    : "bg-transparent hover:bg-projectsecondary-300/50"
+                }`}
+              >
+                {item.icon}
+                <span className="ml-4 font-['Kumbh_Sans',Helvetica] font-semibold text-white text-sm">
+                  {item.label}
+                </span>
+              </button>
+            ))}
+          </div>
+
+          <div className="mt-auto mb-8 mx-[25px]">
+            <button
+              onClick={() => navigate("/")}
+              className="flex items-center h-10 px-4 rounded w-full hover:bg-projectsecondary-300/50"
+            >
+              <SparklesIcon className="w-4 h-4 text-red-400" />
+              <span className="ml-4 font-['Kumbh_Sans',Helvetica] font-semibold text-white text-sm">
+                Sair
+              </span>
+            </button>
+          </div>
+        </nav>
+      </aside>
+    </>
   );
 };

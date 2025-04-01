@@ -179,13 +179,13 @@ export const Dashboard = (): JSX.Element => {
   };
 
   return (
-    <div className="bg-gray-50 flex flex-row justify-center w-full min-h-screen">
+    <div className="bg-gray-50 flex flex-row justify-center w-full min-h-screen mt-16">
       <div className="bg-gray-50 overflow-hidden w-full max-w-[1440px] relative">
         <SidebarSection />
-        <div className="flex flex-col ml-[283px] p-8">
-          <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col p-4 sm:p-6 lg:p-8 lg:ml-[283px]">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Dashboard</h1>
               <p className="text-gray-600 mt-2">Bem-vindo ao seu painel de controle</p>
             </div>
             <NotificationsDropdown
@@ -196,20 +196,19 @@ export const Dashboard = (): JSX.Element => {
             />
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
             {stats.map((stat, index) => (
-              <Card key={index} className="p-6">
+              <Card key={index} className="p-4 sm:p-6">
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                    <h3 className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</h3>
+                    <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{stat.value}</h3>
                   </div>
                   <div className="p-2 rounded-lg bg-gray-50">{stat.icon}</div>
                 </div>
                 <div className="flex items-center mt-4">
                   <TrendingUpIcon className={`w-4 h-4 ${stat.change > 0 ? 'text-green-500' : 'text-red-500'} mr-1`} />
-                  <span className={`text-sm ${stat.change > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  <span className={`text-xs sm:text-sm ${stat.change > 0 ? 'text-green-600' : 'text-red-600'}`}>
                     {Math.abs(stat.change)}% em relação ao mês anterior
                   </span>
                 </div>
@@ -217,55 +216,52 @@ export const Dashboard = (): JSX.Element => {
             ))}
           </div>
 
-          {/* Quick Access Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
             {quickAccessCards.map((card, index) => (
               <button
                 key={index}
                 onClick={() => navigate(card.path)}
-                className={`${card.bgColor} p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-left`}
+                className={`${card.bgColor} p-4 sm:p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-left w-full`}
               >
                 <div className="flex items-start space-x-4">
-                  <div className="p-3 rounded-full bg-white shadow-sm">
+                  <div className="p-2 sm:p-3 rounded-full bg-white shadow-sm">
                     {card.icon}
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-800">{card.title}</h3>
-                    <p className="text-sm text-gray-600 mt-1">{card.description}</p>
+                    <p className="text-xs sm:text-sm text-gray-600 mt-1">{card.description}</p>
                   </div>
                 </div>
               </button>
             ))}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent Activities */}
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Atividades Recentes</h2>
-              <div className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+            <Card className="p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Atividades Recentes</h2>
+              <div className="space-y-3 sm:space-y-4">
                 {recentActivities.map((activity, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center space-x-3">
+                  <div key={index} className="flex items-center justify-between p-2 sm:p-3 rounded-lg hover:bg-gray-50">
+                    <div className="flex items-center space-x-3 min-w-0">
                       {activity.icon}
-                      <span className="text-gray-600">{activity.description}</span>
+                      <span className="text-gray-600 text-sm truncate">{activity.description}</span>
                     </div>
-                    <span className="text-sm text-gray-400">{activity.time}</span>
+                    <span className="text-xs sm:text-sm text-gray-400 ml-2">{activity.time}</span>
                   </div>
                 ))}
               </div>
             </Card>
 
-            {/* Upcoming Events */}
-            <Card className="p-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">Próximos Eventos</h2>
-              <div className="space-y-4">
+            <Card className="p-4 sm:p-6">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Próximos Eventos</h2>
+              <div className="space-y-3 sm:space-y-4">
                 {upcomingEvents.map((event, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50">
+                  <div key={index} className="flex items-center justify-between p-2 sm:p-3 rounded-lg hover:bg-gray-50">
                     <div className="flex items-center space-x-3">
-                      <CalendarIcon className="w-5 h-5 text-blue-500" />
-                      <div>
-                        <h4 className="font-medium text-gray-800">{event.title}</h4>
-                        <p className="text-sm text-gray-500">{event.date} às {event.time}</p>
+                      <CalendarIcon className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <h4 className="font-medium text-gray-800 text-sm sm:text-base truncate">{event.title}</h4>
+                        <p className="text-xs sm:text-sm text-gray-500">{event.date} às {event.time}</p>
                       </div>
                     </div>
                   </div>

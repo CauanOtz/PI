@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { LockIcon, MailIcon, LogInIcon } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/avatar";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -29,6 +30,12 @@ export const Login = () => {
     <div className="min-h-screen bg-[#152259] flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
         <div className="text-center mb-8">
+          <div className="flex justify-center mb-6">
+            <Avatar className="w-[65px] h-[65px]">
+              <AvatarImage src="/ellipse-6.png" alt="Logo da escola" />
+              <AvatarFallback>ES</AvatarFallback>
+            </Avatar>
+          </div>
           <h1 className="text-2xl font-bold text-gray-800">Bem-vindo de volta!</h1>
           <p className="text-gray-600 mt-2">Entre com suas credenciais para acessar</p>
         </div>
