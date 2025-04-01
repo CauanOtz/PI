@@ -34,7 +34,7 @@ Construir uma **sociedade mais justa e digna**, trabalhando **em conjunto com pa
 
 ## 💻 Tecnologias Utilizadas
 - 🚀 **Back-end**: Node.js
-- 🚀 **Front-end**: React + Vite
+- 🚀 **Front-end**: Typescript
 - 🚀 **Outras ferramentas**: Font Awesome, SweetAlert
 
 ---
