@@ -26,7 +26,7 @@ Construir uma **sociedade mais justa e digna**, trabalhando **em conjunto com pa
 ## 🛠️ Funcionalidades do Sistema
 - 📌 **Cadastro de Alunos**: Registro detalhado dos participantes do projeto.
 - 📌 **Gestão de Frequência**: Controle de presenças e faltas.
-- 📌 **Organização de Atividades**: Cadastro e gestão das atividades realizadas pela ONG.
+- 📌 **Organização de Aulas**: Cadastro e gestão das aulas realizadas pela ONG.
 - 📌 **Relatórios e Estatísticas**: Geração de relatórios sobre frequência e participação dos alunos.
 - 📌 **Acesso de Voluntários**: Controle de permissões e gerenciamento de perfis dos colaboradores.
 
