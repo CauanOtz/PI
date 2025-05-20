@@ -2,36 +2,41 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import setupSwagger from './config/swagger.js'; // Importe a configuração do Swagger
 // import mainRoutes from './routes/index.js'; // Descomente quando tiver rotas
+import aulaRoutes from './routes/aula.routes.js'; // Importe suas rotas de aula
 
-// Carrega variáveis de ambiente do .env
 dotenv.config();
-
 const app = express();
 
-// Middlewares
-app.use(cors()); // Permite requisições de diferentes origens
-app.use(express.json()); // Permite que o Express entenda JSON no corpo das requisições
-app.use(express.urlencoded({ extended: true })); // Permite que o Express entenda dados de formulário URL-encoded
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Rota de Teste
+// Configurar Swagger
+setupSwagger(app);
+
 app.get('/', (req, res) => {
-  res.status(200).json({ message: 'Bem-vindo à API da Escola!' });
+  res.status(200).json({ message: 'Bem-vindo à API do Diário de Classe!' });
 });
 
 // Aqui você importará e usará suas rotas principais
-// app.use('/api/v1', mainRoutes); // Exemplo de prefixo para todas as rotas
+// O prefixo /api/v1 é um exemplo, ajuste conforme sua necessidade e o que foi configurado no swagger.js
+// app.use('/api/v1', mainRoutes);
 
-// Middleware para tratar rotas não encontradas (404)
 app.use((req, res, next) => {
   res.status(404).json({ message: 'Rota não encontrada.' });
 });
 
-// Middleware para tratamento de erros global (opcional, mas recomendado)
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Ocorreu um erro interno no servidor.', error: err.message });
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'Ocorreu um erro interno no servidor.';
+  res.status(statusCode).json({ message, ...(process.env.NODE_ENV === 'development' && { stack: err.stack }) });
 });
+
+// Use suas rotas com um prefixo
+app.use('/api/v1/aulas', aulaRoutes); // Rotas de aula sob /api/v1/aulas
 
 export default app;
