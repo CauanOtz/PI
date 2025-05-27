@@ -24,9 +24,7 @@ app.get('/', (req, res) => {
 // O prefixo /api/v1 é um exemplo, ajuste conforme sua necessidade e o que foi configurado no swagger.js
 // app.use('/api/v1', mainRoutes);
 
-app.use((req, res, next) => {
-  res.status(404).json({ message: 'Rota não encontrada.' });
-});
+
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
@@ -38,5 +36,9 @@ app.use((err, req, res, next) => {
 
 // Use suas rotas com um prefixo
 app.use('/api/v1/aulas', aulaRoutes); // Rotas de aula sob /api/v1/aulas
+
+app.use((req, res, next) => {
+  res.status(404).json({ message: 'Rota não encontrada.' });
+});
 
 export default app;

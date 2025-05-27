@@ -1,6 +1,7 @@
 // src/routes/aula.routes.js
 import { Router } from 'express';
 import * as aulaController from '../controllers/aula.controller.js';
+import { validateCreateAula } from '../middlewares/validators/aula.validator.js'; // Importe o validador
 
 const router = Router();
 
@@ -18,38 +19,19 @@ const router = Router();
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/Aula' # Referência ao esquema do modelo Aula
+ *                 $ref: '#/components/schemas/Aula'
  *       500:
  *         description: Erro interno do servidor.
  */
 router.get('/', aulaController.listarAulas);
 
-/**
- * @openapi
- * /aulas:
- *   post:
- *     summary: Cria uma nova aula
- *     tags: [Aulas]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/NovaAula' # Esquema para criar uma nova aula
- *     responses:
- *       201:
- *         description: Aula criada com sucesso.
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Aula'
- *       400:
- *         description: Dados de entrada inválidos.
- *       500:
- *         description: Erro interno do servidor.
- */
-router.post('/', aulaController.criarAula);
+// A rota POST agora usa o middleware de validação ANTES do controller
+router.post('/', validateCreateAula, aulaController.criarAula);
+
 
 // Adicione outras rotas para GET /{id}, PUT /{id}, DELETE /{id} com suas anotações
+// router.get('/:id', aulaController.getAulaPorId);
+// router.put('/:id', validateUpdateAula, aulaController.atualizarAula); // Precisaria de validateUpdateAula
+// router.delete('/:id', aulaController.excluirAula);
 
 export default router;
