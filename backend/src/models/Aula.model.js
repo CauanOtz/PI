@@ -21,7 +21,7 @@ import { sequelize } from '../config/database.js';
  *           type: string
  *           maxLength: 100
  *           description: Título da aula.
- *           example: "Matemática Divertida"
+ *           example: "Matemática Básica"
  *         data:
  *           type: string
  *           format: date
@@ -31,12 +31,12 @@ import { sequelize } from '../config/database.js';
  *           type: string
  *           format: time
  *           description: Horário da aula (HH:MM:SS).
- *           example: "09:00:00"
+ *           example: "14:30:00"
  *         descricao:
  *           type: string
  *           nullable: true
  *           description: Descrição opcional da aula.
- *           example: "Introdução aos números."
+ *           example: "Aula introdutória sobre conceitos básicos"
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -56,7 +56,7 @@ import { sequelize } from '../config/database.js';
  *           type: string
  *           maxLength: 100
  *           description: Título da aula.
- *           example: "Matemática Divertida"
+ *           example: "Matemática Básica"
  *         data:
  *           type: string
  *           format: date
@@ -66,12 +66,12 @@ import { sequelize } from '../config/database.js';
  *           type: string
  *           format: time
  *           description: Horário da aula (HH:MM:SS).
- *           example: "09:00:00"
+ *           example: "14:30:00"
  *         descricao:
  *           type: string
  *           nullable: true
  *           description: Descrição opcional da aula.
- *           example: "Introdução aos números."
+ *           example: "Aula introdutória sobre conceitos básicos"
  */
 const Aula = sequelize.define('Aula', {
   // ... (definição do modelo como antes)

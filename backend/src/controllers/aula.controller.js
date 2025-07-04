@@ -156,4 +156,91 @@ export const atualizarAula = async (req, res, next) => {
 
 // Implementar getAulaPorId, excluirAula futuramente
 // export const getAulaPorId = async (req, res, next) => { ... };
-// export const excluirAula = async (req, res, next) => { ... };
+// export const excluirAula = async (req, res, next) => { ... };// Adicione estas funções ao final do arquivo, antes do export
+
+/**
+ * @openapi
+ * /aulas/{id}:
+ *   get:
+ *     summary: Obtém uma aula específica pelo ID
+ *     tags: [Aulas]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID da aula a ser obtida
+ *     responses:
+ *       200:
+ *         description: Aula encontrada com sucesso.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Aula'
+ *       404:
+ *         description: Aula não encontrada.
+ *       500:
+ *         description: Erro interno do servidor.
+ */
+export const getAulaPorId = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    // Busca a aula pelo ID
+    const aula = await Aula.findByPk(id);
+    
+    // Se a aula não for encontrada, retorna 404
+    if (!aula) {
+      return res.status(404).json({ message: 'Aula não encontrada.' });
+    }
+    
+    // Retorna a aula encontrada
+    res.status(200).json(aula);
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @openapi
+ * /aulas/{id}:
+ *   delete:
+ *     summary: Remove uma aula existente
+ *     tags: [Aulas]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID da aula a ser removida
+ *     responses:
+ *       204:
+ *         description: Aula removida com sucesso.
+ *       404:
+ *         description: Aula não encontrada.
+ *       500:
+ *         description: Erro interno do servidor.
+ */
+export const excluirAula = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    
+    // Busca a aula pelo ID
+    const aula = await Aula.findByPk(id);
+    
+    // Se a aula não for encontrada, retorna 404
+    if (!aula) {
+      return res.status(404).json({ message: 'Aula não encontrada.' });
+    }
+    
+    // Remove a aula do banco de dados
+    await aula.destroy();
+    
+    // Retorna status 204 (No Content) para indicar sucesso na remoção
+    res.status(204).end();
+  } catch (error) {
+    next(error);
+  }
+};
