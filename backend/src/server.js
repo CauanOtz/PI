@@ -13,7 +13,7 @@ const startServer = async () => {
     // CUIDADO: { force: true } apaga e recria as tabelas. Use apenas em desenvolvimento.
     // Para produção, use migrations.
     // await sequelize.sync({ force: true }); // Para recriar tabelas
-    await sequelize.sync(); // Apenas cria tabelas se não existirem ou altera se { alter: true }
+    await sequelize.sync({ alter: true }); // Apenas cria tabelas se não existirem ou altera se { alter: true }
     console.log('Modelos sincronizados com o banco de dados.');
 
     app.listen(PORT, () => {

@@ -1,6 +1,7 @@
 // src/models/Aula.model.js
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
+import Usuario from './Usuario.model.js';
 
 /**
  * @openapi
@@ -85,4 +86,27 @@ const Aula = sequelize.define('Aula', {
   timestamps: true,
 });
 
-export default Aula;
+// Relacionamento com Usuario (Responsável)
+Aula.belongsTo(Usuario, {
+  foreignKey: 'responsavel_id',
+  as: 'responsavel'
+});
+
+// Relacionamento com Usuario (Professor)
+Aula.belongsTo(Usuario, {
+  foreignKey: 'professor_id',
+  as: 'professor'
+});
+
+// Se você quiser acessar as aulas de um usuário
+Usuario.hasMany(Aula, {
+  foreignKey: 'responsavel_id',
+  as: 'aulasResponsavel'
+});
+
+Usuario.hasMany(Aula, {
+  foreignKey: 'professor_id',
+  as: 'aulasProfessor'
+});
+
+export default Aula ;
