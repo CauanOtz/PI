@@ -1,5 +1,5 @@
 // src/middlewares/validators/usuario.validator.js
-import { body, validationResult } from 'express-validator';
+import { query, body, validationResult } from 'express-validator';
 
 // Middleware para validar o registro de um novo usuário
 export const validateRegistroUsuario = [
@@ -22,6 +22,42 @@ export const validateRegistroUsuario = [
   body('role')
     .optional()
     .isIn(['admin', 'responsavel']).withMessage('Papel inválido.'),
+
+  // Middleware para processar os resultados da validação
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const errorMessages = errors.array().map(error => ({
+        field: error.path,
+        message: error.msg,
+      }));
+      return res.status(400).json({ errors: errorMessages });
+    }
+    next();
+  },
+];
+
+
+// Middleware para validar os parâmetros de busca
+export const validateListarUsuarios = [
+  query('page')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('O número da página deve ser um inteiro maior que 0')
+    .toInt(),
+  query('limit')
+    .optional()
+    .isInt({ min: 1, max: 100 })
+    .withMessage('O limite deve ser um inteiro entre 1 e 100')
+    .toInt(),
+  query('search')
+    .optional()
+    .isString()
+    .trim(),
+  query('role')
+    .optional()
+    .isIn(['admin', 'responsavel'])
+    .withMessage('Papel inválido'),
 
   // Middleware para processar os resultados da validação
   (req, res, next) => {
