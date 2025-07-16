@@ -1,7 +1,7 @@
 // src/routes/usuario.routes.js
 import { Router } from 'express';
 import * as usuarioController from '../controllers/usuario.controller.js';
-import { validateRegistroUsuario, validateListarUsuarios, validateBuscarPorCPF, validateLogin, validateAtualizarUsuario } from '../middlewares/validators/usuario.validator.js';
+import { validateRegistroUsuario, validateListarUsuarios, validateBuscarPorCPF, validateLogin, validateAtualizarUsuario, validateExcluirUsuario  } from '../middlewares/validators/usuario.validator.js';
 import { autenticar } from '../middlewares/auth.middleware.js';
 
 const router = Router();
@@ -33,6 +33,14 @@ router.put(
     autenticar,
     validateAtualizarUsuario,
     usuarioController.atualizarUsuarioPorCPF
+);
+
+// Rota para excluir usuário por CPF (apenas admin)
+router.delete(
+    '/:cpf',
+    autenticar,
+    validateExcluirUsuario,
+    usuarioController.excluirUsuarioPorCPF
 );
 
 export default router;

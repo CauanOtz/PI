@@ -490,3 +490,85 @@ export const atualizarUsuarioPorCPF = async (req, res, next) => {
     next(error);
   }
 };
+
+
+/**
+ * @openapi
+ * /usuarios/{cpf}:
+ *   delete:
+ *     summary: Exclui um usuário pelo CPF (apenas admin)
+ *     description: |
+ *       Apenas administradores podem excluir usuários.
+ *       Um administrador não pode se auto-excluir.
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: cpf
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: cpf
+ *         description: CPF do usuário a ser excluído
+ *     responses:
+ *       200:
+ *         description: Usuário excluído com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 mensagem:
+ *                   type: string
+ *                   example: Usuário excluído com sucesso
+ *       400:
+ *         description: CPF inválido
+ *       401:
+ *         description: Não autorizado
+ *       403:
+ *         description: Acesso negado (apenas administradores) ou Tentativa de auto-exclusão
+ *       404:
+ *         description: Usuário não encontrado
+ */
+export const excluirUsuarioPorCPF = async (req, res, next) => {
+  try {
+    // Verifica se o usuário é admin
+    if (req.usuario.role !== 'admin') {
+      return res.status(403).json({ 
+        mensagem: 'Acesso negado. Apenas administradores podem acessar este recurso.' 
+      });
+    }
+
+    const { cpf } = req.params;
+
+    // Formata o CPF para o formato do banco de dados
+    const cpfFormatado = cpf.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+
+    // Verifica se o usuário está tentando se auto-excluir
+    if (req.usuario.cpf === cpfFormatado) {
+      return res.status(403).json({
+        mensagem: 'Você não pode se auto-excluir. Contate outro administrador para realizar esta ação.'
+      });
+    }
+
+    // Busca e exclui o usuário
+    const usuario = await Usuario.findOne({
+      where: { cpf: cpfFormatado }
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ 
+        mensagem: 'Usuário não encontrado' 
+      });
+    }
+
+    await usuario.destroy();
+
+    res.status(200).json({ 
+      mensagem: 'Usuário excluído com sucesso' 
+    });
+  } catch (error) {
+    next(error);
+  }
+};

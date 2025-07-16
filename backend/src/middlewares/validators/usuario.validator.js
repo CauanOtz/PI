@@ -169,3 +169,18 @@ export const validateAtualizarUsuario = [
     next();
   }
 ];
+
+export const validateExcluirUsuario = [
+  param('cpf')
+    .notEmpty().withMessage('CPF é obrigatório')
+    .isLength({ min: 11, max: 14 }).withMessage('CPF inválido')
+    .custom(validarCPF).withMessage('CPF inválido'),
+  
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  }
+];
