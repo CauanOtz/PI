@@ -1,7 +1,7 @@
 // src/controllers/usuario.controller.js
 import Usuario from '../models/Usuario.model.js';
 import { Op } from 'sequelize';
-
+import bcrypt from 'bcrypt';
 /**
  * @openapi
  * tags:
@@ -168,8 +168,8 @@ export const listarUsuarios = async (req, res, next) => {
     const where = {};
     if (search) {
       where[Op.or] = [
-        { nome: { [Op.iLike]: `%${search}%` } },
-        { email: { [Op.iLike]: `%${search}%` } }
+        { nome: { [Op.like]: `%${search}%` } },
+        { email: { [Op.like]: `%${search}%` } }
       ];
     }
     if (role) {
@@ -238,6 +238,92 @@ export const obterMeusDados = async (req, res, next) => {
     }
 
     res.status(200).json(usuario);
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+/**
+ * @openapi
+ * /usuarios/login:
+ *   post:
+ *     summary: Autentica um usuário e retorna um token JWT
+ *     tags: [Autenticação]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - senha
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: admin@escola.com
+ *               senha:
+ *                 type: string
+ *                 format: password
+ *                 example: senha123
+ *     responses:
+ *       200:
+ *         description: Login realizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 usuario:
+ *                   $ref: '#/components/schemas/Usuario'
+ *                 token:
+ *                   type: string
+ *                   description: Token JWT para autenticação
+ *       400:
+ *         description: Dados de login inválidos
+ *       401:
+ *         description: Credenciais inválidas
+ */
+export const login = async (req, res, next) => {
+  try {
+    const { email, senha } = req.body;
+
+    // Busca o usuário pelo email
+    const usuario = await Usuario.findOne({ 
+      where: { email },
+      attributes: { include: ['senha'] } 
+    });
+
+    // Verifica se o usuário existe
+    if (!usuario) {
+      return res.status(401).json({ 
+        mensagem: 'Credenciais inválidas' 
+      });
+    }
+
+    // Verifica se a senha está correta
+    const senhaValida = await bcrypt.compare(senha, usuario.senha);
+    if (!senhaValida) {
+      return res.status(401).json({ 
+        mensagem: 'Credenciais inválidas' 
+      });
+    }
+
+    // Gera o token JWT
+    const token = usuario.gerarToken();
+
+    // Remove a senha do objeto de retorno
+    const usuarioSemSenha = usuario.get();
+    delete usuarioSemSenha.senha;
+
+    // Retorna o usuário e o token
+    res.status(200).json({
+      usuario: usuarioSemSenha,
+      token
+    });
   } catch (error) {
     next(error);
   }

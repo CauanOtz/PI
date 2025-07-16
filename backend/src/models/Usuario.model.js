@@ -115,4 +115,19 @@ Usuario.prototype.gerarToken = function() {
   );
 };
 
+// Método para gerar token JWT
+Usuario.prototype.gerarToken = function() {
+  return jwt.sign(
+    { 
+      id: this.id, 
+      email: this.email, 
+      role: this.role 
+    },
+    process.env.JWT_SECRET || 'sua_chave_secreta',
+    { 
+      expiresIn: process.env.JWT_EXPIRES_IN || '7d' 
+    }
+  );
+};
+
 export default Usuario;

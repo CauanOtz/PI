@@ -23,6 +23,7 @@ const options = {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
+          description: 'Insira o token JWT no formato: Bearer <token>'
         }
       }
     },

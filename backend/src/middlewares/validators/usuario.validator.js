@@ -72,3 +72,30 @@ export const validateListarUsuarios = [
     next();
   },
 ];
+
+export const validateLogin = [
+  body('email')
+    .isEmail()
+    .withMessage('Email inválido')
+    .normalizeEmail(),
+  body('senha')
+    .isString()
+    .withMessage('Senha é obrigatória')
+    .notEmpty()
+    .withMessage('Senha não pode estar vazia')
+    .isLength({ min: 6 })
+    .withMessage('Senha deve ter no mínimo 6 caracteres'),
+
+  // Middleware para processar os resultados da validação
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const errorMessages = errors.array().map(error => ({
+        field: error.path,
+        message: error.msg,
+      }));
+      return res.status(400).json({ errors: errorMessages });
+    }
+    next();
+  },
+];

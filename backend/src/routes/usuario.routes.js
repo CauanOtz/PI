@@ -1,12 +1,15 @@
 // src/routes/usuario.routes.js
 import { Router } from 'express';
 import * as usuarioController from '../controllers/usuario.controller.js';
-import { validateRegistroUsuario, validateListarUsuarios } from '../middlewares/validators/usuario.validator.js';
+import { validateRegistroUsuario, validateListarUsuarios, validateLogin } from '../middlewares/validators/usuario.validator.js';
 import { autenticar } from '../middlewares/auth.middleware.js';
 const router = Router();
 
 // Rota para registro de usuário
 router.post('/registrar', validateRegistroUsuario, usuarioController.registrarUsuario);
+
+// Rota para login
+router.post('/login', validateLogin, usuarioController.login);
 
 // Outras rotas de usuário podem ser adicionadas aqui
 // Rota para listar usuários
