@@ -141,3 +141,31 @@ export const validateBuscarPorCPF = [
     next();
   }
 ];
+
+export const validateAtualizarUsuario = [
+  param('cpf')
+    .notEmpty().withMessage('CPF é obrigatório')
+    .isLength({ min: 11, max: 14 }).withMessage('CPF inválido')
+    .custom(validarCPF).withMessage('CPF inválido'),
+  
+  body('nome')
+    .optional()
+    .isLength({ min: 3 }).withMessage('O nome deve ter pelo menos 3 caracteres'),
+  
+  body('email')
+    .optional()
+    .isEmail().withMessage('E-mail inválido')
+    .normalizeEmail(),
+  
+  body('telefone')
+    .optional()
+    .isMobilePhone('pt-BR').withMessage('Telefone inválido'),
+  
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  }
+];

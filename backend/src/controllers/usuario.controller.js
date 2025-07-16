@@ -392,5 +392,101 @@ export const buscarPorCPF = async (req, res, next) => {
     next(error);
   }
 };
-// Outros métodos do controlador podem ser adicionados aqui
-// como login, atualizar, etc.
+
+
+/**
+ * @openapi
+ * /usuarios/{cpf}:
+ *   put:
+ *     summary: Atualiza um usuário pelo CPF (apenas admin)
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: cpf
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: cpf
+ *         description: CPF do usuário a ser atualizado
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome:
+ *                 type: string
+ *                 example: João da Silva
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: joao@escola.com
+ *               telefone:
+ *                 type: string
+ *                 example: (11) 98765-4321
+ *     responses:
+ *       200:
+ *         description: Usuário atualizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Usuario'
+ *       400:
+ *         description: Dados inválidos
+ *       401:
+ *         description: Não autorizado
+ *       403:
+ *         description: Acesso negado (apenas administradores)
+ *       404:
+ *         description: Usuário não encontrado
+ */
+export const atualizarUsuarioPorCPF = async (req, res, next) => {
+  try {
+    // Verifica se o usuário é admin
+    if (req.usuario.role !== 'admin') {
+      return res.status(403).json({ 
+        mensagem: 'Acesso negado. Apenas administradores podem acessar este recurso.' 
+      });
+    }
+
+    const { cpf } = req.params;
+    const { nome, email, telefone } = req.body;
+
+    // Formata o CPF para o formato do banco de dados
+    const cpfFormatado = cpf.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+
+    // Busca o usuário
+    const usuario = await Usuario.findOne({
+      where: { cpf: cpfFormatado }
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ 
+        mensagem: 'Usuário não encontrado' 
+      });
+    }
+
+    // Atualiza apenas os campos fornecidos
+    if (nome) usuario.nome = nome;
+    if (email) usuario.email = email;
+    if (telefone) usuario.telefone = telefone;
+
+    await usuario.save();
+
+    // Remove a senha da resposta
+    const usuarioSemSenha = usuario.get({ plain: true });
+    delete usuarioSemSenha.senha;
+
+    res.status(200).json(usuarioSemSenha);
+  } catch (error) {
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      return res.status(400).json({ 
+        mensagem: 'E-mail já está em uso por outro usuário' 
+      });
+    }
+    next(error);
+  }
+};

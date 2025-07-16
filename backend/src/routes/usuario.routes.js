@@ -1,8 +1,9 @@
 // src/routes/usuario.routes.js
 import { Router } from 'express';
 import * as usuarioController from '../controllers/usuario.controller.js';
-import { validateRegistroUsuario, validateListarUsuarios, validateBuscarPorCPF, validateLogin } from '../middlewares/validators/usuario.validator.js';
+import { validateRegistroUsuario, validateListarUsuarios, validateBuscarPorCPF, validateLogin, validateAtualizarUsuario } from '../middlewares/validators/usuario.validator.js';
 import { autenticar } from '../middlewares/auth.middleware.js';
+
 const router = Router();
 
 // Rota para registro de usuário
@@ -24,6 +25,14 @@ router.get(
     autenticar,
     validateBuscarPorCPF,
     usuarioController.buscarPorCPF
-  );
+);
+
+// Rota para atualizar usuário por CPF (apenas admin)
+router.put(
+    '/:cpf',
+    autenticar,
+    validateAtualizarUsuario,
+    usuarioController.atualizarUsuarioPorCPF
+);
 
 export default router;
