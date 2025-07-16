@@ -82,11 +82,14 @@ export const registrarUsuario = async (req, res, next) => {
       role
     });
 
+     // Gera o token JWT
+     const token = novoUsuario.gerarToken();
+
     // Remove a senha do objeto de resposta
     const usuarioSemSenha = novoUsuario.get({ plain: true });
     delete usuarioSemSenha.senha;
 
-    res.status(201).json(usuarioSemSenha);
+    res.status(201).json({ usuarioSemSenha, token });
   } catch (error) {
     next(error);
   }
@@ -198,6 +201,43 @@ export const listarUsuarios = async (req, res, next) => {
       hasNext,
       hasPrevious
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @openapi
+ * /usuarios/me:
+ *   get:
+ *     summary: Obtém os dados do usuário logado
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Dados do usuário logado
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Usuario'
+ *       401:
+ *         description: Não autorizado - token inválido ou não fornecido
+ *       404:
+ *         description: Usuário não encontrado
+ */
+export const obterMeusDados = async (req, res, next) => {
+  try {
+    // O middleware de autenticação já adicionou o usuário ao req.usuario
+    const usuario = await Usuario.findByPk(req.usuario.id, {
+      attributes: { exclude: ['senha'] } // Não retornar a senha
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ mensagem: 'Usuário não encontrado' });
+    }
+
+    res.status(200).json(usuario);
   } catch (error) {
     next(error);
   }
