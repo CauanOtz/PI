@@ -91,7 +91,15 @@ const Usuario = sequelize.define('Usuario', {
     type: DataTypes.ENUM('admin', 'responsavel'), 
     allowNull: false,
     defaultValue: 'responsavel'
-  }
+  },
+  cpf: {
+    type: DataTypes.STRING(14), // Formato: 000.000.000-00
+    allowNull: true, // Ou false se for obrigatório
+    //unique: true,
+    validate: {
+      is: /^\d{3}\.\d{3}\.\d{3}\-\d{2}$/ // Valida o formato do CPF
+    }
+  },
 }, {
   tableName: 'usuarios',
   timestamps: true,

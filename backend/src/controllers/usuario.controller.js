@@ -329,5 +329,68 @@ export const login = async (req, res, next) => {
   }
 };
 
+
+/**
+ * @openapi
+ * /usuarios/{cpf}:
+ *   get:
+ *     summary: Obtém os detalhes de um usuário pelo CPF (apenas admin)
+ *     tags: [Usuários]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: cpf
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: cpf
+ *         description: CPF do usuário a ser buscado (apenas números)
+ *     responses:
+ *       200:
+ *         description: Dados do usuário
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Usuario'
+ *       400:
+ *         description: CPF inválido
+ *       401:
+ *         description: Não autorizado
+ *       403:
+ *         description: Acesso negado (apenas administradores)
+ *       404:
+ *         description: Usuário não encontrado
+ */
+export const buscarPorCPF = async (req, res, next) => {
+  try {
+    // Verifica se o usuário é admin
+    if (req.usuario.role !== 'admin') {
+      return res.status(403).json({ 
+        mensagem: 'Acesso negado. Apenas administradores podem acessar este recurso.' 
+      });
+    }
+
+    const { cpf } = req.params;
+
+    // Formata o CPF para o formato do banco de dados (se necessário)
+    const cpfFormatado = cpf.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+
+    const usuario = await Usuario.findOne({
+      where: { cpf: cpfFormatado },
+      attributes: { exclude: ['senha'] } // Não retornar a senha
+    });
+
+    if (!usuario) {
+      return res.status(404).json({ 
+        mensagem: 'Usuário não encontrado' 
+      });
+    }
+
+    res.status(200).json(usuario);
+  } catch (error) {
+    next(error);
+  }
+};
 // Outros métodos do controlador podem ser adicionados aqui
 // como login, atualizar, etc.
