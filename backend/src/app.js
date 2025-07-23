@@ -6,6 +6,7 @@ import setupSwagger from './config/swagger.js'; // Importe a configuração do S
 // import mainRoutes from './routes/index.js'; // Descomente quando tiver rotas
 import aulaRoutes from './routes/aula.routes.js'; // Importe suas rotas de aula
 import usuarioRoutes from './routes/usuario.routes.js'; // Importe suas rotas de usuário
+import alunoRoutes from './routes/aluno.routes.js'; // Importe as rotas de aluno
 dotenv.config();
 const app = express();
 
@@ -24,8 +25,6 @@ app.get('/', (req, res) => {
 // O prefixo /api/v1 é um exemplo, ajuste conforme sua necessidade e o que foi configurado no swagger.js
 // app.use('/api/v1', mainRoutes);
 
-
-
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
   console.error(err.stack);
@@ -37,6 +36,7 @@ app.use((err, req, res, next) => {
 // Use suas rotas com um prefixo
 app.use('/api/v1/aulas', aulaRoutes); // Rotas de aula sob /api/v1/aulas
 app.use('/api/v1/usuarios', usuarioRoutes); // Rotas de usuário sob /api/v1/usuarios
+app.use('/api/v1/alunos', alunoRoutes); // Rotas de aluno sob /api/v1/alunos
 
 app.use((req, res, next) => {
   res.status(404).json({ message: 'Rota não encontrada.' });

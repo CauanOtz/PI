@@ -89,6 +89,76 @@ const options = {
               }
             }
           }
+        },
+        Aluno: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'integer',
+              example: 1
+            },
+            nome: {
+              type: 'string',
+              example: 'Maria Oliveira'
+            },
+            idade: {
+              type: 'integer',
+              example: 10
+            },
+            endereco: {
+              type: 'string',
+              example: 'Rua das Flores, 123 - Centro',
+              nullable: true
+            },
+            contato: {
+              type: 'string',
+              example: '(11) 98765-4321',
+              nullable: true
+            },
+            responsavel_id: {
+              type: 'integer',
+              example: 1
+            },
+            created_at: {
+              type: 'string',
+              format: 'date-time'
+            },
+            updated_at: {
+              type: 'string',
+              format: 'date-time'
+            },
+            responsavel: {
+              $ref: '#/components/schemas/Usuario'
+            }
+          }
+        },
+        NovoAluno: {
+          type: 'object',
+          required: ['nome', 'idade', 'responsavel_id'],
+          properties: {
+            nome: {
+              type: 'string',
+              example: 'Maria Oliveira'
+            },
+            idade: {
+              type: 'integer',
+              example: 10
+            },
+            endereco: {
+              type: 'string',
+              example: 'Rua das Flores, 123 - Centro',
+              nullable: true
+            },
+            contato: {
+              type: 'string',
+              example: '(11) 98765-4321',
+              nullable: true
+            },
+            responsavel_id: {
+              type: 'integer',
+              example: 1
+            }
+          }
         }
       },
       responses: {
