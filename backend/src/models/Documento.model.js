@@ -11,11 +11,27 @@ const Documento = sequelize.define('Documento', {
   nome: {
     type: DataTypes.STRING,
     allowNull: false,
+    validate: {
+        notEmpty: {
+          msg: 'O nome do documento é obrigatório'
+        },
+        len: {
+          args: [3, 255],
+          msg: 'O nome deve ter entre 3 e 255 caracteres'
+        }
+      }
   },
   descricao: {
     type: DataTypes.TEXT,
     allowNull: true,
+    validate: {
+      len: {
+        args: [0, 1000],
+        msg: 'A descrição deve ter no máximo 1000 caracteres'
+      }
+    }
   },
+
   caminhoArquivo: {
     type: DataTypes.STRING,
     allowNull: false,

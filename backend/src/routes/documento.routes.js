@@ -1,7 +1,7 @@
 // src/routes/documento.routes.js
 import { Router } from 'express';
-import { adicionarDocumento, listarDocumentos, obterDocumento } from '../controllers/documento.controller.js';
-import { validateAdicionarDocumento, validateListarDocumentos, validateObterDocumento } from '../middlewares/validators/documento.validator.js';
+import { adicionarDocumento, listarDocumentos, obterDocumento, atualizarDocumento } from '../controllers/documento.controller.js';
+import { validateAdicionarDocumento, validateListarDocumentos, validateObterDocumento, validateAtualizarDocumento } from '../middlewares/validators/documento.validator.js';
 import { autenticar } from '../middlewares/auth.middleware.js';
 import upload from '../middlewares/upload.middleware.js';
 
@@ -31,6 +31,15 @@ router.get(
     validateObterDocumento,
     obterDocumento
 );
+
+
+// Rota para atualizar um documento
+router.put(
+    '/alunos/:alunoId/documentos/:documentoId',
+    autenticar,
+    validateAtualizarDocumento,
+    atualizarDocumento
+  );
 
 
 

@@ -243,3 +243,120 @@ export const obterDocumento = async (req, res, next) => {
       next(error);
     }
   };
+
+  
+/**
+ * @openapi
+ * /alunos/{alunoId}/documentos/{documentoId}:
+ *   put:
+ *     summary: Atualiza as informações de um documento
+ *     tags: [Documentos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: alunoId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID do aluno
+ *       - in: path
+ *         name: documentoId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID do documento
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               nome:
+ *                 type: string
+ *                 description: Novo nome do documento
+ *               descricao:
+ *                 type: string
+ *                 description: Nova descrição do documento
+ *               tipo:
+ *                 type: string
+ *                 enum: [pdf, docx, jpg, jpeg, png, txt]
+ *                 description: Novo tipo do documento
+ *     responses:
+ *       200:
+ *         description: Documento atualizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Documento'
+ *       400:
+ *         description: Dados inválidos
+ *       401:
+ *         description: Não autorizado
+ *       403:
+ *         description: Acesso negado
+ *       404:
+ *         description: Documento não encontrado
+ */
+export const atualizarDocumento = async (req, res, next) => {
+    try {
+      const { alunoId, documentoId } = req.params;
+      const { nome, descricao, tipo } = req.body;
+      const usuarioId = req.usuario.id;
+  
+      // Verifica se o aluno existe
+      const aluno = await Aluno.findByPk(alunoId);
+      if (!aluno) {
+        return res.status(404).json({ mensagem: 'Aluno não encontrado' });
+      }
+  
+      // Verifica se o usuário tem permissão (admin ou o próprio aluno)
+      if (req.usuario.role !== 'admin' && aluno.usuarioId !== usuarioId) {
+        return res.status(403).json({ 
+          mensagem: 'Você não tem permissão para atualizar este documento' 
+        });
+      }
+  
+      // Busca o documento
+      const documento = await Documento.findOne({
+        where: { 
+          id: documentoId,
+          alunoId
+        }
+      });
+  
+      if (!documento) {
+        return res.status(404).json({ mensagem: 'Documento não encontrado' });
+      }
+  
+      // Atualiza os campos fornecidos
+      const camposAtualizados = {};
+      if (nome !== undefined) camposAtualizados.nome = nome;
+      if (descricao !== undefined) camposAtualizados.descricao = descricao;
+      if (tipo !== undefined) camposAtualizados.tipo = tipo;
+  
+      // Se não houver campos para atualizar, retorna o documento sem alterações
+      if (Object.keys(camposAtualizados).length === 0) {
+        return res.status(200).json(documento);
+      }
+  
+      // Atualiza o documento
+      const [updated] = await Documento.update(camposAtualizados, {
+        where: { id: documentoId },
+        returning: true,
+        plain: true
+      });
+  
+      // Busca o documento atualizado
+      const documentoAtualizado = await Documento.findByPk(documentoId, {
+        attributes: { exclude: ['caminhoArquivo'] }
+      });
+  
+      res.status(200).json(documentoAtualizado);
+  
+    } catch (error) {
+      next(error);
+    }
+  };
