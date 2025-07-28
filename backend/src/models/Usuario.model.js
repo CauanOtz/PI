@@ -95,7 +95,7 @@ const Usuario = sequelize.define('Usuario', {
   cpf: {
     type: DataTypes.STRING(14), // Formato: 000.000.000-00
     allowNull: true, // Ou false se for obrigatório
-    //unique: true,
+    unique: true,
     validate: {
       is: /^\d{3}\.\d{3}\.\d{3}\-\d{2}$/ // Valida o formato do CPF
     }
@@ -105,9 +105,26 @@ const Usuario = sequelize.define('Usuario', {
   timestamps: true,
   defaultScope: {
     attributes: { exclude: ['senha'] } // Por padrão, não retornar a senha
-  }
+  },
+  indexes: [
+    {
+      unique: true,
+      fields: ['cpf']
+    }
+  ]
 });
 
+Usuario.associate = (models) => {
+  // ... outras associações existentes ...
+  
+  // Associação com alunos através da tabela de junção
+  Usuario.belongsToMany(models.Aluno, {
+    through: 'responsaveis_alunos',
+    foreignKey: 'cpf_usuario',
+    otherKey: 'id_aluno',
+    as: 'alunos'
+  });
+};
 // Método para verificar a senha
 Usuario.prototype.verificarSenha = function(senha) {
   return bcrypt.compareSync(senha, this.senha);

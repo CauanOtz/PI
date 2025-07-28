@@ -147,6 +147,14 @@ Aluno.associate = (models) => {
     foreignKey: 'alunoId',
     as: 'documentos'
   });
+
+  // Associação com ResponsavelAluno
+  Aluno.belongsToMany(models.Usuario, {
+    through: 'responsaveis_alunos',
+    foreignKey: 'id_aluno',
+    otherKey: 'cpf_usuario',
+    as: 'responsaveis'
+  });
 };
 
 Aluno.hasMany(Documento, { foreignKey: 'alunoId' });
