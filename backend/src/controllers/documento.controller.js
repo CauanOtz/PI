@@ -49,49 +49,49 @@ import path from 'path';
  *         description: Arquivo muito grande
  */
 export const adicionarDocumento = async (req, res, next) => {
-  try {
-    // Verifica se o arquivo foi enviado
-    if (!req.file) {
-      return res.status(400).json({ 
-        mensagem: 'Nenhum arquivo foi enviado' 
-      });
+    try {
+        // Verifica se o arquivo foi enviado
+        if (!req.file) {
+            return res.status(400).json({
+                mensagem: 'Nenhum arquivo foi enviado'
+            });
+        }
+
+        const { alunoId } = req.params;
+        const { descricao } = req.body;
+        const usuarioId = req.usuario.id;
+
+        // Aqui você deve verificar se o aluno existe
+        // const aluno = await Aluno.findByPk(alunoId);
+        // if (!aluno) {
+        //   // Remove o arquivo enviado
+        //   fs.unlinkSync(req.file.path);
+        //   return res.status(404).json({ mensagem: 'Aluno não encontrado' });
+        // }
+
+        // Cria o documento no banco de dados
+        const documento = await Documento.create({
+            nome: req.file.originalname,
+            descricao: descricao || null,
+            caminhoArquivo: req.file.path,
+            tipo: req.file.mimetype,
+            tamanho: req.file.size,
+            alunoId: parseInt(alunoId, 10),
+            usuarioId: usuarioId
+        });
+
+        // Remove a senha do usuário da resposta
+        const documentoResposta = documento.get({ plain: true });
+        delete documentoResposta.usuario?.senha;
+
+        res.status(201).json(documentoResposta);
+    } catch (error) {
+        // Em caso de erro, remove o arquivo enviado
+        if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+        next(error);
     }
-
-    const { alunoId } = req.params;
-    const { descricao } = req.body;
-    const usuarioId = req.usuario.id;
-
-    // Aqui você deve verificar se o aluno existe
-    // const aluno = await Aluno.findByPk(alunoId);
-    // if (!aluno) {
-    //   // Remove o arquivo enviado
-    //   fs.unlinkSync(req.file.path);
-    //   return res.status(404).json({ mensagem: 'Aluno não encontrado' });
-    // }
-
-    // Cria o documento no banco de dados
-    const documento = await Documento.create({
-      nome: req.file.originalname,
-      descricao: descricao || null,
-      caminhoArquivo: req.file.path,
-      tipo: req.file.mimetype,
-      tamanho: req.file.size,
-      alunoId: parseInt(alunoId, 10),
-      usuarioId: usuarioId
-    });
-
-    // Remove a senha do usuário da resposta
-    const documentoResposta = documento.get({ plain: true });
-    delete documentoResposta.usuario?.senha;
-
-    res.status(201).json(documentoResposta);
-  } catch (error) {
-    // Em caso de erro, remove o arquivo enviado
-    if (req.file && fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
-    next(error);
-  }
 };
 
 /**
@@ -125,38 +125,38 @@ export const adicionarDocumento = async (req, res, next) => {
  */
 export const listarDocumentos = async (req, res, next) => {
     try {
-      const { alunoId } = req.params;
-      const usuarioId = req.usuario.id;
-  
-      // Verifica se o aluno existe
-      const aluno = await Aluno.findByPk(alunoId);
-      if (!aluno) {
-        return res.status(404).json({ mensagem: 'Aluno não encontrado' });
-      }
-  
-      // Verifica se o usuário tem permissão (admin ou o próprio aluno)
-      if (req.usuario.role !== 'admin' && aluno.usuarioId !== usuarioId) {
-        return res.status(403).json({ 
-          mensagem: 'Você não tem permissão para acessar estes documentos' 
-        });
-      }
-  
-      // Busca os documentos do aluno
-      const documentos = await Documento.findAll({
-        where: { alunoId },
-        attributes: { 
-          exclude: ['alunoId', 'usuarioId', 'caminhoArquivo'] 
-        },
-        order: [['createdAt', 'DESC']]
-      });
-  
-      res.status(200).json(documentos);
-    } catch (error) {
-      next(error);
-    }
-  };
+        const { alunoId } = req.params;
+        const usuarioId = req.usuario.id;
 
-  
+        // Verifica se o aluno existe
+        const aluno = await Aluno.findByPk(alunoId);
+        if (!aluno) {
+            return res.status(404).json({ mensagem: 'Aluno não encontrado' });
+        }
+
+        // Verifica se o usuário tem permissão (admin ou o próprio aluno)
+        if (req.usuario.role !== 'admin' && aluno.usuarioId !== usuarioId) {
+            return res.status(403).json({
+                mensagem: 'Você não tem permissão para acessar estes documentos'
+            });
+        }
+
+        // Busca os documentos do aluno
+        const documentos = await Documento.findAll({
+            where: { alunoId },
+            attributes: {
+                exclude: ['alunoId', 'usuarioId', 'caminhoArquivo']
+            },
+            order: [['createdAt', 'DESC']]
+        });
+
+        res.status(200).json(documentos);
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 /**
  * @openapi
  * /alunos/{alunoId}/documentos/{documentoId}:
@@ -196,55 +196,55 @@ export const listarDocumentos = async (req, res, next) => {
  */
 export const obterDocumento = async (req, res, next) => {
     try {
-      const { alunoId, documentoId } = req.params;
-      const usuarioId = req.usuario.id;
-  
-      // Verifica se o aluno existe
-      const aluno = await Aluno.findByPk(alunoId);
-      if (!aluno) {
-        return res.status(404).json({ mensagem: 'Aluno não encontrado' });
-      }
-  
-      // Verifica se o usuário tem permissão (admin ou o próprio aluno)
-      if (req.usuario.role !== 'admin' && aluno.usuarioId !== usuarioId) {
-        return res.status(403).json({ 
-          mensagem: 'Você não tem permissão para acessar este documento' 
-        });
-      }
-  
-      // Busca o documento
-      const documento = await Documento.findOne({
-        where: { 
-          id: documentoId,
-          alunoId
-        }
-      });
-  
-      if (!documento) {
-        return res.status(404).json({ mensagem: 'Documento não encontrado' });
-      }
-  
-      // Verifica se o arquivo existe
-      if (!fs.existsSync(documento.caminhoArquivo)) {
-        return res.status(404).json({ mensagem: 'Arquivo não encontrado' });
-      }
-  
-      // Define o cabeçalho para download
-      const nomeArquivo = path.basename(documento.caminhoArquivo);
-      res.setHeader('Content-Disposition', `attachment; filename="${nomeArquivo}"`);
-      res.setHeader('Content-Type', documento.tipo);
-      res.setHeader('Content-Length', documento.tamanho);
-  
-      // Envia o arquivo
-      const stream = fs.createReadStream(documento.caminhoArquivo);
-      stream.pipe(res);
-  
-    } catch (error) {
-      next(error);
-    }
-  };
+        const { alunoId, documentoId } = req.params;
+        const usuarioId = req.usuario.id;
 
-  
+        // Verifica se o aluno existe
+        const aluno = await Aluno.findByPk(alunoId);
+        if (!aluno) {
+            return res.status(404).json({ mensagem: 'Aluno não encontrado' });
+        }
+
+        // Verifica se o usuário tem permissão (admin ou o próprio aluno)
+        if (req.usuario.role !== 'admin' && aluno.usuarioId !== usuarioId) {
+            return res.status(403).json({
+                mensagem: 'Você não tem permissão para acessar este documento'
+            });
+        }
+
+        // Busca o documento
+        const documento = await Documento.findOne({
+            where: {
+                id: documentoId,
+                alunoId
+            }
+        });
+
+        if (!documento) {
+            return res.status(404).json({ mensagem: 'Documento não encontrado' });
+        }
+
+        // Verifica se o arquivo existe
+        if (!fs.existsSync(documento.caminhoArquivo)) {
+            return res.status(404).json({ mensagem: 'Arquivo não encontrado' });
+        }
+
+        // Define o cabeçalho para download
+        const nomeArquivo = path.basename(documento.caminhoArquivo);
+        res.setHeader('Content-Disposition', `attachment; filename="${nomeArquivo}"`);
+        res.setHeader('Content-Type', documento.tipo);
+        res.setHeader('Content-Length', documento.tamanho);
+
+        // Envia o arquivo
+        const stream = fs.createReadStream(documento.caminhoArquivo);
+        stream.pipe(res);
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 /**
  * @openapi
  * /alunos/{alunoId}/documentos/{documentoId}:
@@ -302,66 +302,66 @@ export const obterDocumento = async (req, res, next) => {
  */
 export const atualizarDocumento = async (req, res, next) => {
     try {
-      const { alunoId, documentoId } = req.params;
-      const { nome, descricao, tipo } = req.body;
-      const usuarioId = req.usuario.id;
-  
-      // Verifica se o aluno existe
-      const aluno = await Aluno.findByPk(alunoId);
-      if (!aluno) {
-        return res.status(404).json({ mensagem: 'Aluno não encontrado' });
-      }
-  
-      // Verifica se o usuário tem permissão (admin ou o próprio aluno)
-      if (req.usuario.role !== 'admin' && aluno.usuarioId !== usuarioId) {
-        return res.status(403).json({ 
-          mensagem: 'Você não tem permissão para atualizar este documento' 
-        });
-      }
-  
-      // Busca o documento
-      const documento = await Documento.findOne({
-        where: { 
-          id: documentoId,
-          alunoId
-        }
-      });
-  
-      if (!documento) {
-        return res.status(404).json({ mensagem: 'Documento não encontrado' });
-      }
-  
-      // Atualiza os campos fornecidos
-      const camposAtualizados = {};
-      if (nome !== undefined) camposAtualizados.nome = nome;
-      if (descricao !== undefined) camposAtualizados.descricao = descricao;
-      if (tipo !== undefined) camposAtualizados.tipo = tipo;
-  
-      // Se não houver campos para atualizar, retorna o documento sem alterações
-      if (Object.keys(camposAtualizados).length === 0) {
-        return res.status(200).json(documento);
-      }
-  
-      // Atualiza o documento
-      const [updated] = await Documento.update(camposAtualizados, {
-        where: { id: documentoId },
-        returning: true,
-        plain: true
-      });
-  
-      // Busca o documento atualizado
-      const documentoAtualizado = await Documento.findByPk(documentoId, {
-        attributes: { exclude: ['caminhoArquivo'] }
-      });
-  
-      res.status(200).json(documentoAtualizado);
-  
-    } catch (error) {
-      next(error);
-    }
-  };
+        const { alunoId, documentoId } = req.params;
+        const { nome, descricao, tipo } = req.body;
+        const usuarioId = req.usuario.id;
 
-  
+        // Verifica se o aluno existe
+        const aluno = await Aluno.findByPk(alunoId);
+        if (!aluno) {
+            return res.status(404).json({ mensagem: 'Aluno não encontrado' });
+        }
+
+        // Verifica se o usuário tem permissão (admin ou o próprio aluno)
+        if (req.usuario.role !== 'admin' && aluno.usuarioId !== usuarioId) {
+            return res.status(403).json({
+                mensagem: 'Você não tem permissão para atualizar este documento'
+            });
+        }
+
+        // Busca o documento
+        const documento = await Documento.findOne({
+            where: {
+                id: documentoId,
+                alunoId
+            }
+        });
+
+        if (!documento) {
+            return res.status(404).json({ mensagem: 'Documento não encontrado' });
+        }
+
+        // Atualiza os campos fornecidos
+        const camposAtualizados = {};
+        if (nome !== undefined) camposAtualizados.nome = nome;
+        if (descricao !== undefined) camposAtualizados.descricao = descricao;
+        if (tipo !== undefined) camposAtualizados.tipo = tipo;
+
+        // Se não houver campos para atualizar, retorna o documento sem alterações
+        if (Object.keys(camposAtualizados).length === 0) {
+            return res.status(200).json(documento);
+        }
+
+        // Atualiza o documento
+        const [updated] = await Documento.update(camposAtualizados, {
+            where: { id: documentoId },
+            returning: true,
+            plain: true
+        });
+
+        // Busca o documento atualizado
+        const documentoAtualizado = await Documento.findByPk(documentoId, {
+            attributes: { exclude: ['caminhoArquivo'] }
+        });
+
+        res.status(200).json(documentoAtualizado);
+
+    } catch (error) {
+        next(error);
+    }
+};
+
+
 /**
  * @openapi
  * /alunos/{alunoId}/documentos/{documentoId}:
@@ -396,46 +396,134 @@ export const atualizarDocumento = async (req, res, next) => {
  */
 export const excluirDocumento = async (req, res, next) => {
     try {
-      const { alunoId, documentoId } = req.params;
-      const usuarioId = req.usuario.id;
-  
-      // Verifica se o aluno existe
-      const aluno = await Aluno.findByPk(alunoId);
-      if (!aluno) {
-        return res.status(404).json({ mensagem: 'Aluno não encontrado' });
-      }
-  
-      // Verifica se o usuário tem permissão (admin ou o próprio aluno)
-      if (req.usuario.role !== 'admin' && aluno.usuarioId !== usuarioId) {
-        return res.status(403).json({ 
-          mensagem: 'Você não tem permissão para excluir este documento' 
-        });
-      }
-  
-      // Busca o documento
-      const documento = await Documento.findOne({
-        where: { 
-          id: documentoId,
-          alunoId
+        const { alunoId, documentoId } = req.params;
+        const usuarioId = req.usuario.id;
+
+        // Verifica se o aluno existe
+        const aluno = await Aluno.findByPk(alunoId);
+        if (!aluno) {
+            return res.status(404).json({ mensagem: 'Aluno não encontrado' });
         }
-      });
-  
-      if (!documento) {
-        return res.status(404).json({ mensagem: 'Documento não encontrado' });
-      }
-  
-      // Remove o arquivo físico
-      if (fs.existsSync(documento.caminhoArquivo)) {
-        fs.unlinkSync(documento.caminhoArquivo);
-      }
-  
-      // Remove o registro do banco de dados
-      await documento.destroy();
-  
-      // Resposta sem conteúdo (204 No Content)
-      res.status(204).end();
-  
+
+        // Verifica se o usuário tem permissão (admin ou o próprio aluno)
+        if (req.usuario.role !== 'admin' && aluno.usuarioId !== usuarioId) {
+            return res.status(403).json({
+                mensagem: 'Você não tem permissão para excluir este documento'
+            });
+        }
+
+        // Busca o documento
+        const documento = await Documento.findOne({
+            where: {
+                id: documentoId,
+                alunoId
+            }
+        });
+
+        if (!documento) {
+            return res.status(404).json({ mensagem: 'Documento não encontrado' });
+        }
+
+        // Remove o arquivo físico
+        if (fs.existsSync(documento.caminhoArquivo)) {
+            fs.unlinkSync(documento.caminhoArquivo);
+        }
+
+        // Remove o registro do banco de dados
+        await documento.destroy();
+
+        // Resposta sem conteúdo (204 No Content)
+        res.status(204).end();
+
     } catch (error) {
-      next(error);
+        next(error);
     }
-  };
+};
+
+
+/**
+ * @openapi
+ * /documentos/{documentoId}/download:
+ *   get:
+ *     summary: Faz o download de um documento
+ *     tags: [Documentos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: documentoId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID do documento
+ *     responses:
+ *       200:
+ *         description: Arquivo para download
+ *         content:
+ *           application/octet-stream:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       401:
+ *         description: Não autorizado
+ *       403:
+ *         description: Acesso negado
+ *       404:
+ *         description: Documento não encontrado
+ */
+export const downloadDocumento = async (req, res, next) => {
+    try {
+        const { documentoId } = req.params;
+        const usuarioId = req.usuario.id;
+
+        // Busca o documento com as informações do aluno
+        const documento = await Documento.findOne({
+            where: { id: documentoId },
+            include: [{
+                model: Aluno,
+                as: 'aluno',
+                attributes: ['id', 'usuarioId']
+            }]
+        });
+
+        if (!documento) {
+            return res.status(404).json({ mensagem: 'Documento não encontrado' });
+        }
+
+        // Verifica se o usuário tem permissão (admin ou o dono do documento)
+        if (req.usuario.role !== 'admin' && documento.aluno.usuarioId !== usuarioId) {
+            return res.status(403).json({
+                mensagem: 'Você não tem permissão para acessar este documento'
+            });
+        }
+
+        // Verifica se o arquivo existe
+        if (!fs.existsSync(documento.caminhoArquivo)) {
+            return res.status(404).json({ mensagem: 'Arquivo não encontrado' });
+        }
+
+        // Obtém o nome do arquivo a partir do caminho
+        const nomeArquivo = path.basename(documento.caminhoArquivo);
+
+        // Configura os cabeçalhos para download
+        res.setHeader('Content-Disposition', `attachment; filename="${nomeArquivo}"`);
+        res.setHeader('Content-Type', documento.tipo);
+        res.setHeader('Content-Length', documento.tamanho);
+
+        // Cria um stream do arquivo e envia para o cliente
+        const fileStream = fs.createReadStream(documento.caminhoArquivo);
+        fileStream.pipe(res);
+
+        // Trata erros no stream
+        fileStream.on('error', (error) => {
+            console.error('Erro ao ler o arquivo:', error);
+            if (!res.headersSent) {
+                res.status(500).json({ mensagem: 'Erro ao processar o arquivo' });
+            }
+        });
+
+    } catch (error) {
+        next(error);
+    }
+};

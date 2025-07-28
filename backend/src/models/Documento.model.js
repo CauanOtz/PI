@@ -94,5 +94,12 @@ Documento.associate = (models) => {
     as: 'usuario'
   });
 };
+Documento.associate = (models) => {
+    Documento.belongsTo(models.Aluno, {
+      foreignKey: 'alunoId',
+      as: 'aluno'
+    });
+    // ... outras associações existentes ...
+  };
 
 export default Documento;
