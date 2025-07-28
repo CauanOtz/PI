@@ -1,7 +1,7 @@
 // src/routes/documento.routes.js
 import { Router } from 'express';
-import { adicionarDocumento, listarDocumentos, obterDocumento, atualizarDocumento } from '../controllers/documento.controller.js';
-import { validateAdicionarDocumento, validateListarDocumentos, validateObterDocumento, validateAtualizarDocumento } from '../middlewares/validators/documento.validator.js';
+import { adicionarDocumento, listarDocumentos, obterDocumento, atualizarDocumento, excluirDocumento } from '../controllers/documento.controller.js';
+import { validateAdicionarDocumento, validateListarDocumentos, validateObterDocumento, validateAtualizarDocumento, validateExcluirDocumento } from '../middlewares/validators/documento.validator.js';
 import { autenticar } from '../middlewares/auth.middleware.js';
 import upload from '../middlewares/upload.middleware.js';
 
@@ -41,6 +41,14 @@ router.put(
     atualizarDocumento
   );
 
+
+  // Rota para excluir um documento
+router.delete(
+    '/alunos/:alunoId/documentos/:documentoId',
+    autenticar,
+    validateExcluirDocumento,
+    excluirDocumento
+  );
 
 
 export default router;

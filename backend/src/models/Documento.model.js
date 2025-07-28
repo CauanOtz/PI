@@ -35,10 +35,21 @@ const Documento = sequelize.define('Documento', {
   caminhoArquivo: {
     type: DataTypes.STRING,
     allowNull: false,
+    validate: {
+      notEmpty: {
+        msg: 'O caminho do arquivo é obrigatório'
+      }
+    }
   },
   tipo: {
     type: DataTypes.STRING,
     allowNull: false,
+    validate: {
+      isIn: {
+        args: [['pdf', 'docx', 'jpg', 'jpeg', 'png', 'txt']],
+        msg: 'Tipo de arquivo inválido'
+      }
+    }
   },
   tamanho: {
     type: DataTypes.INTEGER,
@@ -55,6 +66,19 @@ const Documento = sequelize.define('Documento', {
   scopes: {
     comArquivo: {
       attributes: { include: ['caminhoArquivo'] }
+    }
+  },
+  hooks: {
+    beforeDestroy: async (documento) => {
+      // Remove o arquivo físico quando o documento for excluído
+      try {
+        if (documento.caminhoArquivo && fs.existsSync(documento.caminhoArquivo)) {
+          fs.unlinkSync(documento.caminhoArquivo);
+        }
+      } catch (error) {
+        console.error('Erro ao remover arquivo físico:', error);
+        // Não lança o erro para não interromper o fluxo de exclusão
+      }
     }
   }
 });

@@ -360,3 +360,82 @@ export const atualizarDocumento = async (req, res, next) => {
       next(error);
     }
   };
+
+  
+/**
+ * @openapi
+ * /alunos/{alunoId}/documentos/{documentoId}:
+ *   delete:
+ *     summary: Exclui um documento específico
+ *     tags: [Documentos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: alunoId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID do aluno
+ *       - in: path
+ *         name: documentoId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID do documento
+ *     responses:
+ *       204:
+ *         description: Documento excluído com sucesso
+ *       401:
+ *         description: Não autorizado
+ *       403:
+ *         description: Acesso negado
+ *       404:
+ *         description: Documento não encontrado
+ */
+export const excluirDocumento = async (req, res, next) => {
+    try {
+      const { alunoId, documentoId } = req.params;
+      const usuarioId = req.usuario.id;
+  
+      // Verifica se o aluno existe
+      const aluno = await Aluno.findByPk(alunoId);
+      if (!aluno) {
+        return res.status(404).json({ mensagem: 'Aluno não encontrado' });
+      }
+  
+      // Verifica se o usuário tem permissão (admin ou o próprio aluno)
+      if (req.usuario.role !== 'admin' && aluno.usuarioId !== usuarioId) {
+        return res.status(403).json({ 
+          mensagem: 'Você não tem permissão para excluir este documento' 
+        });
+      }
+  
+      // Busca o documento
+      const documento = await Documento.findOne({
+        where: { 
+          id: documentoId,
+          alunoId
+        }
+      });
+  
+      if (!documento) {
+        return res.status(404).json({ mensagem: 'Documento não encontrado' });
+      }
+  
+      // Remove o arquivo físico
+      if (fs.existsSync(documento.caminhoArquivo)) {
+        fs.unlinkSync(documento.caminhoArquivo);
+      }
+  
+      // Remove o registro do banco de dados
+      await documento.destroy();
+  
+      // Resposta sem conteúdo (204 No Content)
+      res.status(204).end();
+  
+    } catch (error) {
+      next(error);
+    }
+  };
