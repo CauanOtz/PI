@@ -155,3 +155,91 @@ export const listarDocumentos = async (req, res, next) => {
       next(error);
     }
   };
+
+  
+/**
+ * @openapi
+ * /alunos/{alunoId}/documentos/{documentoId}:
+ *   get:
+ *     summary: Obtém um documento específico de um aluno
+ *     tags: [Documentos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: alunoId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID do aluno
+ *       - in: path
+ *         name: documentoId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *         description: ID do documento
+ *     responses:
+ *       200:
+ *         description: Documento encontrado
+ *         content:
+ *           application/octet-stream:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       401:
+ *         description: Não autorizado
+ *       403:
+ *         description: Acesso negado
+ *       404:
+ *         description: Documento não encontrado
+ */
+export const obterDocumento = async (req, res, next) => {
+    try {
+      const { alunoId, documentoId } = req.params;
+      const usuarioId = req.usuario.id;
+  
+      // Verifica se o aluno existe
+      const aluno = await Aluno.findByPk(alunoId);
+      if (!aluno) {
+        return res.status(404).json({ mensagem: 'Aluno não encontrado' });
+      }
+  
+      // Verifica se o usuário tem permissão (admin ou o próprio aluno)
+      if (req.usuario.role !== 'admin' && aluno.usuarioId !== usuarioId) {
+        return res.status(403).json({ 
+          mensagem: 'Você não tem permissão para acessar este documento' 
+        });
+      }
+  
+      // Busca o documento
+      const documento = await Documento.findOne({
+        where: { 
+          id: documentoId,
+          alunoId
+        }
+      });
+  
+      if (!documento) {
+        return res.status(404).json({ mensagem: 'Documento não encontrado' });
+      }
+  
+      // Verifica se o arquivo existe
+      if (!fs.existsSync(documento.caminhoArquivo)) {
+        return res.status(404).json({ mensagem: 'Arquivo não encontrado' });
+      }
+  
+      // Define o cabeçalho para download
+      const nomeArquivo = path.basename(documento.caminhoArquivo);
+      res.setHeader('Content-Disposition', `attachment; filename="${nomeArquivo}"`);
+      res.setHeader('Content-Type', documento.tipo);
+      res.setHeader('Content-Length', documento.tamanho);
+  
+      // Envia o arquivo
+      const stream = fs.createReadStream(documento.caminhoArquivo);
+      stream.pipe(res);
+  
+    } catch (error) {
+      next(error);
+    }
+  };

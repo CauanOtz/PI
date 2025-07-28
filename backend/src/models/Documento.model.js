@@ -21,46 +21,38 @@ const Documento = sequelize.define('Documento', {
     allowNull: false,
   },
   tipo: {
-    type: DataTypes.STRING, // Ex: 'pdf', 'docx', 'jpg', etc.
+    type: DataTypes.STRING,
     allowNull: false,
   },
   tamanho: {
-    type: DataTypes.INTEGER, // Tamanho em bytes
-    allowNull: false,
-  },
-  alunoId: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    references: {
-      model: 'Alunos',
-      key: 'id',
-    },
-  },
-  usuarioId: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'Usuarios',
-      key: 'id',
-    },
-  },
+  }
 }, {
   tableName: 'documentos',
-  timestamps: true,  
+  timestamps: true,
   underscored: true,
-  paranoid: true
+  paranoid: true,
+  defaultScope: {
+    attributes: { exclude: ['caminhoArquivo'] }
+  },
+  scopes: {
+    comArquivo: {
+      attributes: { include: ['caminhoArquivo'] }
+    }
+  }
 });
 
 // Associações
 Documento.associate = (models) => {
-    Documento.belongsTo(models.Aluno, {
-      foreignKey: 'alunoId',
-      as: 'aluno'
-    });
-    Documento.belongsTo(models.Usuario, {
-      foreignKey: 'usuarioId',
-      as: 'usuario'
-    });
+  Documento.belongsTo(models.Aluno, {
+    foreignKey: 'alunoId',
+    as: 'aluno'
+  });
+  Documento.belongsTo(models.Usuario, {
+    foreignKey: 'usuarioId',
+    as: 'usuario'
+  });
 };
 
 export default Documento;
