@@ -21,3 +21,18 @@ export const validateAdicionarDocumento = [
     next();
   }
 ];
+
+export const validateListarDocumentos = [
+    param('alunoId')
+      .isInt({ min: 1 })
+      .withMessage('ID do aluno inválido')
+      .toInt(),
+    
+    (req, res, next) => {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return res.status(400).json({ errors: errors.array() });
+      }
+      next();
+    }
+  ];

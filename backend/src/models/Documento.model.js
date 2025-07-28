@@ -46,7 +46,21 @@ const Documento = sequelize.define('Documento', {
   },
 }, {
   tableName: 'documentos',
-  timestamps: true,
+  timestamps: true,  
+  underscored: true,
+  paranoid: true
 });
+
+// Associações
+Documento.associate = (models) => {
+    Documento.belongsTo(models.Aluno, {
+      foreignKey: 'alunoId',
+      as: 'aluno'
+    });
+    Documento.belongsTo(models.Usuario, {
+      foreignKey: 'usuarioId',
+      as: 'usuario'
+    });
+};
 
 export default Documento;

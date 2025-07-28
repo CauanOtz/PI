@@ -93,3 +93,65 @@ export const adicionarDocumento = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @openapi
+ * /alunos/{alunoId}/documentos:
+ *   get:
+ *     summary: Lista todos os documentos de um aluno
+ *     tags: [Documentos]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: alunoId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID do aluno
+ *     responses:
+ *       200:
+ *         description: Lista de documentos do aluno
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Documento'
+ *       401:
+ *         description: Não autorizado
+ *       404:
+ *         description: Aluno não encontrado
+ */
+export const listarDocumentos = async (req, res, next) => {
+    try {
+      const { alunoId } = req.params;
+      const usuarioId = req.usuario.id;
+  
+      // Verifica se o aluno existe
+      const aluno = await Aluno.findByPk(alunoId);
+      if (!aluno) {
+        return res.status(404).json({ mensagem: 'Aluno não encontrado' });
+      }
+  
+      // Verifica se o usuário tem permissão (admin ou o próprio aluno)
+      if (req.usuario.role !== 'admin' && aluno.usuarioId !== usuarioId) {
+        return res.status(403).json({ 
+          mensagem: 'Você não tem permissão para acessar estes documentos' 
+        });
+      }
+  
+      // Busca os documentos do aluno
+      const documentos = await Documento.findAll({
+        where: { alunoId },
+        attributes: { 
+          exclude: ['alunoId', 'usuarioId', 'caminhoArquivo'] 
+        },
+        order: [['createdAt', 'DESC']]
+      });
+  
+      res.status(200).json(documentos);
+    } catch (error) {
+      next(error);
+    }
+  };

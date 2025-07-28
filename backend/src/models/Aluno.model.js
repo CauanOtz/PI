@@ -142,6 +142,13 @@ const Aluno = sequelize.define('Aluno', {
   updatedAt: 'updated_at'
 });
 
+Aluno.associate = (models) => {
+  Aluno.hasMany(models.Documento, {
+    foreignKey: 'alunoId',
+    as: 'documentos'
+  });
+};
+
 Aluno.hasMany(Documento, { foreignKey: 'alunoId' });
 Documento.belongsTo(Aluno, { foreignKey: 'alunoId' });
 Documento.belongsTo(Usuario, { foreignKey: 'usuarioId' });
