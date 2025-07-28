@@ -124,6 +124,14 @@ Usuario.associate = (models) => {
     otherKey: 'id_aluno',
     as: 'alunos'
   });
+
+  // Associação com alunos através da tabela de junção
+  Usuario.belongsToMany(models.Aluno, {
+    through: 'responsaveis_alunos',
+    foreignKey: 'cpf_usuario',
+    otherKey: 'id_aluno',
+    as: 'alunos'
+  });
 };
 // Método para verificar a senha
 Usuario.prototype.verificarSenha = function(senha) {

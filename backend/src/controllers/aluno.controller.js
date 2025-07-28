@@ -401,3 +401,4 @@ export const excluirAluno = async (req, res, next) => {
     next(error);
   }
 };
+

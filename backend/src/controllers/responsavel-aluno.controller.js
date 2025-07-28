@@ -153,3 +153,84 @@ export const desvincularResponsavel = async (req, res, next) => {
     next(error);
   }
 };
+
+
+/**
+ * @openapi
+ * /alunos/{idAluno}/responsaveis:
+ *   get:
+ *     summary: Lista todos os responsáveis de um aluno
+ *     tags: [Responsáveis]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: idAluno
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID do aluno
+ *     responses:
+ *       200:
+ *         description: Lista de responsáveis do aluno
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Usuario'
+ *       400:
+ *         description: Dados inválidos
+ *       401:
+ *         description: Não autorizado
+ *       403:
+ *         description: Acesso negado
+ *       404:
+ *         description: Aluno não encontrado
+ */
+export const listarResponsaveis = async (req, res, next) => {
+    try {
+      const { idAluno } = req.params;
+      const usuarioId = req.usuario.id;
+  
+      // Verifica se o aluno existe
+      const aluno = await Aluno.findByPk(idAluno);
+      if (!aluno) {
+        return res.status(404).json({ mensagem: 'Aluno não encontrado' });
+      }
+  
+      // Verifica se o usuário tem permissão (admin, o próprio aluno ou responsável)
+      const isAdmin = req.usuario.role === 'admin';
+      const isProprioAluno = aluno.usuarioId === usuarioId;
+      const isResponsavel = await ResponsavelAluno.findOne({
+        where: { 
+          cpfUsuario: req.usuario.cpf,
+          idAluno
+        }
+      });
+  
+      if (!isAdmin && !isProprioAluno && !isResponsavel) {
+        return res.status(403).json({ 
+          mensagem: 'Você não tem permissão para ver os responsáveis deste aluno' 
+        });
+      }
+  
+      // Busca os responsáveis do aluno
+      const responsaveis = await Usuario.findAll({
+        attributes: ['cpf', 'nome', 'email', 'telefone', 'dataNascimento', 'endereco'],
+        include: [{
+          model: ResponsavelAluno,
+          as: 'alunos',
+          where: { idAluno },
+          attributes: [],
+          required: true
+        }],
+        order: [['nome', 'ASC']]
+      });
+  
+      return res.status(200).json(responsaveis);
+  
+    } catch (error) {
+      next(error);
+    }
+  };

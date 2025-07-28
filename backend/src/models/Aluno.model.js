@@ -155,6 +155,7 @@ Aluno.associate = (models) => {
     otherKey: 'cpf_usuario',
     as: 'responsaveis'
   });
+
 };
 
 Aluno.hasMany(Documento, { foreignKey: 'alunoId' });
