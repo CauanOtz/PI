@@ -1,6 +1,8 @@
 // src/models/Aluno.model.js
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
+import Documento from './Documento.model.js';
+import Usuario from './Usuario.model.js';
 
 /**
  * @openapi
@@ -139,5 +141,9 @@ const Aluno = sequelize.define('Aluno', {
   createdAt: 'created_at',
   updatedAt: 'updated_at'
 });
+
+Aluno.hasMany(Documento, { foreignKey: 'alunoId' });
+Documento.belongsTo(Aluno, { foreignKey: 'alunoId' });
+Documento.belongsTo(Usuario, { foreignKey: 'usuarioId' });
 
 export default Aluno;

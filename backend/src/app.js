@@ -7,6 +7,7 @@ import setupSwagger from './config/swagger.js'; // Importe a configuração do S
 import aulaRoutes from './routes/aula.routes.js'; // Importe suas rotas de aula
 import usuarioRoutes from './routes/usuario.routes.js'; // Importe suas rotas de usuário
 import alunoRoutes from './routes/aluno.routes.js'; // Importe as rotas de aluno
+import documentoRoutes from './routes/documento.routes.js'; // Importe as rotas de documento
 dotenv.config();
 const app = express();
 
@@ -37,6 +38,7 @@ app.use((err, req, res, next) => {
 app.use('/api/v1/aulas', aulaRoutes); // Rotas de aula sob /api/v1/aulas
 app.use('/api/v1/usuarios', usuarioRoutes); // Rotas de usuário sob /api/v1/usuarios
 app.use('/api/v1/alunos', alunoRoutes); // Rotas de aluno sob /api/v1/alunos
+app.use('/api/v1/documentos', documentoRoutes); // Rotas de documento sob /api/v1/documentos
 
 app.use((req, res, next) => {
   res.status(404).json({ message: 'Rota não encontrada.' });
