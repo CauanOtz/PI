@@ -64,6 +64,143 @@ import { Op } from 'sequelize';
  *                   type: integer
  *                   description: Total de páginas
  */
+/**
+ * @openapi
+ * /responsaveis/{responsavelId}/alunos:
+ *   get:
+ *     summary: Lista todos os alunos associados a um responsável
+ *     tags: [Alunos]
+ *     parameters:
+ *       - in: path
+ *         name: responsavelId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID do responsável
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Número da página para paginação
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         description: Número de itens por página
+ *     responses:
+ *       200:
+ *         description: Lista de alunos do responsável
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 sucesso:
+ *                   type: boolean
+ *                   example: true
+ *                 dados:
+ *                   type: object
+ *                   properties:
+ *                     alunos:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/Aluno'
+ *                     paginacao:
+ *                       type: object
+ *                       properties:
+ *                         total:
+ *                           type: integer
+ *                           description: Total de alunos encontrados
+ *                         paginaAtual:
+ *                           type: integer
+ *                           description: Número da página atual
+ *                         totalPaginas:
+ *                           type: integer
+ *                           description: Total de páginas
+ *                         itensPorPagina:
+ *                           type: integer
+ *                           description: Número de itens por página
+ *                         temProximaPagina:
+ *                           type: boolean
+ *                           description: Indica se existe próxima página
+ *                         temPaginaAnterior:
+ *                           type: boolean
+ *                           description: Indica se existe página anterior
+ *       400:
+ *         description: ID do responsável inválido
+ *       404:
+ *         description: Responsável não encontrado
+ */
+export const listarAlunosPorResponsavel = async (req, res, next) => {
+  try {
+    const responsavelId = parseInt(req.params.responsavelId);
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
+    const offset = (page - 1) * limit;
+    
+    // Verifica se o ID do responsável é válido
+    if (isNaN(responsavelId)) {
+      return res.status(400).json({
+        sucesso: false,
+        mensagem: 'ID do responsável inválido',
+        detalhes: 'O ID do responsável deve ser um número inteiro válido'
+      });
+    }
+    
+    // Verifica se o responsável existe
+    const responsavel = await Usuario.findByPk(responsavelId);
+    if (!responsavel) {
+      return res.status(404).json({
+        sucesso: false,
+        mensagem: 'Responsável não encontrado',
+        detalhes: `Nenhum responsável encontrado com o ID ${responsavelId}`
+      });
+    }
+    
+    // Busca os alunos associados ao responsável
+    const { count, rows: alunos } = await Aluno.findAndCountAll({
+      where: { responsavel_id: responsavelId },
+      include: [
+        {
+          model: Usuario,
+          as: 'responsavel',
+          attributes: ['id', 'nome', 'email', 'telefone']
+        }
+      ],
+      limit: limit,
+      offset: offset,
+      order: [['nome', 'ASC']]
+    });
+    
+    // Calcula o total de páginas
+    const totalPages = Math.ceil(count / limit);
+    
+    // Retorna a resposta com os alunos e informações de paginação
+    res.status(200).json({
+      sucesso: true,
+      dados: {
+        alunos: alunos,
+        paginacao: {
+          total: count,
+          paginaAtual: page,
+          totalPaginas: totalPages,
+          itensPorPagina: limit,
+          temProximaPagina: page < totalPages,
+          temPaginaAnterior: page > 1
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Erro ao listar alunos do responsável:', error);
+    next(error);
+  }
+};
+
 export const listarAlunos = async (req, res, next) => {
   try {
     // Validação dos parâmetros de paginação

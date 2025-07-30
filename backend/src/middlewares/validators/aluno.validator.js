@@ -96,6 +96,26 @@ export const validateAlunoId = [
   },
 ];
 
+// Middleware para validação do ID do responsável nos parâmetros da rota
+export const validateResponsavelId = [
+  param('responsavelId')
+    .isInt({ min: 1 }).withMessage('O ID do responsável deve ser um número inteiro positivo.')
+    .toInt(),
+  
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        errors: errors.array().map(err => ({
+          field: err.path,
+          message: err.msg,
+        }))
+      });
+    }
+    next();
+  },
+];
+
 // Middleware para validação de consulta (query params)
 export const validateListarAlunos = [
   param('page').optional().isInt({ min: 1 }).withMessage('A página deve ser um número inteiro positivo.'),
