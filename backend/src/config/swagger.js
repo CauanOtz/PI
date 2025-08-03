@@ -7,12 +7,12 @@ const options = {
     openapi: '3.0.0',
     info: {
       title: 'API do Diario de Classe',
-      version: '1.0.0',
+      version: '2.0.0',
       description: 'Documentação da API para o sistema de Diario de Classe.',
     },
     servers: [
       {
-        url: `http://localhost:${process.env.PORT || 3000}/api/v1`,
+        url: `http://localhost:${process.env.PORT || 3000}/api/v2`,
         description: 'Servidor de Desenvolvimento',
       },
     ],

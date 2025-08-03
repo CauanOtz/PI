@@ -9,6 +9,7 @@ import usuarioRoutes from './routes/usuario.routes.js'; // Importe suas rotas de
 import alunoRoutes from './routes/aluno.routes.js'; // Importe as rotas de aluno
 import documentoRoutes from './routes/documento.routes.js'; // Importe as rotas de documento
 import responsavelAlunoRoutes from './routes/responsavel-aluno.routes.js'; // Importe as rotas de responsavel-aluno
+import presencaRoutes from './routes/presenca.routes.js'; // Importe as rotas de presença
 dotenv.config();
 const app = express();
 
@@ -36,11 +37,12 @@ app.use((err, req, res, next) => {
 });
 
 // Use suas rotas com um prefixo
-app.use('/api/v1/aulas', aulaRoutes); // Rotas de aula sob /api/v1/aulas
-app.use('/api/v1/usuarios', usuarioRoutes); // Rotas de usuário sob /api/v1/usuarios
-app.use('/api/v1/alunos', alunoRoutes); // Rotas de aluno sob /api/v1/alunos
-app.use('/api/v1/documentos', documentoRoutes); // Rotas de documento sob /api/v1/documentos
-app.use('/api/v1/responsaveis-alunos', responsavelAlunoRoutes); // Rotas de responsavel-aluno sob /api/v1/responsaveis-alunos
+app.use('/api/v2/aulas', aulaRoutes); // Rotas de aula sob /api/v2/aulas
+app.use('/api/v2/usuarios', usuarioRoutes); // Rotas de usuário sob /api/v2/usuarios
+app.use('/api/v2/alunos', alunoRoutes); // Rotas de aluno sob /api/v2/alunos
+app.use('/api/v2/documentos', documentoRoutes); // Rotas de documento sob /api/v2/documentos
+app.use('/api/v2/responsaveis-alunos', responsavelAlunoRoutes); // Rotas de responsavel-aluno sob /api/v2/responsaveis-alunos
+app.use('/api/v2/presencas', presencaRoutes); // Rotas de presença sob /api/v2/presencas
 
 app.use((req, res, next) => {
   res.status(404).json({ message: 'Rota não encontrada.' });
