@@ -87,7 +87,7 @@ const router = Router();
 
 /**
  * @openapi
- * /api/v2/presencas:
+ * /presencas:
  *   post:
  *     summary: Registra uma nova presença
  *     tags: [Presenças]
@@ -150,7 +150,7 @@ router.post('/',
 
 /**
  * @openapi
- * /api/v2/presencas:
+ * /presencas:
  *   get:
  *     summary: Lista todas as presenças com filtros opcionais
  *     tags: [Presenças]
@@ -207,7 +207,7 @@ router.get('/',
 
 /**
  * @openapi
- * /api/v2/presencas/aulas/{idAula}:
+ * /presencas/aulas/{idAula}:
  *   get:
  *     summary: Lista as presenças de uma aula específica
  *     tags: [Presenças]
@@ -250,7 +250,7 @@ router.get('/aulas/:idAula',
 
 /**
  * @openapi
- * /api/v2/presencas/alunos/{idAluno}:
+ * /presencas/alunos/{idAluno}:
  *   get:
  *     summary: Lista o histórico de presença de um aluno
  *     tags: [Presenças]
@@ -299,7 +299,7 @@ router.get('/alunos/:idAluno',
 
 /**
  * @openapi
- * /api/v2/presencas/{id}:
+ * /presencas/{id}:
  *   get:
  *     summary: Obtém um registro de presença específico
  *     tags: [Presenças]
@@ -334,7 +334,7 @@ router.get('/:id',
 
 /**
  * @openapi
- * /api/v2/presencas/{id}:
+ * /presencas/{id}:
  *   put:
  *     summary: Atualiza o status de uma presença
  *     tags: [Presenças]
@@ -390,7 +390,7 @@ router.put('/:id',
 
 /**
  * @openapi
- * /api/v2/presencas/{id}:
+ * /presencas/{id}:
  *   delete:
  *     summary: Remove um registro de presença
  *     tags: [Presenças]
