@@ -40,12 +40,6 @@ export const Dashboard = (): JSX.Element => {
       change: 4,
       icon: <ClipboardCheckIcon className="w-4 h-4 text-green-500" />,
     },
-    {
-      title: "Avaliações Pendentes",
-      value: "8",
-      change: -2,
-      icon: <BarChart2Icon className="w-4 h-4 text-orange-500" />,
-    },
   ];
 
   const quickAccessCards = [
@@ -69,20 +63,6 @@ export const Dashboard = (): JSX.Element => {
       icon: <UsersIcon className="w-6 h-6 text-purple-400" />,
       path: "/students",
       bgColor: "bg-purple-50",
-    },
-    {
-      title: "Avaliações",
-      description: "Gerenciar provas e notas",
-      icon: <BarChart2Icon className="w-6 h-6 text-red-400" />,
-      path: "/exams",
-      bgColor: "bg-red-50",
-    },
-    {
-      title: "Plano de Aula",
-      description: "Criar e editar planos de aula",
-      icon: <BookOpenIcon className="w-6 h-6 text-green-400" />,
-      path: "/lessons",
-      bgColor: "bg-green-50",
     },
     {
       title: "Calendário",
