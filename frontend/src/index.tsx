@@ -12,24 +12,28 @@ import { Settings } from "./screens/Settings/Settings";
 import { Exams } from "./screens/Exams/Exams";
 import { Calendar } from "./screens/Calendar/Calendar";
 import { Toaster } from 'sonner';
+import { AuthProvider } from "./context/AuthProvider";
+import PrivateRoute from "./routes/PrivateRoute";
 
 function App() {
   return (
     <>
-      <BrowserRouter>
+      <AuthProvider>
         <Routes>
           <Route path="/" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/attendance" element={<Attendance />} />
-          <Route path="/students" element={<Students />} />
-          <Route path="/files" element={<Files />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/exams" element={<Exams />} />
-          <Route path="/calendar" element={<Calendar />} />
+          <Route element={<PrivateRoute />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/attendance" element={<Attendance />} />
+            <Route path="/students" element={<Students />} />
+            <Route path="/files" element={<Files />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/exams" element={<Exams />} />
+            <Route path="/calendar" element={<Calendar />} />
+          </Route>
         </Routes>
-      </BrowserRouter>
+      </AuthProvider>
       <Toaster 
         position="top-right"
         toastOptions={{
@@ -47,6 +51,8 @@ function App() {
 
 createRoot(document.getElementById("app") as HTMLElement).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
   </StrictMode>
 );

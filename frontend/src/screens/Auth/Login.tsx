@@ -7,6 +7,8 @@ import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { LockIcon, MailIcon, LogInIcon } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/avatar";
+import { useAuth } from "../../context/AuthProvider";
+import { toast } from "sonner"; 
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -17,13 +19,20 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export const Login = () => {
   const navigate = useNavigate();
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
   });
+  const { login } = useAuth();
 
-  const onSubmit = (data: LoginForm) => {
-    console.log(data);
-    navigate("/dashboard");
+  const onSubmit = async (data: LoginForm) => {
+    try {
+      await login(data.email, data.password);
+      toast.success("Bem-vindo! Login realizado com sucesso."); 
+      navigate("/dashboard");
+    } catch (err: any) {
+      console.error(err);
+      alert(err?.response?.data?.mensagem || "Falha ao entrar");
+    }
   };
 
   return (
@@ -79,10 +88,11 @@ export const Login = () => {
 
           <Button 
             type="submit" 
+            disabled={isSubmitting}
             className="w-full h-12 bg-projectsecondary-300 hover:bg-projectsecondary-300/90 text-white font-semibold flex items-center justify-center gap-2 mt-6"
           >
             <LogInIcon className="w-5 h-5" />
-            Entrar
+            {isSubmitting ? "Entrando..." : "Entrar"}
           </Button>
         </form>
 

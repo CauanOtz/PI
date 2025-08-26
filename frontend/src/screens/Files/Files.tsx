@@ -44,14 +44,6 @@ const mockReports: Report[] = [
     size: "1.8 MB",
     category: "Frequência"
   },
-  {
-    id: "3",
-    name: "Plano de Aula - Matemática",
-    type: "DOCX",
-    date: "2024-03-28",
-    size: "856 KB",
-    category: "Planos"
-  },
   // Add more mock data as needed
 ];
 

@@ -13,7 +13,8 @@ import presencaRoutes from './routes/presenca.routes.js'; // Importe as rotas de
 dotenv.config();
 const app = express();
 
-app.use(cors());
+const FRONT_ORIGIN = process.env.FRONT_ORIGIN || "http://localhost:5173";
+app.use(cors({ origin: FRONT_ORIGIN, credentials: false })); // true se usar cookies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

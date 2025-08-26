@@ -19,11 +19,14 @@ import {
   AvatarImage,
 } from "../ui/avatar";
 import { Separator } from "../ui/separator";
+import { useAuth } from "../../context/AuthProvider";
+import { toast } from "sonner";
 
 export const SidebarSection = (): JSX.Element => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
+  const { logout } = useAuth();
 
   const navItems = [
     {
@@ -50,11 +53,6 @@ export const SidebarSection = (): JSX.Element => {
       icon: <FileTextIcon className="w-4 h-4 text-pink-400" />,
       label: "Relatório",
       path: "/files",
-    },
-    {
-      icon: <BarChart2Icon className="w-4 h-4 text-red-400" />,
-      label: "Avaliações",
-      path: "/exams",
     },
     {
       icon: <SettingsIcon className="w-4 h-4 text-orange-400" />,
@@ -129,7 +127,12 @@ export const SidebarSection = (): JSX.Element => {
 
           <div className="mt-auto mb-8 mx-[25px]">
             <button
-              onClick={() => navigate("/")}
+              onClick={() => {
+                logout();
+                setIsOpen(false);
+                toast.success("Desconectado com sucesso");
+                navigate("/");
+              }}
               className="flex items-center h-10 px-4 rounded w-full hover:bg-projectsecondary-300/50"
             >
               <SparklesIcon className="w-4 h-4 text-red-400" />
