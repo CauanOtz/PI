@@ -1,6 +1,23 @@
 // src/middlewares/validators/aluno.validator.js
 import { body, param, validationResult } from 'express-validator';
 
+// Middleware genérico para lidar com os erros de validação
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const errorMessages = errors.array().map(error => ({
+      field: error.path,
+      message: error.msg,
+    }));
+    return res.status(400).json({ 
+      sucesso: false,
+      mensagem: 'Erro de validação',
+      erros: errorMessages 
+    });
+  }
+  next();
+};
+
 // Validações comuns que podem ser reutilizadas
 const nomeValidation = body('nome')
   .trim()
@@ -22,9 +39,17 @@ const contatoValidation = body('contato')
   .matches(/^(\(\d{2}\)\s?\d{4,5}-?\d{4}|\d{10,11})?$/)
   .withMessage('Formato de contato inválido. Use (DD) 99999-9999 ou (DD) 9999-9999.');
 
-const responsavelIdValidation = body('responsavel_id')
-  .notEmpty().withMessage('O ID do responsável é obrigatório.')
-  .isInt({ min: 1 }).withMessage('O ID do responsável deve ser um número inteiro positivo.');
+// --- CORREÇÃO PRINCIPAL AQUI ---
+// Nova validação para o array de IDs de responsáveis
+const responsaveisIdsValidation = body('responsaveisIds')
+  .isArray({ min: 1 }).withMessage('É necessário fornecer pelo menos um ID de responsável em um array.')
+  .custom((ids) => {
+    // Verifica se cada item no array é um número inteiro positivo
+    if (!ids.every(id => Number.isInteger(id) && id > 0)) {
+      throw new Error('Todos os IDs de responsáveis devem ser números inteiros positivos.');
+    }
+    return true;
+  });
 
 // Middleware para validação de criação de aluno
 export const validateCreateAluno = [
@@ -32,20 +57,8 @@ export const validateCreateAluno = [
   idadeValidation,
   enderecoValidation,
   contatoValidation,
-  responsavelIdValidation,
-  
-  // Middleware para processar os resultados da validação
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      const errorMessages = errors.array().map(error => ({
-        field: error.path,
-        message: error.msg,
-      }));
-      return res.status(400).json({ errors: errorMessages });
-    }
-    next();
-  },
+  responsaveisIdsValidation, // <-- Usa a nova validação
+  handleValidationErrors,     // <-- Usa o manipulador de erros centralizado
 ];
 
 // Middleware para validação de atualização de aluno
@@ -59,41 +72,25 @@ export const validateUpdateAluno = [
     .isInt({ min: 0, max: 120 }).withMessage('A idade deve ser um número entre 0 e 120.'),
   enderecoValidation,
   contatoValidation,
-  body('responsavel_id')
+  // --- CORREÇÃO AQUI TAMBÉM ---
+  // Validação opcional para o array de IDs
+  body('responsaveisIds')
     .optional()
-    .isInt({ min: 1 }).withMessage('O ID do responsável deve ser um número inteiro positivo.'),
-  
-  // Middleware para processar os resultados da validação
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      const errorMessages = errors.array().map(error => ({
-        field: error.path,
-        message: error.msg,
-      }));
-      return res.status(400).json({ errors: errorMessages });
-    }
-    next();
-  },
+    .isArray().withMessage('O campo responsaveisIds deve ser um array.')
+    .custom((ids) => {
+      if (!ids.every(id => Number.isInteger(id) && id > 0)) {
+        throw new Error('Todos os IDs de responsáveis devem ser números inteiros positivos.');
+      }
+      return true;
+    }),
+  handleValidationErrors, // <-- Usa o manipulador de erros centralizado
 ];
 
 // Middleware para validar o ID do aluno nos parâmetros da rota
 export const validateAlunoId = [
   param('id')
     .isInt({ min: 1 }).withMessage('O ID do aluno deve ser um número inteiro positivo.'),
-  
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        errors: errors.array().map(err => ({
-          field: err.path,
-          message: err.msg,
-        }))
-      });
-    }
-    next();
-  },
+  handleValidationErrors,
 ];
 
 // Middleware para validação do ID do responsável nos parâmetros da rota
@@ -101,19 +98,7 @@ export const validateResponsavelId = [
   param('responsavelId')
     .isInt({ min: 1 }).withMessage('O ID do responsável deve ser um número inteiro positivo.')
     .toInt(),
-  
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        errors: errors.array().map(err => ({
-          field: err.path,
-          message: err.msg,
-        }))
-      });
-    }
-    next();
-  },
+  handleValidationErrors,
 ];
 
 // Middleware para validação de consulta (query params)
@@ -122,17 +107,5 @@ export const validateListarAlunos = [
   param('limit').optional().isInt({ min: 1, max: 100 }).withMessage('O limite deve ser um número entre 1 e 100.'),
   param('search').optional().trim().isString().withMessage('O termo de busca deve ser um texto.'),
   param('responsavel_id').optional().isInt({ min: 1 }).withMessage('O ID do responsável deve ser um número inteiro positivo.'),
-  
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        errors: errors.array().map(err => ({
-          field: err.path,
-          message: err.msg,
-        }))
-      });
-    }
-    next();
-  },
+  handleValidationErrors,
 ];

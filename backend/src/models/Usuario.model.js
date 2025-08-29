@@ -94,7 +94,7 @@ const Usuario = sequelize.define('Usuario', {
   },
   cpf: {
     type: DataTypes.STRING(14), // Formato: 000.000.000-00
-    allowNull: true, // Ou false se for obrigatório
+    allowNull: false, // Ou false se for obrigatório
     unique: true,
     validate: {
       is: /^\d{3}\.\d{3}\.\d{3}\-\d{2}$/ // Valida o formato do CPF
@@ -115,37 +115,32 @@ const Usuario = sequelize.define('Usuario', {
 });
 
 Usuario.associate = (models) => {
-  // ... outras associações existentes ...
-  
-  // Associação com alunos através da tabela de junção
+
+
+  // Association with Aluno (many-to-many through ResponsavelAluno)
   Usuario.belongsToMany(models.Aluno, {
-    through: 'responsaveis_alunos',
-    foreignKey: 'cpf_usuario',
+    through: models.ResponsavelAluno,
+    foreignKey: 'id_usuario',
     otherKey: 'id_aluno',
-    as: 'alunos'
+    as: 'alunos',
   });
 
-  // Associação com alunos através da tabela de junção
-  Usuario.belongsToMany(models.Aluno, {
-    through: 'responsaveis_alunos',
-    foreignKey: 'cpf_usuario',
-    otherKey: 'id_aluno',
-    as: 'alunos'
+  // If you need to access the join table directly
+  Usuario.hasMany(models.ResponsavelAluno, {
+    foreignKey: 'id_usuario',
+    as: 'responsavelAlunos'
+  });
+
+  // Association with Documento
+  Usuario.hasMany(models.Documento, {
+    foreignKey: 'usuarioId',
+    as: 'documentos'
   });
 };
+
 // Método para verificar a senha
 Usuario.prototype.verificarSenha = function(senha) {
   return bcrypt.compareSync(senha, this.senha);
-};
-
-
-// Método para gerar token JWT
-Usuario.prototype.gerarToken = function() {
-  return jwt.sign(
-    { id: this.id, email: this.email, role: this.role },
-    process.env.JWT_SECRET || 'sua_chave_secreta',
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
-  );
 };
 
 // Método para gerar token JWT

@@ -79,83 +79,6 @@ const router = Router();
  */
 router.get('/', autenticar, validateListarAlunos, alunoController.listarAlunos);
 
-/**
- * @openapi
- * /responsaveis/{responsavelId}/alunos:
- *   get:
- *     summary: Lista todos os alunos associados a um responsável
- *     tags: [Alunos]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: responsavelId
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID do responsável
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           minimum: 1
- *           default: 1
- *         description: Número da página para paginação
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 100
- *           default: 10
- *         description: Número de itens por página
- *     responses:
- *       200:
- *         description: Lista de alunos do responsável
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 sucesso:
- *                   type: boolean
- *                   example: true
- *                 dados:
- *                   type: object
- *                   properties:
- *                     alunos:
- *                       type: array
- *                       items:
- *                         $ref: '#/components/schemas/Aluno'
- *                     paginacao:
- *                       type: object
- *                       properties:
- *                         total:
- *                           type: integer
- *                           description: Total de alunos encontrados
- *                         paginaAtual:
- *                           type: integer
- *                           description: Número da página atual
- *                         totalPaginas:
- *                           type: integer
- *                           description: Total de páginas
- *                         itensPorPagina:
- *                           type: integer
- *                           description: Número de itens por página
- *                         temProximaPagina:
- *                           type: boolean
- *                           description: Indica se existe próxima página
- *                         temPaginaAnterior:
- *                           type: boolean
- *                           description: Indica se existe página anterior
- *       400:
- *         description: ID do responsável inválido
- *       401:
- *         description: Não autorizado
- *       404:
- *         description: Responsável não encontrado
- */
-router.get('/responsaveis/:responsavelId/alunos', autenticar, validateResponsavelId, alunoController.listarAlunosPorResponsavel);
 
 /**
  * @openapi
@@ -254,7 +177,7 @@ router.post('/', autenticar, validateCreateAluno, alunoController.criarAluno);
  *                 example: "(11) 98765-1234"
  *               responsavel_id:
  *                 type: integer
- *                 example: 2
+ *                 example: [7]
  *     responses:
  *       200:
  *         description: Aluno atualizado com sucesso

@@ -5,35 +5,66 @@ import { sequelize } from '../config/database.js';
 const ResponsavelAluno = sequelize.define('ResponsavelAluno', {
   id: {
     type: DataTypes.INTEGER,
+    autoIncrement: true,
     primaryKey: true,
-    autoIncrement: true
+    
   },
-  cpfUsuario: {
-    type: DataTypes.STRING(11),
+
+  id_usuario: { // Renomeado de cpf_usuario para id_usuario
+    type: DataTypes.INTEGER, // Tipo alterado para INTEGER
     allowNull: false,
     references: {
       model: 'usuarios',
-      key: 'cpf'
-    }
+      key: 'id' // Referência alterada para a chave primária 'id'
+    },
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE'
   },
-  idAluno: {
+  id_aluno: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
       model: 'alunos',
       key: 'id'
-    }
+    },
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE'
+  },
+  created_at: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
+  },
+  updated_at: {
+    type: DataTypes.DATE,
+    allowNull: false,
+    defaultValue: DataTypes.NOW
   }
 }, {
   tableName: 'responsaveis_alunos',
   timestamps: true,
   underscored: true,
-  indexes: [
-    {
-      unique: true,
-      fields: ['cpf_usuario', 'id_aluno']
-    }
-  ]
+  createdAt: 'created_at',
+  updatedAt: 'updated_at'
 });
+
+ResponsavelAluno.associate = (models) => {
+  // Association with Usuario
+  // --- CORREÇÃO AQUI ---
+  ResponsavelAluno.belongsTo(models.Usuario, {
+    foreignKey: 'id_usuario', // Chave estrangeira atualizada
+    as: 'usuario',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  });
+
+  // Association with Aluno
+  ResponsavelAluno.belongsTo(models.Aluno, {
+    foreignKey: 'id_aluno',
+    as: 'aluno',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  });
+};
 
 export default ResponsavelAluno;

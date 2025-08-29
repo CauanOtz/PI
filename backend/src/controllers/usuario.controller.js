@@ -25,6 +25,7 @@ import bcrypt from 'bcrypt';
  *               - nome
  *               - email
  *               - senha
+ *               - cpf
  *             properties:
  *               nome:
  *                 type: string
@@ -37,6 +38,9 @@ import bcrypt from 'bcrypt';
  *                 type: string
  *                 format: password
  *                 example: "senha123"
+ *               cpf:
+ *                 type: string
+ *                 example: "123.456.789-00"
  *               telefone:
  *                 type: string
  *                 example: "(11) 99999-9999"
@@ -54,22 +58,29 @@ import bcrypt from 'bcrypt';
  *       400:
  *         description: Dados de entrada inválidos.
  *       409:
- *         description: E-mail já cadastrado.
+ *         description: E-mail ou CPF já cadastrado.
  *       500:
  *         description: Erro interno do servidor.
  */
 export const registrarUsuario = async (req, res, next) => {
   try {
-    const { nome, email, senha, telefone, role = 'responsavel' } = req.body;
+    const { nome, email, senha, telefone, cpf, role = 'responsavel' } = req.body;
+
+    // Validação de campos obrigatórios
+    if (!cpf) {
+      return res.status(400).json({
+        message: 'O campo CPF é obrigatório.'
+      });
+    }
 
     // Verifica se o e-mail já está cadastrado
     const usuarioExistente = await Usuario.findOne({
-      where: { email }
+      where: { [Op.or]: [{ email }, { cpf }] }
     });
 
     if (usuarioExistente) {
       return res.status(409).json({ 
-        message: 'Este e-mail já está em uso.' 
+        message: 'E-mail ou CPF já está em uso.' 
       });
     }
 
@@ -79,6 +90,7 @@ export const registrarUsuario = async (req, res, next) => {
       email,
       senha, // A senha será hasheada pelo setter do modelo
       telefone,
+      cpf,    // Incluindo o CPF no create
       role
     });
 

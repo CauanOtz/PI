@@ -115,9 +115,9 @@ const options = {
               example: '(11) 98765-4321',
               nullable: true
             },
-            responsavel_id: {
+            responsaveisIds: {
               type: 'integer',
-              example: 1
+              example: [1]
             },
             created_at: {
               type: 'string',
@@ -156,7 +156,7 @@ const options = {
             },
             responsavel_id: {
               type: 'integer',
-              example: 1
+              example: [7]
             }
           }
         }

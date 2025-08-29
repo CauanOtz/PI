@@ -3,6 +3,7 @@ import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
 import Documento from './Documento.model.js';
 import Usuario from './Usuario.model.js';
+import ResponsavelAluno from './ResponsavelAluno.model.js';
 
 /**
  * @openapi
@@ -13,7 +14,6 @@ import Usuario from './Usuario.model.js';
  *       required:
  *         - nome
  *         - idade
- *         - responsavel_id
  *       properties:
  *         id:
  *           type: integer
@@ -42,10 +42,11 @@ import Usuario from './Usuario.model.js';
  *           description: Telefone para contato.
  *           example: "(11) 98765-4321"
  *           nullable: true
- *         responsavel_id:
- *           type: integer
- *           description: ID do responsável pelo aluno (referência ao modelo Usuario).
- *           example: 1
+ *         responsaveis:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Usuario'
+ *           description: Lista de responsáveis associados ao aluno.
  *         created_at:
  *           type: string
  *           format: date-time
@@ -114,16 +115,6 @@ const Aluno = sequelize.define('Aluno', {
       }
     }
   },
-  responsavel_id: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'usuarios',
-      key: 'id'
-    },
-    onUpdate: 'CASCADE',
-    onDelete: 'RESTRICT'
-  },
   created_at: {
     type: DataTypes.DATE,
     allowNull: false,
@@ -143,23 +134,29 @@ const Aluno = sequelize.define('Aluno', {
 });
 
 Aluno.associate = (models) => {
+  // Association with Documento
   Aluno.hasMany(models.Documento, {
     foreignKey: 'alunoId',
-    as: 'documentos'
+    as: 'documentos',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
   });
 
-  // Associação com ResponsavelAluno
+  // Association with Usuario (many-to-many through ResponsavelAluno)
   Aluno.belongsToMany(models.Usuario, {
-    through: 'responsaveis_alunos',
+    through: models.ResponsavelAluno,
     foreignKey: 'id_aluno',
-    otherKey: 'cpf_usuario',
+    otherKey: 'id_usuario',
     as: 'responsaveis'
   });
 
+  // If you need to access the join table directly
+  Aluno.hasMany(models.ResponsavelAluno, {
+    foreignKey: 'id_aluno',
+    as: 'alunoResponsaveis',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  });
 };
-
-Aluno.hasMany(Documento, { foreignKey: 'alunoId' });
-Documento.belongsTo(Aluno, { foreignKey: 'alunoId' });
-Documento.belongsTo(Usuario, { foreignKey: 'usuarioId' });
 
 export default Aluno;
