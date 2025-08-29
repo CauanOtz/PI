@@ -6,7 +6,6 @@ import {
   validateUpdateAluno, 
   validateAlunoId,
   validateListarAlunos,
-  validateResponsavelId
 } from '../middlewares/validators/aluno.validator.js';
 import { autenticar } from '../middlewares/auth.middleware.js';
 

@@ -18,12 +18,12 @@ import Aluno from '../models/Aluno.model.js';
  *           schema:
  *             type: object
  *             required:
- *               - cpfUsuario
+ *               - idUsuario
  *               - idAluno
  *             properties:
- *               cpfUsuario:
- *                 type: string
- *                 description: CPF do responsável (apenas números)
+ *               idUsuario:
+ *                 type: integer
+ *                 description: ID do responsável
  *               idAluno:
  *                 type: integer
  *                 description: ID do aluno
@@ -43,12 +43,12 @@ import Aluno from '../models/Aluno.model.js';
  */
 export const vincularResponsavel = async (req, res, next) => {
   try {
-    const { cpfUsuario, idAluno } = req.body;
+    const { idUsuario, idAluno } = req.body;
 
     // Verifica se o usuário existe e é um responsável
     const usuario = await Usuario.findOne({
       where: { 
-        cpf: cpfUsuario,
+        id: idUsuario,
         role: 'responsavel' 
       }
     });
@@ -67,7 +67,7 @@ export const vincularResponsavel = async (req, res, next) => {
 
     // Verifica se o vínculo já existe
     const vinculoExistente = await ResponsavelAluno.findOne({
-      where: { cpfUsuario, idAluno }
+      where: { id_usuario: idUsuario, id_aluno: idAluno }
     });
 
     if (vinculoExistente) {
@@ -78,8 +78,8 @@ export const vincularResponsavel = async (req, res, next) => {
 
     // Cria o vínculo
     await ResponsavelAluno.create({
-      cpfUsuario,
-      idAluno
+      id_usuario: idUsuario,
+      id_aluno: idAluno
     });
 
     return res.status(201).json({ 
@@ -93,7 +93,7 @@ export const vincularResponsavel = async (req, res, next) => {
 
 /**
  * @openapi
- * /responsaveis/{cpfUsuario}/alunos/{idAluno}:
+ * /responsaveis-alunos/usuario/{idUsuario}/aluno/{idAluno}:
  *   delete:
  *     summary: Desvincula um responsável de um aluno
  *     tags: [Responsáveis]
@@ -101,11 +101,11 @@ export const vincularResponsavel = async (req, res, next) => {
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: cpfUsuario
+ *         name: idUsuario
  *         required: true
  *         schema:
- *           type: string
- *         description: CPF do responsável (apenas números)
+ *           type: integer
+ *         description: ID do responsável
  *       - in: path
  *         name: idAluno
  *         required: true
@@ -126,13 +126,13 @@ export const vincularResponsavel = async (req, res, next) => {
  */
 export const desvincularResponsavel = async (req, res, next) => {
   try {
-    const { cpfUsuario, idAluno } = req.params;
+    const { idUsuario, idAluno } = req.params;
 
     // Verifica se o vínculo existe
     const vinculo = await ResponsavelAluno.findOne({
       where: { 
-        cpfUsuario,
-        idAluno
+        id_usuario: idUsuario,
+        id_aluno: idAluno
       }
     });
 
@@ -154,83 +154,3 @@ export const desvincularResponsavel = async (req, res, next) => {
   }
 };
 
-
-/**
- * @openapi
- * /alunos/{idAluno}/responsaveis:
- *   get:
- *     summary: Lista todos os responsáveis de um aluno
- *     tags: [Responsáveis]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: idAluno
- *         required: true
- *         schema:
- *           type: integer
- *         description: ID do aluno
- *     responses:
- *       200:
- *         description: Lista de responsáveis do aluno
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Usuario'
- *       400:
- *         description: Dados inválidos
- *       401:
- *         description: Não autorizado
- *       403:
- *         description: Acesso negado
- *       404:
- *         description: Aluno não encontrado
- */
-export const listarResponsaveis = async (req, res, next) => {
-    try {
-      const { idAluno } = req.params;
-      const usuarioId = req.usuario.id;
-  
-      // Verifica se o aluno existe
-      const aluno = await Aluno.findByPk(idAluno);
-      if (!aluno) {
-        return res.status(404).json({ mensagem: 'Aluno não encontrado' });
-      }
-  
-      // Verifica se o usuário tem permissão (admin, o próprio aluno ou responsável)
-      const isAdmin = req.usuario.role === 'admin';
-      const isProprioAluno = aluno.usuarioId === usuarioId;
-      const isResponsavel = await ResponsavelAluno.findOne({
-        where: { 
-          cpfUsuario: req.usuario.cpf,
-          idAluno
-        }
-      });
-  
-      if (!isAdmin && !isProprioAluno && !isResponsavel) {
-        return res.status(403).json({ 
-          mensagem: 'Você não tem permissão para ver os responsáveis deste aluno' 
-        });
-      }
-  
-      // Busca os responsáveis do aluno
-      const responsaveis = await Usuario.findAll({
-        attributes: ['cpf', 'nome', 'email', 'telefone', 'dataNascimento', 'endereco'],
-        include: [{
-          model: ResponsavelAluno,
-          as: 'alunos',
-          where: { idAluno },
-          attributes: [],
-          required: true
-        }],
-        order: [['nome', 'ASC']]
-      });
-  
-      return res.status(200).json(responsaveis);
-  
-    } catch (error) {
-      next(error);
-    }
-  };

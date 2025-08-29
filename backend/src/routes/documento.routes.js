@@ -4,8 +4,6 @@ import { adicionarDocumento, listarDocumentos, obterDocumento, atualizarDocument
 import { validateAdicionarDocumento, validateListarDocumentos, validateObterDocumento, validateAtualizarDocumento, validateExcluirDocumento, validateDownloadDocumento } from '../middlewares/validators/documento.validator.js';
 import { autenticar } from '../middlewares/auth.middleware.js';
 import upload from '../middlewares/upload.middleware.js';
-import { validateListarResponsaveis } from '../middlewares/validators/responsavel-aluno.validator.js';
-import { listarResponsaveis } from '../controllers/responsavel-aluno.controller.js';
 
 const router = Router();
 
@@ -59,15 +57,6 @@ router.get(
     validateDownloadDocumento,
     downloadDocumento
 );
-
-
-// Rota para listar responsáveis de um aluno
-router.get(
-    '/alunos/:idAluno/responsaveis',
-    autenticar,
-    validateListarResponsaveis,
-    listarResponsaveis
-  );
 
 
 export default router;

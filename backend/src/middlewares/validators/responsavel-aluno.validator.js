@@ -2,80 +2,49 @@
 import { body, param, validationResult } from 'express-validator';
 import { cpf } from 'cpf-cnpj-validator';
 
+// Middleware genérico para lidar com os erros de validação
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const errorMessages = errors.array().map(error => ({
+      field: error.path,
+      message: error.msg,
+    }));
+    return res.status(400).json({
+      sucesso: false,
+      mensagem: 'Erro de validação',
+      erros: errorMessages
+    });
+  }
+  next();
+};
+
+// Valida o CORPO (body) da requisição POST para vincular
 export const validateVincularResponsavel = [
-  body('cpfUsuario')
-    .notEmpty()
-    .withMessage('CPF do responsável é obrigatório')
-    .bail()
-    .isString()
-    .withMessage('CPF deve ser uma string')
-    .bail()
-    .custom(value => cpf.isValid(value))
-    .withMessage('CPF inválido')
-    .bail()
-    .customSanitizer(value => value.replace(/\D/g, '')), // Remove formatação
+  body('idUsuario')
+    .notEmpty().withMessage('O ID do responsável é obrigatório.')
+    .isInt({ min: 1 }).withMessage('O ID do responsável deve ser um número inteiro positivo.')
+    .toInt(),
 
   body('idAluno')
-    .notEmpty()
-    .withMessage('ID do aluno é obrigatório')
-    .bail()
-    .isInt({ min: 1 })
-    .withMessage('ID do aluno deve ser um número inteiro positivo')
+    .notEmpty().withMessage('O ID do aluno é obrigatório.')
+    .isInt({ min: 1 }).withMessage('O ID do aluno deve ser um número inteiro positivo.')
     .toInt(),
 
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-    next();
-  }
+  handleValidationErrors
 ];
 
+// Valida os PARÂMETROS (param) da requisição DELETE para desvincular
 export const validateDesvincularResponsavel = [
-  param('cpfUsuario')
-    .notEmpty()
-    .withMessage('CPF do responsável é obrigatório')
-    .bail()
-    .isString()
-    .withMessage('CPF deve ser uma string')
-    .bail()
-    .custom(value => cpf.isValid(value))
-    .withMessage('CPF inválido')
-    .bail()
-    .customSanitizer(value => value.replace(/\D/g, '')), // Remove formatação
+  param('idUsuario')
+    .notEmpty().withMessage('O ID do responsável é obrigatório.')
+    .isInt({ min: 1 }).withMessage('O ID do responsável deve ser um número inteiro positivo.')
+    .toInt(),
 
   param('idAluno')
-    .notEmpty()
-    .withMessage('ID do aluno é obrigatório')
-    .bail()
-    .isInt({ min: 1 })
-    .withMessage('ID do aluno deve ser um número inteiro positivo')
+    .notEmpty().withMessage('O ID do aluno é obrigatório.')
+    .isInt({ min: 1 }).withMessage('O ID do aluno deve ser um número inteiro positivo.')
     .toInt(),
 
-  (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
-    }
-    next();
-  }
+  handleValidationErrors
 ];
-
-export const validateListarResponsaveis = [
-    param('idAluno')
-      .notEmpty()
-      .withMessage('ID do aluno é obrigatório')
-      .bail()
-      .isInt({ min: 1 })
-      .withMessage('ID do aluno deve ser um número inteiro positivo')
-      .toInt(),
-  
-    (req, res, next) => {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return res.status(400).json({ errors: errors.array() });
-      }
-      next();
-    }
-  ];

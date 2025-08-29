@@ -14,7 +14,7 @@ const router = Router();
 
 // Rota para vincular responsável a aluno
 router.post(
-  '/responsaveis-alunos',
+  '/',
   autenticar,
   validateVincularResponsavel,
   vincularResponsavel
@@ -22,7 +22,7 @@ router.post(
 
 // Rota para desvincular responsável de aluno
 router.delete(
-  '/responsaveis/:cpfUsuario/alunos/:idAluno',
+  '/usuario/:idUsuario/aluno/:idAluno',
   autenticar,
   validateDesvincularResponsavel,
   desvincularResponsavel

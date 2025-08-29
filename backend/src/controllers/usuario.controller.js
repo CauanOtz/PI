@@ -276,7 +276,7 @@ export const obterMeusDados = async (req, res, next) => {
  *               email:
  *                 type: string
  *                 format: email
- *                 example: admin@escola.com
+ *                 example: joao@escola.com
  *               senha:
  *                 type: string
  *                 format: password

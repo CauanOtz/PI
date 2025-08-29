@@ -1,7 +1,7 @@
 // src/routes/responsavel.routes.js
 import { Router } from 'express';
-import * as alunoController from '../controllers/aluno.controller.js';
-import { validateResponsavelId } from '../middlewares/validators/aluno.validator.js';
+import * as responsavelController from '../controllers/responsavel.controller.js';
+import { validateResponsavelId } from '../middlewares/validators/responsavel.validator.js';
 import { autenticar } from '../middlewares/auth.middleware.js';
 
 const router = Router();
@@ -11,7 +11,7 @@ const router = Router();
  * /responsaveis/{responsavelId}/alunos:
  *   get:
  *     summary: Lista todos os alunos associados a um responsável
- *     tags: [Responsaveis]
+ *     tags: [Responsáveis]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -50,7 +50,7 @@ router.get(
   '/:responsavelId/alunos', 
   autenticar, 
   validateResponsavelId, 
-  alunoController.listarAlunosPorResponsavel
+  responsavelController.listarAlunosPorResponsavel
 );
 
 // Outras rotas relacionadas a responsáveis podem vir aqui.
