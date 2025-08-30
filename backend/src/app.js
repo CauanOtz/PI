@@ -7,7 +7,6 @@ import setupSwagger from './config/swagger.js'; // Importe a configuração do S
 import aulaRoutes from './routes/aula.routes.js'; // Importe suas rotas de aula
 import usuarioRoutes from './routes/usuario.routes.js'; // Importe suas rotas de usuário
 import alunoRoutes from './routes/aluno.routes.js'; // Importe as rotas de aluno
-import documentoRoutes from './routes/documento.routes.js'; // Importe as rotas de documento
 import responsavelAlunoRoutes from './routes/responsavel-aluno.routes.js'; // Importe as rotas de responsavel-aluno
 import presencaRoutes from './routes/presenca.routes.js'; // Importe as rotas de presença
 import responsavelRoutes from './routes/responsavel.routes.js'; // Importe as rotas de responsavel
@@ -42,7 +41,6 @@ app.use((err, req, res, next) => {
 app.use('/api/v2/aulas', aulaRoutes); // Rotas de aula sob /api/v2/aulas
 app.use('/api/v2/usuarios', usuarioRoutes); // Rotas de usuário sob /api/v2/usuarios
 app.use('/api/v2/alunos', alunoRoutes); // Rotas de aluno sob /api/v2/alunos
-app.use('/api/v2/documentos', documentoRoutes); // Rotas de documento sob /api/v2/documentos
 app.use('/api/v2/responsaveis-alunos', responsavelAlunoRoutes); // Rotas de responsavel-aluno sob /api/v2/responsaveis-alunos
 app.use('/api/v2/presencas', presencaRoutes); // Rotas de presença sob /api/v2/presencas
 app.use('/api/v2/responsaveis', responsavelRoutes); // Rotas de responsavel sob /api/v2/responsaveis

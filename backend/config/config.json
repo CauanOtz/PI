@@ -1,11 +1,12 @@
 {
   "development": {
-    "username": "root",
+    "username": null,
     "password": null,
-    "database": "seu_banco_de_dados",
+    "database": "database_development",
     "host": "127.0.0.1",
     "dialect": "sqlite",
-    "storage": "./dev.sqlite"
+    "storage": "./dev.sqlite",
+    "logging": false
   },
   "test": {
     "username": "root",

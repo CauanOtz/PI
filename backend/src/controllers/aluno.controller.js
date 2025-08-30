@@ -4,6 +4,8 @@ import { sequelize } from '../config/database.js';
 import Usuario from '../models/Usuario.model.js'; // Modelo de Usuário para os Responsáveis
 import { Op } from 'sequelize';
 import ResponsavelAluno from '../models/ResponsavelAluno.model.js'; // Modelo de associação para Many-to-Many
+import Documento from '../models/Documento.model.js'; // Modelo de documento para inclusão na exclusão
+import fs from 'fs'; // Importando o módulo fs para manipulação de arquivos
 
 /**
  * @openapi
@@ -40,7 +42,7 @@ import ResponsavelAluno from '../models/ResponsavelAluno.model.js'; // Modelo de
  *           type: string
  *         description: Termo de busca para filtrar alunos por nome
  *       - in: query
- *         name: responsavelId
+ *         name: responsaveisIds
  *         schema:
  *           type: integer
  *         description: ID do responsável para filtrar alunos associados a ele.
@@ -167,7 +169,7 @@ export const obterAlunoPorId = async (req, res, next) => {
           model: Usuario,
           as: 'responsaveis',
           attributes: ['id', 'nome', 'email', 'telefone'],
-          through: { attributes: [] }
+          through: { attributes: [] } // Não queremos os campos da tabela de junção na resposta do aluno
         }
       ]
     });
@@ -281,18 +283,16 @@ export const criarAluno = async (req, res, next) => {
       contato,
     }, { transaction });
 
-    // --- CORREÇÃO PRINCIPAL AQUI ---
-    // Em vez de usar novoAluno.addResponsaveis, criamos as entradas na tabela de junção manualmente.
-    // Isso é mais explícito e garantido de funcionar.
-    const associacoesParaCriar = responsaveisExistentes.map(responsavel => {
-      return {
-        id_aluno: novoAluno.id,
-        id_usuario: responsavel.id
-      };
-    });
-
-    await ResponsavelAluno.bulkCreate(associacoesParaCriar, { transaction });
-    // --- FIM DA CORREÇÃO ---
+    // Cria as associações na tabela de junção
+    if (responsaveisExistentes && responsaveisExistentes.length > 0) {
+      // Usando o método addResponsaveis que é criado automaticamente pelo Sequelize
+      // para a associação belongsToMany
+      await novoAluno.addResponsaveis(responsaveisExistentes, { transaction });
+      
+      // Log para depuração
+      console.log(`Associações criadas para o aluno ID ${novoAluno.id} com os responsáveis:`, 
+        responsaveisExistentes.map(r => r.id).join(', '));
+    }
 
     // Finaliza a transação com sucesso
     await transaction.commit();
@@ -511,30 +511,26 @@ export const excluirAluno = async (req, res, next) => {
       await transaction.rollback();
       return res.status(400).json({
         sucesso: false,
-        mensagem: 'ID do aluno inválido',
-        detalhes: 'O ID deve ser um número inteiro válido'
+        mensagem: 'ID do aluno inválido'
       });
     }
 
-    // Primeiro, verifica se o aluno existe
     const aluno = await Aluno.findByPk(alunoId, { transaction });
     
     if (!aluno) {
       await transaction.rollback();
       return res.status(404).json({
         sucesso: false,
-        mensagem: 'Aluno não encontrado',
-        detalhes: `Nenhum aluno encontrado com o ID ${alunoId}`
+        mensagem: 'Aluno não encontrado'
       });
     }
 
-    // Remove todas as associações na tabela de junção primeiro
-    await ResponsavelAluno.destroy({
-      where: { id_aluno: alunoId },
-      transaction
-    });
-
-    // Agora remove o aluno
+    // --- LÓGICA SIMPLIFICADA ---
+    // O método 'destroy' irá acionar as regras 'ON DELETE CASCADE' no banco de dados,
+    // que apagarão automaticamente todos os registros dependentes nas tabelas:
+    // - documentos
+    // - responsaveis_alunos
+    // - presencas
     await aluno.destroy({ transaction });
     
     // Se chegou até aqui, tudo deu certo
@@ -548,8 +544,9 @@ export const excluirAluno = async (req, res, next) => {
     if (error.name === 'SequelizeForeignKeyConstraintError') {
       return res.status(400).json({
         sucesso: false,
-        mensagem: 'Não foi possível excluir o aluno',
-        detalhes: 'Existem registros associados a este aluno que precisam ser removidos primeiro.'
+        mensagem: 'Não foi possível excluir o aluno.',
+        detalhes: 'Este aluno ainda possui registros dependentes (como presenças) que não puderam ser removidos.',
+        erro: error.message
       });
     }
     

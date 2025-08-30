@@ -7,7 +7,11 @@ import {
   validateAlunoId,
   validateListarAlunos,
 } from '../middlewares/validators/aluno.validator.js';
+import { validateAdicionarDocumento, validateListarDocumentos, validateObterDocumento, validateAtualizarDocumento, validateExcluirDocumento, validateDownloadDocumento } from '../middlewares/validators/documento.validator.js';
+import { adicionarDocumento, listarDocumentos, obterDocumento, atualizarDocumento, excluirDocumento, downloadDocumento } from '../controllers/documento.controller.js';
+import upload from '../middlewares/upload.middleware.js';
 import { autenticar } from '../middlewares/auth.middleware.js';
+import { sequelize } from '../config/database.js';
 
 const router = Router();
 
@@ -221,5 +225,104 @@ router.put('/:id', autenticar, validateAlunoId, validateUpdateAluno, alunoContro
  *         description: Aluno não encontrado
  */
 router.delete('/:id', autenticar, validateAlunoId, alunoController.excluirAluno);
+
+router.post(
+  '/:alunoId/documentos',
+  autenticar,
+  upload.single('documento'),
+  validateAdicionarDocumento,
+  adicionarDocumento
+);
+
+// Rota para listar documentos de um aluno
+router.get(
+  '/:alunoId/documentos',
+  autenticar,
+  validateListarDocumentos,
+  listarDocumentos
+);
+
+// Rota para obter um documento específico
+router.get(
+  '/:alunoId/documentos/:documentoId',
+  autenticar,
+  validateObterDocumento,
+  obterDocumento
+);
+
+
+// Rota para atualizar um documento
+router.put(
+  '/:alunoId/documentos/:documentoId',
+  autenticar,
+  validateAtualizarDocumento,
+  atualizarDocumento
+);
+
+
+// Rota para excluir um documento
+router.delete(
+  '/:alunoId/documentos/:documentoId',
+  autenticar,
+  validateExcluirDocumento,
+  excluirDocumento
+);
+
+// Rota para download de documento
+router.get(
+  '/:alunoId/documentos/:documentoId/download',
+  autenticar,
+  validateDownloadDocumento,
+  downloadDocumento
+);
+
+// Rota de depuração para verificar os registros em responsaveis_alunos
+router.get('/debug/vinculos', autenticar, async (req, res) => {
+  try {
+    const { id } = req.usuario;
+    
+    // Verifica se o usuário é admin
+    if (req.usuario.role !== 'admin') {
+      return res.status(403).json({ mensagem: 'Apenas administradores podem acessar esta rota' });
+    }
+    
+    // Consulta todos os registros da tabela responsaveis_alunos
+    const vinculos = await sequelize.query(
+      'SELECT * FROM responsaveis_alunos',
+      { type: sequelize.QueryTypes.SELECT }
+    );
+    
+    // Consulta os usuários
+    const usuarios = await sequelize.query(
+      'SELECT id, nome, email, role FROM usuarios',
+      { type: sequelize.QueryTypes.SELECT }
+    );
+    
+    // Consulta os alunos
+    const alunos = await sequelize.query(
+      'SELECT id, nome FROM alunos',
+      { type: sequelize.QueryTypes.SELECT }
+    );
+    
+    // Mapeia os resultados para incluir informações detalhadas
+    const resultado = vinculos.map(vinculo => ({
+      ...vinculo,
+      usuario: usuarios.find(u => u.id === vinculo.id_usuario),
+      aluno: alunos.find(a => a.id === vinculo.id_aluno)
+    }));
+    
+    res.status(200).json({
+      total: resultado.length,
+      vinculos: resultado
+    });
+    
+  } catch (error) {
+    console.error('Erro na rota de depuração:', error);
+    res.status(500).json({ 
+      mensagem: 'Erro ao consultar vínculos',
+      erro: error.message 
+    });
+  }
+});
 
 export default router;

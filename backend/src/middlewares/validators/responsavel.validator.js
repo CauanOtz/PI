@@ -1,5 +1,6 @@
 import { body, param, validationResult } from 'express-validator';
 
+
 // Middleware genérico para lidar com os erros de validação
 const handleValidationErrors = (req, res, next) => {
   const errors = validationResult(req);

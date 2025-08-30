@@ -110,12 +110,16 @@ const Presenca = sequelize.define('Presenca', {
 Presenca.associate = (models) => {
   Presenca.belongsTo(models.Aluno, {
     foreignKey: 'idAluno',
-    as: 'aluno'
+    as: 'aluno',
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE' 
   });
   
   Presenca.belongsTo(models.Aula, {
     foreignKey: 'idAula',
-    as: 'aula'
+    as: 'aula',
+    onUpdate: 'CASCADE',
+    onDelete: 'CASCADE' 
   });
 };
 

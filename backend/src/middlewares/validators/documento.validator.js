@@ -40,12 +40,12 @@ export const validateListarDocumentos = [
 export const validateObterDocumento = [
   param('alunoId')
     .isInt({ min: 1 })
-    .withMessage('ID do aluno inválido')
+    .withMessage('O ID do aluno deve ser um número inteiro positivo.')
     .toInt(),
     
   param('documentoId')
-    .isUUID('4')
-    .withMessage('ID do documento inválido'),
+    .isInt({ min: 1 })
+    .withMessage('O ID do documento deve ser um número inteiro positivo.'),
   
   (req, res, next) => {
     const errors = validationResult(req);
@@ -63,7 +63,7 @@ export const validateAtualizarDocumento = [
     .toInt(),
     
   param('documentoId')
-    .isUUID('4')
+    .isInt({ min: 1 })
     .withMessage('ID do documento inválido'),
   
   body('nome')
@@ -105,7 +105,7 @@ export const validateExcluirDocumento = [
     .toInt(),
     
   param('documentoId')
-    .isUUID('4')
+    .isInt({ min: 1 })
     .withMessage('ID do documento inválido'),
   
   (req, res, next) => {
@@ -118,8 +118,13 @@ export const validateExcluirDocumento = [
 ];
 
 export const validateDownloadDocumento = [
+  param('alunoId')
+    .isInt({ min: 1 })
+    .withMessage('ID do aluno inválido')
+    .toInt(),
+    
   param('documentoId')
-    .isUUID('4')
+    .isInt({ min: 1 })
     .withMessage('ID do documento inválido'),
   
   (req, res, next) => {
