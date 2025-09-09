@@ -266,10 +266,10 @@ export const listarPresencasPorAula = async (req, res, next) => {
         { 
           model: Aluno, 
           as: 'aluno', 
-          attributes: ['id', 'nome', 'matricula'] 
+          attributes: ['id', 'nome'] 
         }
       ],
-      order: [['aluno', 'nome', 'ASC']]
+      order: [[ 'aluno', 'nome', 'ASC' ]]
     });
     
     return sendSuccess(res, 200, {
@@ -362,7 +362,7 @@ export const listarHistoricoAluno = async (req, res, next) => {
       aluno: {
         id: aluno.id,
         nome: aluno.nome,
-        matricula: aluno.matricula
+        matricula: aluno.id // Substituído por ID, já que matrícula não existe
       },
       historico: presencas
     });

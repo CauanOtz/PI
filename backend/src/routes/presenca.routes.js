@@ -205,6 +205,30 @@ router.get('/',
   listarPresencas
 );
 
+router.get('/aulas/:idAula', 
+  autenticar, 
+  validatePresencasPorAula,
+  listarPresencasPorAula
+);
+
+router.get('/alunos/:idAluno', 
+  autenticar, 
+  validateHistoricoAluno,
+  listarHistoricoAluno
+);
+
+router.get('/aulas/:idAula', 
+  autenticar, 
+  validatePresencasPorAula,
+  listarPresencasPorAula
+);
+
+router.get('/alunos/:idAluno', 
+  autenticar, 
+  validateHistoricoAluno,
+  listarHistoricoAluno
+);
+
 /**
  * @openapi
  * /presencas/aulas/{idAula}:
@@ -242,11 +266,6 @@ router.get('/',
  *       404:
  *         description: Aula não encontrada
  */
-router.get('/aulas/:idAula', 
-  autenticar, 
-  validatePresencasPorAula,
-  listarPresencasPorAula
-);
 
 /**
  * @openapi
@@ -291,11 +310,6 @@ router.get('/aulas/:idAula',
  *       404:
  *         description: Aluno não encontrado
  */
-router.get('/alunos/:idAluno', 
-  autenticar, 
-  validateHistoricoAluno,
-  listarHistoricoAluno
-);
 
 /**
  * @openapi

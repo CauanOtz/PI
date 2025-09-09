@@ -86,27 +86,26 @@ const Aula = sequelize.define('Aula', {
   timestamps: true,
 });
 
-// Relacionamento com Usuario (Responsável)
-Aula.belongsTo(Usuario, {
-  foreignKey: 'responsavel_id',
-  as: 'responsavel'
-});
+Aula.associate = (models) => {
+  // Relacionamento com Usuario (Responsável)
+  Aula.belongsTo(models.Usuario, {
+    foreignKey: 'responsavel_id',
+    as: 'responsavel'
+  });
 
-// Relacionamento com Usuario (Professor)
-Aula.belongsTo(Usuario, {
-  foreignKey: 'professor_id',
-  as: 'professor'
-});
+  // Relacionamento com Usuario (Professor)
+  Aula.belongsTo(models.Usuario, {
+    foreignKey: 'professor_id',
+    as: 'professor'
+  });
 
-// Se você quiser acessar as aulas de um usuário
-Usuario.hasMany(Aula, {
-  foreignKey: 'responsavel_id',
-  as: 'aulasResponsavel'
-});
+  // Relacionamento com Presenca
+  Aula.hasMany(models.Presenca, {
+    foreignKey: 'idAula',
+    as: 'presencas',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  });
+};
 
-Usuario.hasMany(Aula, {
-  foreignKey: 'professor_id',
-  as: 'aulasProfessor'
-});
-
-export default Aula ;
+export default Aula;

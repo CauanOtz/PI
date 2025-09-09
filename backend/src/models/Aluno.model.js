@@ -157,6 +157,14 @@ Aluno.associate = (models) => {
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
   });
+
+  // Association with Presenca
+  Aluno.hasMany(models.Presenca, {
+    foreignKey: 'idAluno',
+    as: 'presencas',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  });
 };
 
 export default Aluno;

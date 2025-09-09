@@ -136,6 +136,17 @@ Usuario.associate = (models) => {
     foreignKey: 'usuarioId',
     as: 'documentos'
   });
+
+  // Association with Aula
+  Usuario.hasMany(models.Aula, {
+    foreignKey: 'responsavel_id',
+    as: 'aulasResponsavel'
+  });
+
+  Usuario.hasMany(models.Aula, {
+    foreignKey: 'professor_id',
+    as: 'aulasProfessor'
+  });
 };
 
 // Método para verificar a senha

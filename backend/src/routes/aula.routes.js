@@ -28,13 +28,11 @@ router.get('/', aulaController.listarAulas);
 // Rota para criar uma nova aula
 router.post('/', validateCreateAula, aulaController.criarAula);
 
-// Rota para obter uma aula específica
-router.get('/:id', aulaController.getAulaPorId);
-
 // Rota para atualizar uma aula existente
 router.put('/:id', validateUpdateAula, aulaController.atualizarAula);
 
 // Rota para remover uma aula
 router.delete('/:id', aulaController.excluirAula);
+
 
 export default router;
