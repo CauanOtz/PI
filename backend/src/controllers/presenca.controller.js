@@ -196,7 +196,7 @@ export const listarPresencas = async (req, res, next) => {
       where: whereClause,
       include: [
         { model: Aluno, as: 'aluno', attributes: ['id', 'nome'] },
-        { model: Aula, as: 'aula', attributes: ['id', 'nome'] }
+        { model: Aula, as: 'aula', attributes: ['id', 'titulo'] }
       ],
       order: [['data_registro', 'DESC']]
     });
