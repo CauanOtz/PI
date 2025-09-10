@@ -3,23 +3,34 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { PencilIcon } from "lucide-react";
 
-interface Student {
+interface BackendResponsavel {
   id: number;
-  name: string;
-  email: string;
-  class: string;
-  registrationNumber: string;
-  status: 'active' | 'inactive';
+  nome?: string;
+}
+
+interface EditStudentData {
+  id: number;
+  nome: string;
+  idade?: number;
+  endereco?: string;
+  contato?: string;
+  responsaveisIds?: number[];
 }
 
 interface EditStudentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  student: Student | null;
-  onSubmit: (data: Student) => void;
+  student: {
+    id: number;
+    nome: string;
+    idade?: number;
+    endereco?: string | null;
+    contato?: string | null;
+    responsaveis?: BackendResponsavel[];
+  } | null;
+  onSubmit: (data: EditStudentData) => void;
 }
 
 export const EditStudentModal: React.FC<EditStudentModalProps> = ({
@@ -28,17 +39,52 @@ export const EditStudentModal: React.FC<EditStudentModalProps> = ({
   student,
   onSubmit,
 }) => {
-  const [formData, setFormData] = React.useState<Student | null>(student);
+  const [formData, setFormData] = React.useState<EditStudentData | null>(null);
+  const [responsaveisInput, setResponsaveisInput] = React.useState<string>("");
+
+  // mesmo formatador usado no create
+  const formatPhone = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 11);
+    if (!digits) return "";
+    if (digits.length <= 2) return `(${digits}`;
+    if (digits.length <= 6) return `(${digits.slice(0,2)}) ${digits.slice(2)}`;
+    if (digits.length <= 10) return `(${digits.slice(0,2)}) ${digits.slice(2,6)}-${digits.slice(6)}`;
+    return `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7)}`;
+  };
 
   React.useEffect(() => {
-    setFormData(student);
+    if (student) {
+      setFormData({
+        id: student.id,
+        nome: student.nome,
+        idade: student.idade,
+        endereco: student.endereco ?? "",
+        contato: student.contato ?? "",
+        responsaveisIds: student.responsaveis?.map(r => r.id) ?? [],
+      });
+      setResponsaveisInput((student.responsaveis?.map(r => r.id).join(",")) ?? "");
+    } else {
+      setFormData(null);
+      setResponsaveisInput("");
+    }
   }, [student]);
 
   if (!formData) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    const responsaveisIds = responsaveisInput
+      .split(",")
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(Number)
+      .filter(n => !Number.isNaN(n));
+
+    onSubmit({
+      ...formData,
+      idade: formData.idade ? Number(formData.idade) : undefined,
+      responsaveisIds,
+    });
   };
 
   return (
@@ -53,66 +99,55 @@ export const EditStudentModal: React.FC<EditStudentModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nome completo</Label>
+            <Label htmlFor="nome">Nome completo</Label>
             <Input
-              id="name"
+              id="nome"
               placeholder="Digite o nome do aluno"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev!, name: e.target.value }))}
+              value={formData.nome}
+              onChange={(e) => setFormData(prev => ({ ...prev!, nome: e.target.value }))}
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="idade">Idade</Label>
             <Input
-              id="email"
-              type="email"
-              placeholder="email@escola.com"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev!, email: e.target.value }))}
-              required
+              id="idade"
+              type="number"
+              placeholder="Ex: 10"
+              value={formData.idade ?? ""}
+              onChange={(e) => setFormData(prev => ({ ...prev!, idade: e.target.value ? Number(e.target.value) : undefined }))}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="class">Turma</Label>
+            <Label htmlFor="endereco">Endereço</Label>
             <Input
-              id="class"
-              placeholder="Ex: 9º Ano A"
-              value={formData.class}
-              onChange={(e) => setFormData(prev => ({ ...prev!, class: e.target.value }))}
-              required
+              id="endereco"
+              placeholder="Rua, número, bairro"
+              value={formData.endereco ?? ""}
+              onChange={(e) => setFormData(prev => ({ ...prev!, endereco: e.target.value }))}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="registrationNumber">Matrícula</Label>
+            <Label htmlFor="contato">Contato</Label>
             <Input
-              id="registrationNumber"
-              placeholder="Ex: 2024001"
-              value={formData.registrationNumber}
-              onChange={(e) => setFormData(prev => ({ ...prev!, registrationNumber: e.target.value }))}
-              required
+              id="contato"
+              placeholder="(11) 9xxxx-xxxx"
+              value={formData.contato ?? ""}
+              onChange={(e) => setFormData(prev => ({ ...prev!, contato: formatPhone(e.target.value) }))}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="status">Status</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value: 'active' | 'inactive') => 
-                setFormData(prev => ({ ...prev!, status: value }))
-              }
-            >
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Selecione o status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="active">Ativo</SelectItem>
-                <SelectItem value="inactive">Inativo</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label htmlFor="responsaveis">IDs dos responsáveis (ex: 1,2)</Label>
+            <Input
+              id="responsaveis"
+              placeholder="IDs separados por vírgula"
+              value={responsaveisInput}
+              onChange={(e) => setResponsaveisInput(e.target.value)}
+            />
           </div>
 
           <DialogFooter>
