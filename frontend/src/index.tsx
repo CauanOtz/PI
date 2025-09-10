@@ -14,6 +14,7 @@ import { Calendar } from "./screens/Calendar/Calendar";
 import { Toaster } from 'sonner';
 import { AuthProvider } from "./context/AuthProvider";
 import PrivateRoute from "./routes/PrivateRoute";
+import { Users } from "./screens/Users/Users";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
             <Route path="/settings" element={<Settings />} />
             <Route path="/exams" element={<Exams />} />
             <Route path="/calendar" element={<Calendar />} />
+            <Route path="/users" element={<Users />} />
           </Route>
         </Routes>
       </AuthProvider>

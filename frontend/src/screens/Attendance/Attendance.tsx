@@ -6,7 +6,7 @@ import { SidebarSection } from "../../components/layout/SidebarSection";
 import { Checkbox } from "../../components/ui/checkbox";
 import { CalendarIcon, PencilIcon, SaveIcon, XIcon, TrashIcon } from "lucide-react";
 import { toast } from "sonner";
-import { DeleteConfirmationModal } from "../../components/modals/DeleteConfirmationModal";
+import { DeleteConfirmationModal } from "../../components/modals/shared/DeleteConfirmationModal";
 
 interface Student {
   id: number;

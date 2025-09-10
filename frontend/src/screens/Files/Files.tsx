@@ -13,9 +13,9 @@ import {
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
-import { CreateReportModal } from "../../components/modals/CreateReportModal";
-import { EditReportModal } from "../../components/modals/EditReportModal";
-import { DeleteConfirmationModal } from "../../components/modals/DeleteConfirmationModal";
+import { CreateReportModal } from "../../components/modals/report/CreateReportModal";
+import { EditReportModal } from "../../components/modals/report/EditReportModal";
+import { DeleteConfirmationModal } from "../../components/modals/shared/DeleteConfirmationModal";
 import { toast } from "sonner";
 
 interface Report {

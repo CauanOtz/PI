@@ -45,6 +45,11 @@ export const SidebarSection = (): JSX.Element => {
       path: "/students",
     },
     {
+      icon: <UsersIcon className="w-4 h-4 text-cyan-400" />,
+      label: "Usuários",
+      path: "/users",
+    },
+    {
       icon: <CalendarIcon className="w-4 h-4 text-green-400" />,
       label: "Calendário",
       path: "/calendar",
