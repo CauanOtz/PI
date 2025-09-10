@@ -31,7 +31,7 @@ export const Login = () => {
       navigate("/dashboard");
     } catch (err: any) {
       console.error(err);
-      toast.error(err?.response?.data?.mensagem || "Falha no login. Verifique suas credenciais.");
+      toast.error(err?.response?.data?.mensagem || "Falha ao entrar");
     }
   };
 
