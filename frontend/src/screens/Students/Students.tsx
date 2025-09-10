@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { SidebarSection } from "../../components/layout/SidebarSection";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -21,7 +21,7 @@ export const Students = (): JSX.Element => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<BackendAluno | null>(null);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page] = useState(1);
   const [limit] = useState(10);
 
   const load = async () => {
@@ -92,10 +92,10 @@ export const Students = (): JSX.Element => {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-4">Nome</th>
-                    <th className="text-left p-4 hidden sm:table-cell">Contato</th>
-                    <th className="text-left p-4 hidden md:table-cell">Endereço</th>
-                    <th className="text-left p-4 hidden lg:table-cell">Idade</th>
-                    <th className="text-right p-4">Ações</th>
+                    <th className="text-center p-4 hidden sm:table-cell">Contato</th>
+                    <th className="text-center p-4 hidden md:table-cell">Endereço</th>
+                    <th className="text-center p-4 hidden lg:table-cell">Idade</th>
+                    <th className="text-center p-4">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -112,11 +112,11 @@ export const Students = (): JSX.Element => {
                             <div className="text-sm text-gray-500 sm:hidden">{student.contato}</div>
                           </div>
                         </td>
-                        <td className="p-4 hidden sm:table-cell">{student.contato}</td>
-                        <td className="p-4 hidden md:table-cell">{student.endereco}</td>
-                        <td className="p-4 hidden lg:table-cell">{student.idade ?? "-"}</td>
+                        <td className="p-4 text-center hidden sm:table-cell">{student.contato}</td>
+                        <td className="p-4 text-center hidden md:table-cell">{student.endereco}</td>
+                        <td className="p-4 text-center hidden lg:table-cell">{student.idade ?? "-"}</td>
                         <td className="p-4">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-center gap-2">
                             <Button
                               variant="ghost"
                               size="sm"

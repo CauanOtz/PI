@@ -1,6 +1,6 @@
 import { http } from "../lib/http";
 
-export const responsavelAlunoService = {
+export const studentResponsibleService = {
   // body: { idUsuario: number, idAluno: number }
   vincular(payload: { idUsuario: number; idAluno: number }) {
     return http.post("/responsaveis-alunos", payload).then(r => r.data);

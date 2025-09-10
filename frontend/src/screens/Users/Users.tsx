@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { CreateUserModal, EditUserModal } from "../../components/modals/users";
 import { DeleteConfirmationModal } from "../../components/modals/shared";
 import { usuariosService, BackendUsuario, CreateUserPayload, EditUserPayload } from "../../services/users";
-import { responsavelAlunoService } from "../../services/responsavelAluno";
+import { studentResponsibleService } from "../../services/studentResponsible";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../components/ui/dialog";
 import ResponsavelStudentsModal from "../../components/modals/users/ResponsavelStudentsModal";
 
@@ -39,7 +39,7 @@ export const Users = (): JSX.Element => {
       if (responsaveis.length > 0) {
         const promises = responsaveis.map(async r => {
           try {
-            const res = await responsavelAlunoService.listByResponsavel(r.id);
+            const res = await studentResponsibleService.listByResponsavel(r.id);
             // suporta resposta paginada e wrappers: res | res.dados | res.data
             const body = (res as any);
             const payload = body?.dados ?? body?.data ?? body;
@@ -86,7 +86,7 @@ export const Users = (): JSX.Element => {
     }
 
     try {
-      const res = await responsavelAlunoService.listByResponsavel(usuarioId);
+      const res = await studentResponsibleService.listByResponsavel(usuarioId);
       console.debug("openStudentsModal - raw response:", res);
 
       const candidates = [
@@ -200,11 +200,11 @@ export const Users = (): JSX.Element => {
                 <thead>
                   <tr className="border-b">
                     <th className="text-left p-4">Nome</th>
-                    <th className="text-left p-4 hidden sm:table-cell">Papel</th>
-                    <th className="text-left p-4 hidden sm:table-cell">Alunos</th>
-                    <th className="text-left p-4 hidden sm:table-cell">Email</th>
-                    <th className="text-left p-4 hidden md:table-cell">Telefone</th>
-                    <th className="text-right p-4">Ações</th>
+                    <th className="text-center p-4 hidden sm:table-cell">Papel</th>
+                    <th className="text-center p-4 hidden sm:table-cell">Alunos</th>
+                    <th className="text-center p-4 hidden sm:table-cell">Email</th>
+                    <th className="text-center p-4 hidden md:table-cell">Telefone</th>
+                    <th className="text-center p-4">Ações</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -216,18 +216,18 @@ export const Users = (): JSX.Element => {
                     items.map(item => (
                       <tr key={item.id} className="border-b last:border-0">
                         <td className="p-4"><div className="font-medium">{item.nome}</div></td>
-                        <td className="p-4 hidden sm:table-cell">{item.role ?? "-"}</td>
-                        <td className="p-4 hidden sm:table-cell">
+                        <td className="p-4 text-center hidden sm:table-cell">{item.role ?? "-"}</td>
+                        <td className="p-4 text-center hidden sm:table-cell">
                           {item.role === "responsavel" ? (
                             <Button size="sm" variant="ghost" onClick={() => openStudentsModal(item.id)}>
                               Ver alunos ({studentsCount[item.id] ?? "—"})
                             </Button>
                           ) : "-"}
                         </td>
-                        <td className="p-4 hidden sm:table-cell">{item.email ?? "-"}</td>
-                        <td className="p-4 hidden md:table-cell">{item.telefone ?? "-"}</td>
+                        <td className="p-4 text-center hidden sm:table-cell">{item.email ?? "-"}</td>
+                        <td className="p-4 text-center hidden md:table-cell">{item.telefone ?? "-"}</td>
                         <td className="p-4">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex justify-center gap-2">
                             <Button variant="ghost" size="sm" onClick={() => setEditing(item)} className="text-blue-600 hover:text-blue-700"><PencilIcon className="w-4 h-4" /></Button>
                             <Button variant="ghost" size="sm" onClick={() => setToDelete(item)} className="text-red-600 hover:text-red-700"><TrashIcon className="w-4 h-4" /></Button>
                           </div>
@@ -270,7 +270,7 @@ export const Users = (): JSX.Element => {
             const createdUser = (res as any).usuarioSemSenha ?? (res as any).usuario ?? null;
             if (createdUser && data.alunoId && typeof createdUser.id === 'number') {
               try {
-                await responsavelAlunoService.vincular({ idUsuario: createdUser.id, idAluno: data.alunoId });
+                await studentResponsibleService.vincular({ idUsuario: createdUser.id, idAluno: data.alunoId });
               } catch (linkErr) {
                 console.error("Falha ao vincular responsavel->aluno:", linkErr);
                 toast.error("Usuário criado, mas falha ao vincular ao aluno.");
@@ -296,7 +296,7 @@ export const Users = (): JSX.Element => {
              await usuariosService.updateByCPF(data.cpf, { nome: data.nome, email: data.email, telefone: data.telefone, ...(data.role ? { role: data.role } : {}) });
            if (data.role === "responsavel" && data.alunoId && editing?.id) {
              try {
-               await responsavelAlunoService.vincular({ idUsuario: editing.id, idAluno: data.alunoId });
+               await studentResponsibleService.vincular({ idUsuario: editing.id, idAluno: data.alunoId });
              } catch (linkErr) {
                console.error("Falha ao vincular responsavel->aluno:", linkErr);
                toast.error("Usuário atualizado, mas falha ao vincular ao aluno.");
