@@ -1,43 +1,41 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { SidebarSection } from "../../components/layout/SidebarSection";
 import {
   FileTextIcon,
   UsersIcon,
   ClipboardCheckIcon,
   BarChart2Icon,
-  BookOpenIcon,
   CalendarIcon,
-  BellIcon,
   TrendingUpIcon,
   AlertCircleIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "../../components/ui/card";
-import { Progress } from "../../components/ui/progress";
 import { NotificationsDropdown } from "../../components/ui/notifications-dropdown";
 import { toast } from "sonner";
-
-interface StatCard {
-  title: string;
-  value: string;
-  change: number;
-  icon: JSX.Element;
-}
+import { dashboardService } from "../../services/dashboard";
 
 export const Dashboard = (): JSX.Element => {
   const navigate = useNavigate();
 
-  const stats: StatCard[] = [
+  const [totalAlunos, setTotalAlunos] = useState<number | null>(null);
+  const [presenceAvg, setPresenceAvg] = useState<number | null>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const stats = [
     {
       title: "Total de Alunos",
-      value: "248",
-      change: 12,
+      value: totalAlunos !== null ? String(totalAlunos) : "...",
+      change: 0,
       icon: <UsersIcon className="w-4 h-4 text-blue-500" />,
     },
     {
       title: "Média de Presença",
-      value: "92%",
-      change: 4,
+      value: presenceAvg !== null ? `${presenceAvg}%` : "...",
+      change: 0,
       icon: <ClipboardCheckIcon className="w-4 h-4 text-green-500" />,
     },
   ];
@@ -73,90 +71,49 @@ export const Dashboard = (): JSX.Element => {
     },
   ];
 
-  const recentActivities = [
-    {
-      icon: <ClipboardCheckIcon className="w-5 h-5 text-green-500" />,
-      description: "Chamada realizada - Turma 301",
-      time: "Há 2 horas",
-      type: "success",
-    },
-    {
-      icon: <BarChart2Icon className="w-5 h-5 text-blue-500" />,
-      description: "Notas registradas - Matemática",
-      time: "Há 1 dia",
-      type: "info",
-    },
-    {
-      icon: <AlertCircleIcon className="w-5 h-5 text-red-500" />,
-      description: "Aluno com baixa frequência - João Silva",
-      time: "Há 2 dias",
-      type: "warning",
-    },
-  ];
-
-  const upcomingEvents = [
-    {
-      title: "Reunião de Pais",
-      date: "15 Abril",
-      time: "19:00",
-      type: "meeting",
-    },
-    {
-      title: "Prova de Matemática",
-      date: "18 Abril",
-      time: "10:00",
-      type: "exam",
-    },
-  ];
-
-  const [notifications, setNotifications] = React.useState([
-    {
-      id: '1',
-      title: 'Nova avaliação registrada',
-      description: 'Prova de Matemática foi adicionada ao calendário',
-      time: 'Há 5 minutos',
-      type: 'info' as const,
-      read: false,
-    },
-    {
-      id: '2',
-      title: 'Chamada finalizada',
-      description: 'Presença registrada para a turma 301',
-      time: 'Há 2 horas',
-      type: 'success' as const,
-      read: false,
-    },
-    {
-      id: '3',
-      title: 'Alerta de frequência',
-      description: 'João Silva atingiu limite de faltas',
-      time: 'Há 1 dia',
-      type: 'warning' as const,
-      read: true,
-    },
-  ]);
+  // will be driven by backend; keep icons as fallback in render
+  // upcomingEvents will come from backend
 
   const handleReadNotification = (id: string) => {
-    setNotifications(prev =>
-      prev.map(notification =>
-        notification.id === id
-          ? { ...notification, read: true }
-          : notification
-      )
-    );
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   };
-
   const handleDeleteNotification = (id: string) => {
-    setNotifications(prev => prev.filter(notification => notification.id !== id));
-    toast.success('Notificação removida');
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+    toast.success("Notificação removida");
+  };
+  const handleMarkAllAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    toast.success("Todas as notificações foram marcadas como lidas");
   };
 
-  const handleMarkAllAsRead = () => {
-    setNotifications(prev =>
-      prev.map(notification => ({ ...notification, read: true }))
-    );
-    toast.success('Todas as notificações foram marcadas como lidas');
-  };
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const [alunosCount, notifs, activities, events] = await Promise.all([
+          dashboardService.getAlunosCount(),
+          dashboardService.getNotifications(),
+          dashboardService.getRecentActivities(),
+          dashboardService.getUpcomingEvents(),
+        ]);
+        if (!mounted) return;
+        setTotalAlunos(alunosCount ?? 0);
+        setNotifications(Array.isArray(notifs) ? notifs : []);
+        setRecentActivities(Array.isArray(activities) ? activities : []);
+        setUpcomingEvents(Array.isArray(events) ? events : []);
+        // presenceAvg not implemented in backend: keep null or compute later
+      } catch (err) {
+        console.error("Erro ao carregar dashboard:", err);
+        toast.error("Falha ao carregar dados do dashboard");
+      } finally {
+        if (mounted) setLoading(false);
+      }
+    })();
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   return (
     <div className="bg-gray-50 flex flex-row justify-center w-full min-h-screen mt-16">
@@ -187,10 +144,8 @@ export const Dashboard = (): JSX.Element => {
                   <div className="p-2 rounded-lg bg-gray-50">{stat.icon}</div>
                 </div>
                 <div className="flex items-center mt-4">
-                  <TrendingUpIcon className={`w-4 h-4 ${stat.change > 0 ? 'text-green-500' : 'text-red-500'} mr-1`} />
-                  <span className={`text-xs sm:text-sm ${stat.change > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {Math.abs(stat.change)}% em relação ao mês anterior
-                  </span>
+                  <TrendingUpIcon className={`w-4 h-4 text-gray-400 mr-1`} />
+                  <span className="text-xs sm:text-sm text-gray-500">Dados carregados do backend</span>
                 </div>
               </Card>
             ))}
@@ -204,9 +159,7 @@ export const Dashboard = (): JSX.Element => {
                 className={`${card.bgColor} p-4 sm:p-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 text-left w-full`}
               >
                 <div className="flex items-start space-x-4">
-                  <div className="p-2 sm:p-3 rounded-full bg-white shadow-sm">
-                    {card.icon}
-                  </div>
+                  <div className="p-2 sm:p-3 rounded-full bg-white shadow-sm">{card.icon}</div>
                   <div>
                     <h3 className="font-semibold text-gray-800">{card.title}</h3>
                     <p className="text-xs sm:text-sm text-gray-600 mt-1">{card.description}</p>
@@ -219,33 +172,45 @@ export const Dashboard = (): JSX.Element => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <Card className="p-4 sm:p-6">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Atividades Recentes</h2>
-              <div className="space-y-3 sm:space-y-4">
-                {recentActivities.map((activity, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 sm:p-3 rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center space-x-3 min-w-0">
-                      {activity.icon}
-                      <span className="text-gray-600 text-sm truncate">{activity.description}</span>
+              <div className="space-y-2">
+                {loading ? (
+                  <div className="text-sm text-gray-500">Carregando atividades...</div>
+                ) : recentActivities.length === 0 ? (
+                  <div className="text-sm text-gray-500">Sem atividades recentes.</div>
+                ) : (
+                  recentActivities.map((act: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <ClipboardCheckIcon className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <span className="text-gray-600 text-sm truncate">{act.description ?? act.title ?? act.nome ?? "Atividade"}</span>
+                      </div>
+                      <span className="text-xs sm:text-sm text-gray-400 ml-2">{act.time ?? act.createdAt ?? ""}</span>
                     </div>
-                    <span className="text-xs sm:text-sm text-gray-400 ml-2">{activity.time}</span>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </Card>
 
             <Card className="p-4 sm:p-6">
               <h2 className="text-lg sm:text-xl font-semibold text-gray-800 mb-4">Próximos Eventos</h2>
-              <div className="space-y-3 sm:space-y-4">
-                {upcomingEvents.map((event, index) => (
-                  <div key={index} className="flex items-center justify-between p-2 sm:p-3 rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center space-x-3">
-                      <CalendarIcon className="w-5 h-5 text-blue-500 flex-shrink-0" />
-                      <div className="min-w-0">
-                        <h4 className="font-medium text-gray-800 text-sm sm:text-base truncate">{event.title}</h4>
-                        <p className="text-xs sm:text-sm text-gray-500">{event.date} às {event.time}</p>
+              <div className="space-y-2">
+                {loading ? (
+                  <div className="text-sm text-gray-500">Carregando eventos...</div>
+                ) : upcomingEvents.length === 0 ? (
+                  <div className="text-sm text-gray-500">Sem eventos agendados.</div>
+                ) : (
+                  upcomingEvents.map((ev: any, idx: number) => (
+                    <div key={idx} className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50">
+                      <div className="flex items-center space-x-3">
+                        <CalendarIcon className="w-5 h-5 text-blue-500 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <h4 className="font-medium text-gray-800 text-sm sm:text-base truncate">{ev.title ?? ev.nome ?? "Evento"}</h4>
+                          <p className="text-xs sm:text-sm text-gray-500">{ev.date ?? ev.data ?? ""} {ev.time ?? ""}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </Card>
           </div>
@@ -254,3 +219,5 @@ export const Dashboard = (): JSX.Element => {
     </div>
   );
 };
+
+export default Dashboard;
