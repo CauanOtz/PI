@@ -12,7 +12,7 @@ import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
 import { Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
-import { DeleteConfirmationModal } from '../../components/modals/DeleteConfirmationModal'
+import { DeleteConfirmationModal } from '../../components/modals/shared/DeleteConfirmationModal'
 
 interface Task {
   id: string;

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "../../components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { toast } from "sonner";
-import { DeleteConfirmationModal } from "../../components/modals/DeleteConfirmationModal";
+import { DeleteConfirmationModal } from "../../components/modals/shared/DeleteConfirmationModal";
 
 interface Exam {
   id: string;

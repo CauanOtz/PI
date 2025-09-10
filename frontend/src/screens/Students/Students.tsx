@@ -9,9 +9,9 @@ import {
   TrashIcon,
 } from "lucide-react";
 import { toast } from "sonner";
-import { CreateStudentModal } from "../../components/modals/CreateStudentModal";
-import { EditStudentModal } from "../../components/modals/EditStudentModal";
-import { DeleteConfirmationModal } from "../../components/modals/DeleteConfirmationModal";
+import { CreateStudentModal } from "../../components/modals/students/CreateStudentModal";
+import { EditStudentModal } from "../../components/modals/students/EditStudentModal";
+import { DeleteConfirmationModal } from "../../components/modals/shared/DeleteConfirmationModal";
 import { studentsService, BackendAluno } from "../../services/students";
 
 export const Students = (): JSX.Element => {

@@ -64,16 +64,50 @@ import bcrypt from 'bcrypt';
  */
 export const registrarUsuario = async (req, res, next) => {
   try {
-    const { nome, email, senha, telefone, cpf, role = 'responsavel' } = req.body;
+    let { nome, email, senha, telefone, cpf, role = 'responsavel' } = req.body;
 
-    // Validação de campos obrigatórios
-    if (!cpf) {
-      return res.status(400).json({
-        message: 'O campo CPF é obrigatório.'
-      });
+    // não permitir que um request não autenticado / não-admin crie um admin
+    if (role === 'admin') {
+      const requesterRole = req.usuario && req.usuario.role ? req.usuario.role : null;
+      if (requesterRole !== 'admin') {
+        return res.status(403).json({ message: 'Apenas administradores podem criar usuários com role "admin".' });
+      }
     }
 
-    // Verifica se o e-mail já está cadastrado
+    // debug pra ver o que o frontend está enviando
+    // console.log('registrarUsuario - req.body.role:', req.body.role);
+    // console.log('registrarUsuario - full body:', req.body);
+  
+    if(!cpf){
+      return res.status(400).json({ message: 'CPF é obrigatório.' });
+    }
+  
+    // aceita apenas valores permitidos; se vier errado, mantemos 'responsavel'
+    const allowedRoles = ['admin', 'responsavel'];
+    role = (typeof role === 'string' && allowedRoles.includes(role)) ? role : 'responsavel';
+    
+    // limpa e formata CPF recebido (aceita dígitos ou já formatado)
+    const cpfDigits = (cpf || "").toString().replace(/\D/g, "");
+    if (!cpfDigits || cpfDigits.length !== 11) {
+      return res.status(400).json({ message: 'CPF inválido. Envie 11 dígitos.' });
+    }
+    const cpfFormatado = cpfDigits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    cpf = cpfFormatado; // sobrescreve para usar na criação/cheque
+
+    // normaliza/valida telefone (aceita dígitos ou máscara)
+    let telefoneFormatado = null;
+    if (telefone) {
+      const telDigits = telefone.toString().replace(/\D/g, "");
+      if (telDigits.length === 10) {
+        telefoneFormatado = `(${telDigits.slice(0,2)}) ${telDigits.slice(2,6)}-${telDigits.slice(6)}`;
+      } else if (telDigits.length === 11) {
+        telefoneFormatado = `(${telDigits.slice(0,2)}) ${telDigits.slice(2,7)}-${telDigits.slice(7)}`;
+      } else {
+        return res.status(400).json({ message: 'Telefone inválido. Informe 10 ou 11 dígitos.' });
+      }
+    }
+
+    // Verifica se o e-mail ou CPF já está cadastrado
     const usuarioExistente = await Usuario.findOne({
       where: { [Op.or]: [{ email }, { cpf }] }
     });
@@ -84,18 +118,18 @@ export const registrarUsuario = async (req, res, next) => {
       });
     }
 
-    // Cria o novo usuário
+    // Cria o novo usuário (cpf/telefone já no formato esperado pelo model)
     const novoUsuario = await Usuario.create({
       nome,
       email,
       senha, // A senha será hasheada pelo setter do modelo
-      telefone,
-      cpf,    // Incluindo o CPF no create
+      telefone: telefoneFormatado,
+      cpf,
       role
     });
 
-     // Gera o token JWT
-     const token = novoUsuario.gerarToken();
+    // Gera o token JWT
+    const token = novoUsuario.gerarToken();
 
     // Remove a senha do objeto de resposta
     const usuarioSemSenha = novoUsuario.get({ plain: true });
@@ -465,7 +499,7 @@ export const atualizarUsuarioPorCPF = async (req, res, next) => {
     }
 
     const { cpf } = req.params;
-    const { nome, email, telefone } = req.body;
+    const { nome, email, telefone, role } = req.body; // aceitar role no body
 
     // Formata o CPF para o formato do banco de dados
     const cpfFormatado = cpf.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
@@ -481,10 +515,37 @@ export const atualizarUsuarioPorCPF = async (req, res, next) => {
       });
     }
 
+    // Normaliza/valida telefone recebido (se houver)
+    let telefoneFormatado = undefined;
+    if (typeof telefone !== 'undefined') {
+      if (telefone === null || telefone === "") {
+        telefoneFormatado = null;
+      } else {
+        const telDigits = telefone.toString().replace(/\D/g, "");
+        if (telDigits.length === 10) {
+          telefoneFormatado = `(${telDigits.slice(0,2)}) ${telDigits.slice(2,6)}-${telDigits.slice(6)}`;
+        } else if (telDigits.length === 11) {
+          telefoneFormatado = `(${telDigits.slice(0,2)}) ${telDigits.slice(2,7)}-${telDigits.slice(7)}`;
+        } else {
+          return res.status(400).json({ mensagem: 'Telefone inválido. Informe 10 ou 11 dígitos.' });
+        }
+      }
+    }
+
     // Atualiza apenas os campos fornecidos
     if (nome) usuario.nome = nome;
     if (email) usuario.email = email;
-    if (telefone) usuario.telefone = telefone;
+    if (typeof telefoneFormatado !== 'undefined') usuario.telefone = telefoneFormatado;
+
+    // Atualiza role se foi fornecido e for válido
+    if (typeof role !== 'undefined') {
+      const allowedRoles = ['admin', 'responsavel'];
+      if (typeof role === 'string' && allowedRoles.includes(role)) {
+        usuario.role = role;
+      } else {
+        return res.status(400).json({ mensagem: 'Papel inválido. Use "admin" ou "responsavel".' });
+      }
+    }
 
     await usuario.save();
 

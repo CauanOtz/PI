@@ -1,6 +1,6 @@
 import React from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/dialog";
-import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../ui/dialog";
+import { Button } from "../../ui/button";
 import { AlertTriangleIcon } from "lucide-react";
 
 interface DeleteConfirmationModalProps {

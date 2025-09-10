@@ -1,6 +1,33 @@
 // src/middlewares/validators/usuario.validator.js
 import { query, body, validationResult, param } from 'express-validator';
 
+export const validarCPF = (cpf) => {
+  if (!cpf) return false;
+  cpf = cpf.toString().replace(/[^\d]/g, '');
+  if (cpf.length !== 11) return false;
+  
+  // Validação do CPF
+  let soma = 0;
+  let resto;
+  
+  for (let i = 1; i <= 9; i++) 
+    soma += parseInt(cpf.substring(i-1, i)) * (11 - i);
+  resto = (soma * 10) % 11;
+
+  if ((resto === 10) || (resto === 11)) resto = 0;
+  if (resto !== parseInt(cpf.substring(9, 10))) return false;
+
+  soma = 0;
+  for (let i = 1; i <= 10; i++) 
+    soma += parseInt(cpf.substring(i-1, i)) * (12 - i);
+  resto = (soma * 10) % 11;
+
+  if ((resto === 10) || (resto === 11)) resto = 0;
+  if (resto !== parseInt(cpf.substring(10, 11))) return false;
+  
+  return true;
+};
+
 // Middleware para validar o registro de um novo usuário
 export const validateRegistroUsuario = [
   body('nome')
@@ -17,8 +44,11 @@ export const validateRegistroUsuario = [
     .isLength({ min: 6 }).withMessage('A senha deve ter pelo menos 6 caracteres.'),
   body('telefone')
     .optional({ checkFalsy: true })
-    .trim()
-    .matches(/^\(?\d{2}\)?[\s-]?\d{4,5}-?\d{4}$/).withMessage('Telefone inválido.'),
+    .customSanitizer(v => (v ? v.toString().replace(/\D/g, '') : v))
+    .custom(v => {
+      if (v === undefined || v === null || v === '') return true;
+      return typeof v === 'string' && (v.length === 10 || v.length === 11);
+    }).withMessage('Telefone inválido. Informe 10 ou 11 dígitos.'),
   body('role')
     .optional()
     .isIn(['admin', 'responsavel']).withMessage('Papel inválido.'),
@@ -28,7 +58,7 @@ export const validateRegistroUsuario = [
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       const errorMessages = errors.array().map(error => ({
-        field: error.path,
+        field: error.param || error.path,
         message: error.msg,
       }));
       return res.status(400).json({ errors: errorMessages });
@@ -59,12 +89,11 @@ export const validateListarUsuarios = [
     .isIn(['admin', 'responsavel'])
     .withMessage('Papel inválido'),
 
-  // Middleware para processar os resultados da validação
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       const errorMessages = errors.array().map(error => ({
-        field: error.path,
+        field: error.param || error.path,
         message: error.msg,
       }));
       return res.status(400).json({ errors: errorMessages });
@@ -86,12 +115,11 @@ export const validateLogin = [
     .isLength({ min: 6 })
     .withMessage('Senha deve ter no mínimo 6 caracteres'),
 
-  // Middleware para processar os resultados da validação
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       const errorMessages = errors.array().map(error => ({
-        field: error.path,
+        field: error.param || error.path,
         message: error.msg,
       }));
       return res.status(400).json({ errors: errorMessages });
@@ -100,38 +128,12 @@ export const validateLogin = [
   },
 ];
 
-
-export const validarCPF = (cpf) => {
-  cpf = cpf.replace(/[^\d]/g, '');
-  if (cpf.length !== 11) return false;
-  
-  // Validação do CPF
-  let soma = 0;
-  let resto;
-  
-  for (let i = 1; i <= 9; i++) 
-    soma += parseInt(cpf.substring(i-1, i)) * (11 - i);
-  resto = (soma * 10) % 11;
-
-  if ((resto === 10) || (resto === 11)) resto = 0;
-  if (resto !== parseInt(cpf.substring(9, 10))) return false;
-
-  soma = 0;
-  for (let i = 1; i <= 10; i++) 
-    soma += parseInt(cpf.substring(i-1, i)) * (12 - i);
-  resto = (soma * 10) % 11;
-
-  if ((resto === 10) || (resto === 11)) resto = 0;
-  if (resto !== parseInt(cpf.substring(10, 11))) return false;
-  
-  return true;
-};
-
+// Buscar por CPF: sanitiza para somente dígitos e valida comprimento (não exige algoritmo)
 export const validateBuscarPorCPF = [
   param('cpf')
     .notEmpty().withMessage('CPF é obrigatório')
-    .isLength({ min: 11, max: 14 }).withMessage('CPF inválido')
-    .custom(validarCPF).withMessage('CPF inválido'),
+    .customSanitizer(v => (v ? v.toString().replace(/\D/g, '') : v))
+    .isLength({ min: 11, max: 11 }).withMessage('CPF inválido'),
   
   (req, res, next) => {
     const errors = validationResult(req);
@@ -142,11 +144,12 @@ export const validateBuscarPorCPF = [
   }
 ];
 
+// Atualizar usuário: sanitiza param CPF e valida comprimento (não exige algoritmo)
 export const validateAtualizarUsuario = [
   param('cpf')
     .notEmpty().withMessage('CPF é obrigatório')
-    .isLength({ min: 11, max: 14 }).withMessage('CPF inválido')
-    .custom(validarCPF).withMessage('CPF inválido'),
+    .customSanitizer(v => (v ? v.toString().replace(/\D/g, '') : v))
+    .isLength({ min: 11, max: 11 }).withMessage('CPF inválido'),
   
   body('nome')
     .optional()
@@ -157,9 +160,14 @@ export const validateAtualizarUsuario = [
     .isEmail().withMessage('E-mail inválido')
     .normalizeEmail(),
   
+  // telefone: sanitizar e validar 10 ou 11 dígitos
   body('telefone')
-    .optional()
-    .isMobilePhone('pt-BR').withMessage('Telefone inválido'),
+    .optional({ nullable: true })
+    .customSanitizer(v => (v ? v.toString().replace(/\D/g, '') : v))
+    .custom(v => {
+      if (v === undefined || v === null || v === '') return true;
+      return typeof v === 'string' && (v.length === 10 || v.length === 11);
+    }).withMessage('Telefone inválido. Informe 10 ou 11 dígitos.'),
   
   (req, res, next) => {
     const errors = validationResult(req);
@@ -170,11 +178,12 @@ export const validateAtualizarUsuario = [
   }
 ];
 
+// Excluir usuário: sanitiza param CPF e valida comprimento (não exige algoritmo)
 export const validateExcluirUsuario = [
   param('cpf')
     .notEmpty().withMessage('CPF é obrigatório')
-    .isLength({ min: 11, max: 14 }).withMessage('CPF inválido')
-    .custom(validarCPF).withMessage('CPF inválido'),
+    .customSanitizer(v => (v ? v.toString().replace(/\D/g, '') : v))
+    .isLength({ min: 11, max: 11 }).withMessage('CPF inválido'),
   
   (req, res, next) => {
     const errors = validationResult(req);
