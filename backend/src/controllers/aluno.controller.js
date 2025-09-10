@@ -85,9 +85,12 @@ export const listarAlunos = async (req, res, next) => {
     ];
 
     if (req.query.search && typeof req.query.search === 'string') {
-      whereClause.nome = {
-        [Op.iLike]: `%${req.query.search.trim()}%`
-      };
+      const search = req.query.search.trim().toLowerCase();
+      //o SQLite não suporta o ILIKE -'_'-
+      whereClause[Op.and] = sequelize.where(
+        sequelize.fn('LOWER', sequelize.col('Aluno.nome')),
+        { [Op.like]: `%${search}%` }
+      );
     }
 
     // Filtrar alunos por ID de responsável (Many-to-Many)
@@ -525,22 +528,31 @@ export const excluirAluno = async (req, res, next) => {
       });
     }
 
-    // --- LÓGICA SIMPLIFICADA ---
-    // O método 'destroy' irá acionar as regras 'ON DELETE CASCADE' no banco de dados,
-    // que apagarão automaticamente todos os registros dependentes nas tabelas:
-    // - documentos
-    // - responsaveis_alunos
-    // - presencas
+    // removo o vinculo com documentos 
+    await Documento.destroy({ where: { alunoId }, transaction });
+
+    //removo as presenças associadas a ele
+    if (sequelize.models.Presenca) {
+      await sequelize.models.Presenca.destroy({ where: { idAluno: alunoId }, transaction });
+    } else {
+      await sequelize.query('DELETE FROM presencas WHERE id_aluno = ?', { replacements: [alunoId], transaction });
+    }
+
+    //removo os vinculos na tabela que junta os responsaveis dos alunos
+    await ResponsavelAluno.destroy({ where: { id_aluno: alunoId }, transaction });
+
+    // agora removo o aluno
     await aluno.destroy({ transaction });
     
-    // Se chegou até aqui, tudo deu certo
+     // Se chegou até aqui, tudo deu certo
     await transaction.commit();
     
-    res.status(204).end();
+    // 204 sem mensagem nenhuma msm
+    return res.status(204).end();
   } catch (error) {
     await transaction.rollback();
     console.error('Erro ao excluir aluno:', error);
-    
+
     if (error.name === 'SequelizeForeignKeyConstraintError') {
       return res.status(400).json({
         sucesso: false,
@@ -549,7 +561,7 @@ export const excluirAluno = async (req, res, next) => {
         erro: error.message
       });
     }
-    
+
     next(error);
   }
 };
