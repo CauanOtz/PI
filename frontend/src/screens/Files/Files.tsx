@@ -10,6 +10,8 @@ import {
   MoreVerticalIcon,
   Pencil,
   Trash2,
+  XIcon,
+  UsersIcon,
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -18,6 +20,7 @@ import { EditReportModal } from "../../components/modals/report/EditReportModal"
 import { DeleteConfirmationModal } from "../../components/modals/shared/DeleteConfirmationModal";
 import { toast } from "sonner";
 import { documentService } from "../../services/documentService";
+import { studentsService } from "../../services/students";
 
 interface Report {
   id: string | number;
@@ -27,6 +30,13 @@ interface Report {
   size?: string;
   category?: string;
   descricao?: string;
+}
+
+interface Student {
+  id: number | string;
+  nome?: string;
+  matricula?: string;
+  [k: string]: any;
 }
 
 export const Files = (): JSX.Element => {
@@ -39,6 +49,14 @@ export const Files = (): JSX.Element => {
   const [loading, setLoading] = React.useState(false);
   const [currentAlunoId, setCurrentAlunoId] = React.useState<string>(""); // usuario seleciona o aluno para gerenciar documentos
 
+  const [studentSearchQuery, setStudentSearchQuery] = React.useState("");
+  const [studentSuggestions, setStudentSuggestions] = React.useState<Student[]>([]);
+  const [loadingStudentSuggestions, setLoadingStudentSuggestions] = React.useState(false);
+  const [isStudentSuggestionsOpen, setIsStudentSuggestionsOpen] = React.useState(false);
+  const [selectedStudent, setSelectedStudent] = React.useState<Student | null>(null);
+  const studentContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const studentSearchDebounceRef = React.useRef<number | null>(null);
+
   const categories = ["Todos", "Desempenho", "Frequência", "Planos", "Outros"];
 
   const filteredReports = reports.filter(report => {
@@ -46,6 +64,46 @@ export const Files = (): JSX.Element => {
     const matchesCategory = selectedCategory === "Todos" || report.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  React.useEffect(() => {
+    if (!isStudentSuggestionsOpen) {
+      setStudentSuggestions([]);
+      return;
+    }
+    setLoadingStudentSuggestions(true);
+    if (studentSearchDebounceRef.current) {
+      window.clearTimeout(studentSearchDebounceRef.current);
+    }
+    studentSearchDebounceRef.current = window.setTimeout(async () => {
+      try {
+        const params = studentSearchQuery ? { search: studentSearchQuery, limit: 10 } : { limit: 10 };
+        const res = await studentsService.list(params);
+        const alunos = (res && (res as any).alunos) ? (res as any).alunos : [];
+        setStudentSuggestions(Array.isArray(alunos) ? alunos : []);
+      } catch (err) {
+        console.error("Erro ao buscar alunos:", err);
+        setStudentSuggestions([]);
+      } finally {
+        setLoadingStudentSuggestions(false);
+      }
+    }, 300);
+    return () => {
+      if (studentSearchDebounceRef.current) {
+        window.clearTimeout(studentSearchDebounceRef.current);
+      }
+    };
+  }, [studentSearchQuery, isStudentSuggestionsOpen]);
+
+  React.useEffect(() => {
+    const onDoc = (ev: MouseEvent) => {
+      if (!studentContainerRef.current) return;
+      if (!studentContainerRef.current.contains(ev.target as Node)) {
+        setIsStudentSuggestionsOpen(false);
+      }
+    };
+    document.addEventListener("click", onDoc);
+    return () => document.removeEventListener("click", onDoc);
+  }, []);
 
   const loadDocuments = async (alunoId?: string) => {
     const id = alunoId ?? currentAlunoId;
@@ -171,14 +229,55 @@ export const Files = (): JSX.Element => {
               <p className="text-gray-600 mt-1">Gerencie seus documentos e relatórios</p>
             </div>
             <div className="flex items-center gap-3">
-              <Input
-                id="alunoIdInput"
-                placeholder="ID do aluno"
-                value={currentAlunoId}
-                onChange={(e) => setCurrentAlunoId(e.target.value)}
-                className="w-40"
-              />
-              <Button onClick={() => loadDocuments()} size="sm" className="bg-white border text-dark">Carregar</Button>
+              <div className="relative flex items-center" ref={studentContainerRef}>
+                <Input
+                  id="alunoIdInput"
+                  placeholder="Pesquisar aluno..."
+                  value={selectedStudent ? (selectedStudent.nome ?? `#${selectedStudent.id}`) : studentSearchQuery}
+                  readOnly={!!selectedStudent}
+                  onFocus={() => !selectedStudent && setIsStudentSuggestionsOpen(true)}
+                  onChange={(e) => setStudentSearchQuery(e.target.value)}
+                  className="w-52 pr-8" 
+                  autoComplete="off"
+                />
+                {selectedStudent && (
+                  <button
+                    onClick={() => {
+                      setSelectedStudent(null);
+                      setCurrentAlunoId("");
+                      setStudentSearchQuery("");
+                      setReports([]);
+                    }}
+                    className="absolute right-2 p-1 text-gray-500 hover:text-gray-800 rounded-full hover:bg-gray-100"
+                    aria-label="Limpar seleção"
+                  >
+                    <XIcon className="w-4 h-4" />
+                  </button>
+                )}
+                {isStudentSuggestionsOpen && (studentSuggestions.length > 0 || loadingStudentSuggestions) && !selectedStudent && (
+                  <div className="absolute left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-50 max-h-60 overflow-auto">
+                    {loadingStudentSuggestions ? (
+                      <div className="p-3 text-center text-sm text-gray-500">Buscando...</div>
+                    ) : studentSuggestions.map((s) => (
+                      <button
+                        key={String(s.id)}
+                        type="button"
+                        className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
+                        onClick={() => {
+                          setSelectedStudent(s);
+                          setCurrentAlunoId(String(s.id));
+                          setStudentSearchQuery("");
+                          setIsStudentSuggestionsOpen(false);
+                          loadDocuments(String(s.id));
+                        }}
+                      >
+                        <div className="font-medium truncate">{s.nome ?? `#${s.id}`}</div>
+                        <div className="text-xs text-gray-500">{s.matricula ? `Matrícula: ${s.matricula}` : `ID: ${s.id}`}</div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               <Button
                 className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                 onClick={() => setIsCreateModalOpen(true)}
@@ -221,102 +320,84 @@ export const Files = (): JSX.Element => {
             )}
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {currentAlunoId.trim() === "" ? (
-                <div className="col-span-full text-center py-10 text-gray-600">
-                  <div className="max-w-md mx-auto">
-                    <p className="mb-3">
-                      Informe o ID do aluno no campo acima e clique em <strong>Carregar</strong> para ver os documentos associados.
+              {!selectedStudent ? (
+                <div className="col-span-full text-center py-16 text-gray-500 bg-gray-50 rounded-lg">
+                  <div className="max-w-md mx-auto flex flex-col items-center">
+                    <UsersIcon className="w-16 h-16 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-700">Nenhum aluno selecionado</h3>
+                    <p className="mt-1 text-sm">
+                      Use a barra de pesquisa acima para encontrar um aluno e ver seus documentos.
                     </p>
-                    <div className="flex items-center justify-center gap-2">
-                      <Button
-                        size="sm"
-                        className="bg-white border text-dark"
-                        onClick={() => {
-                          const el = document.getElementById("alunoIdInput") as HTMLInputElement | null;
-                          el?.focus();
-                        }}
-                      >
-                        Inserir ID do aluno
-                      </Button>
-                      <Button onClick={() => loadDocuments()} size="sm" className="bg-white border text-dark">Carregar</Button>
-                    </div>
                   </div>
                 </div>
               ) : filteredReports.length === 0 ? (
-                <div className="col-span-full text-center py-10 text-gray-500">Nenhum documento encontrado para o aluno {currentAlunoId}.</div>
+                <div className="col-span-full text-center py-10 text-gray-500">Nenhum documento encontrado para o aluno {selectedStudent?.nome ?? currentAlunoId}.</div>
               ) : (
                 filteredReports.map((report) => (
                   <div
                     key={report.id}
-                    className="bg-white p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow"
+                    className="bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-500 hover:shadow-sm transition-all flex flex-col justify-between"
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-3 min-w-0">
-                        <div className="p-2 bg-blue-50 rounded-lg flex-shrink-0">
-                          <FileTextIcon className="w-6 h-6 text-blue-500" />
-                        </div>
-                        <div className="min-w-0">
-                          <h3 className="font-medium text-gray-800 truncate">{report.name}</h3>
-                          <div className="flex items-center space-x-2 mt-2 flex-wrap">
-                            <span className="text-sm text-gray-500">{report.type}</span>
-                            <span className="text-sm text-gray-400 hidden sm:inline">•</span>
-                            <span className="text-sm text-gray-500">{report.size}</span>
+                    <div>
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-blue-50 rounded-lg">
+                            <FileTextIcon className="w-5 h-5 text-blue-600" />
                           </div>
-                          <span className="inline-block mt-2 px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 rounded-full">
-                            {report.category}
-                          </span>
+                          <div>
+                            <h3 className="font-semibold text-gray-800 leading-tight truncate">{report.name}</h3>
+                            <p className="text-xs text-gray-500">{report.category}</p>
+                          </div>
                         </div>
+                        <DropdownMenu.Root>
+                          <DropdownMenu.Trigger asChild>
+                            <button className="text-gray-400 hover:text-gray-600 p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                              <MoreVerticalIcon className="w-5 h-5" />
+                            </button>
+                          </DropdownMenu.Trigger>
+                          <DropdownMenu.Portal>
+                            <DropdownMenu.Content 
+                              className="min-w-[180px] bg-white rounded-md shadow-lg border border-gray-100 py-1 z-50"
+                              align="end" sideOffset={5}
+                            >
+                              <DropdownMenu.Item 
+                                className="flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 cursor-pointer focus:bg-gray-50 focus:outline-none"
+                                onClick={() => handleEdit(report)}
+                              >
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Editar
+                              </DropdownMenu.Item>
+                              <DropdownMenu.Separator className="h-px bg-gray-100 my-1" />
+                              <DropdownMenu.Item 
+                                className="flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer focus:bg-red-50 focus:outline-none"
+                                onClick={() => handleDelete(report)}
+                              >
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Excluir
+                              </DropdownMenu.Item>
+                            </DropdownMenu.Content>
+                          </DropdownMenu.Portal>
+                        </DropdownMenu.Root>
                       </div>
-                      <DropdownMenu.Root>
-                        <DropdownMenu.Trigger asChild>
-                          <button className="text-gray-400 hover:text-gray-600 focus:outline-none flex-shrink-0">
-                            <MoreVerticalIcon className="w-5 h-5" />
-                          </button>
-                        </DropdownMenu.Trigger>
-
-                        <DropdownMenu.Portal>
-                          <DropdownMenu.Content 
-                            className="min-w-[180px] bg-white rounded-md shadow-lg border border-gray-100 py-1 z-50"
-                            align="end"
-                            sideOffset={5}
-                            avoidCollisions
-                          >
-                            <DropdownMenu.Item 
-                              className="flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 cursor-pointer"
-                              onClick={() => handleEdit(report)}
-                            >
-                              <Pencil className="w-4 h-4 mr-2" />
-                              Editar Relatório
-                            </DropdownMenu.Item>
-                            
-                            <DropdownMenu.Separator className="h-px bg-gray-100 my-1" />
-                            
-                            <DropdownMenu.Item 
-                              className="flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
-                              onClick={() => handleDelete(report)}
-                            >
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Excluir Relatório
-                            </DropdownMenu.Item>
-                          </DropdownMenu.Content>
-                        </DropdownMenu.Portal>
-                      </DropdownMenu.Root>
+                      <div className="mt-3 flex items-center space-x-2 text-xs text-gray-500">
+                        <span>{report.type}</span>
+                        <span>•</span>
+                        <span>{report.size}</span>
+                      </div>
                     </div>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-4 pt-4 border-t">
-                      <span className="text-sm text-gray-500">
+                    <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-gray-100">
+                      <span className="text-xs text-gray-500">
                         {report.date ? new Date(report.date).toLocaleDateString() : ""}
                       </span>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-blue-600 hover:text-blue-700 w-full sm:w-auto justify-center"
-                          onClick={() => handleDownload(report)}
-                        >
-                          <DownloadIcon className="w-4 h-4 mr-2" />
-                          Download
-                        </Button>
-                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 px-2"
+                        onClick={() => handleDownload(report)}
+                      >
+                        <DownloadIcon className="w-4 h-4 mr-1.5" />
+                        Download
+                      </Button>
                     </div>
                   </div>
                 ))
@@ -329,6 +410,7 @@ export const Files = (): JSX.Element => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateReport}
+        initialAlunoId={currentAlunoId}
       />
       <EditReportModal
         isOpen={!!reportToEdit}
