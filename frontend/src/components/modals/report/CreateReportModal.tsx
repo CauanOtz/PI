@@ -16,6 +16,7 @@ interface ReportFormData {
   name: string;
   category: string;
   file: File | null;
+  alunoId?: string | number;
 }
 
 export const CreateReportModal: React.FC<CreateReportModalProps> = ({
@@ -27,6 +28,7 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
     name: "",
     category: "Desempenho",
     file: null,
+    alunoId: ""
   });
 
   const categories = ["Desempenho", "Frequência", "Planos", "Outros"];
@@ -35,6 +37,11 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
     e.preventDefault();
     
     try {
+      if (!formData.alunoId) {
+        toast.error("Informe o ID do aluno (campo obrigatório).");
+        return;
+      }
+
       // Validate file size (example: max 10MB)
       if (formData.file && formData.file.size > 10 * 1024 * 1024) {
         toast.error("Arquivo muito grande. O tamanho máximo permitido é 10MB.");
@@ -50,7 +57,6 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
       }
 
       await onSubmit(formData);
-      toast.success("Relatório criado com sucesso!");
       onClose();
       
       // Reset form
@@ -58,6 +64,7 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
         name: "",
         category: "Desempenho",
         file: null,
+        alunoId: ""
       });
     } catch (error) {
       toast.error(
@@ -85,6 +92,18 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+          <div className="space-y-2">
+            <Label htmlFor="alunoId">ID do Aluno (para associar documento)</Label>
+            <Input
+              id="alunoId"
+              value={String(formData.alunoId ?? "")}
+              onChange={(e) => setFormData((prev) => ({ ...prev, alunoId: e.target.value }))}
+              placeholder="Ex: 123"
+              className="w-full"
+              required
+            />
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="name">Nome do relatório</Label>
             <Input
