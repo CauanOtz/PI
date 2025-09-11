@@ -13,7 +13,6 @@ interface CreateUserData {
   cpf: string; 
   senha: string;
   role?: "admin" | "responsavel";
-  alunoId?: number; // opcional: id do aluno para vincular quando role === 'responsavel'
 }
 
 interface CreateUserModalProps {
@@ -104,19 +103,6 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClos
               <option value="admin">Administrador</option>
             </select>
           </div>
-
-          {form.role === "responsavel" && (
-            <div className="space-y-2">
-              <Label htmlFor="alunoId">Vincular a um aluno (ID) — opcional</Label>
-              <Input
-                id="alunoId"
-                type="number"
-                placeholder="ID do aluno (ex: 12)"
-                value={form.alunoId ?? ""}
-                onChange={(e) => setForm(s => ({ ...s, alunoId: e.target.value ? Number(e.target.value) : undefined }))}
-              />
-            </div>
-          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>

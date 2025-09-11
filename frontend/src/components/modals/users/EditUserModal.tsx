@@ -12,7 +12,6 @@ interface EditUserData {
   telefone?: string;
   cpf: string;
   role?: "admin" | "responsavel";
-  alunoId?: number; // opcional para vincular ao editar
 }
 
 interface EditUserModalProps {
@@ -88,19 +87,6 @@ export const EditUserModal: React.FC<EditUserModalProps> = ({ isOpen, onClose, u
               <option value="admin">Administrador</option>
             </select>
           </div>
-
-          {form.role === "responsavel" && (
-            <div className="space-y-2">
-              <Label htmlFor="alunoId">Vincular a um aluno (ID) — opcional</Label>
-              <Input
-                id="alunoId"
-                type="number"
-                placeholder="ID do aluno (ex: 12)"
-                value={form.alunoId ?? ""}
-                onChange={(e) => setForm(f => ({ ...f!, alunoId: e.target.value ? Number(e.target.value) : undefined }))}
-              />
-            </div>
-          )}
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
