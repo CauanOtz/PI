@@ -1,6 +1,4 @@
 import {
-  BarChart2Icon,
-  CreditCardIcon,
   FileTextIcon,
   HomeIcon,
   SettingsIcon,
@@ -11,7 +9,7 @@ import {
   CalendarIcon,
   Menu,
 } from "lucide-react";
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Avatar,
@@ -22,13 +20,16 @@ import { Separator } from "../ui/separator";
 import { useAuth } from "../../context/AuthProvider";
 import { toast } from "sonner";
 
-export const SidebarSection = (): JSX.Element => {
+export const SidebarSection = (): JSX.Element | null => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
-  const { logout } = useAuth();
+  const { logout, user, loading } = useAuth();
 
-  const navItems = [
+  // Não renderiza a sidebar enquanto o usuário estiver sendo carregado
+  if (loading || !user) return null;
+
+  const adminNavItems = [
     {
       icon: <HomeIcon className="w-4 h-4 text-blue-400" />,
       label: "Dashboard",
@@ -65,6 +66,21 @@ export const SidebarSection = (): JSX.Element => {
       path: "/settings",
     },
   ];
+
+  const guardianNavItems = [
+    {
+      icon: <HomeIcon className="w-4 h-4 text-blue-400" />,
+      label: "Painel do Aluno",
+      path: "/guardian-dashboard",
+    },
+    {
+      icon: <SettingsIcon className="w-4 h-4 text-orange-400" />,
+      label: "Configurações",
+      path: "/settings",
+    },
+  ];
+
+  const navItems = user.role === 'responsavel' ? guardianNavItems : adminNavItems;
 
   return (
     <>

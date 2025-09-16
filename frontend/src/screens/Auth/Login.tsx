@@ -1,4 +1,3 @@
-import React from "react";
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -26,9 +25,14 @@ export const Login = () => {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      await login(data.email, data.password);
-      toast.success("Bem-vindo! Login realizado com sucesso."); 
-      navigate("/dashboard");
+      const res = await login(data.email, data.password);
+      const userObj = res?.user || null;
+      toast.success("Bem-vindo! Login realizado com sucesso.");
+      if (userObj?.role === "responsavel") {
+        navigate("/guardian-dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err: any) {
       console.error(err);
       toast.error(err?.response?.data?.mensagem || "Falha ao entrar");
