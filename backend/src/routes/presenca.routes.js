@@ -6,7 +6,8 @@ import {
   obterPresenca, 
   atualizarPresenca,
   listarPresencasPorAula,
-  listarHistoricoAluno
+  listarHistoricoAluno,
+  registrarPresencasBulk
 } from '../controllers/presenca.controller.js';
 import Presenca from '../models/Presenca.model.js';
 import { 
@@ -448,6 +449,76 @@ router.delete('/:id',
       next(error);
     }
   }
+);
+
+/**
+ * @openapi
+ * /presencas/bulk:
+ *   post:
+ *     summary: Registra múltiplas presenças em uma única requisição
+ *     tags: [Presenças]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               presencas:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - idAluno
+ *                     - idAula
+ *                     - status
+ *                   properties:
+ *                     idAluno:
+ *                       type: integer
+ *                       description: ID do aluno
+ *                       example: 1
+ *                     idAula:
+ *                       type: integer
+ *                       description: ID da aula
+ *                       example: 1
+ *                     status:
+ *                       type: string
+ *                       enum: [presente, falta, atraso, falta_justificada]
+ *                       description: Status da presença
+ *                       example: "presente"
+ *                     data_registro:
+ *                       type: string
+ *                       format: date
+ *                       description: Data do registro (opcional, padrão é a data atual)
+ *                       example: "2024-07-30"
+ *                     observacao:
+ *                       type: string
+ *                       description: Observações sobre a presença (opcional)
+ *                       example: "Chegou atrasado 15 minutos"
+ *     responses:
+ *       201:
+ *         description: Presenças registradas com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Presenca'
+ *       400:
+ *         description: Dados inválidos
+ *       401:
+ *         description: Não autorizado
+ *       404:
+ *         description: Aluno ou Aula não encontrado
+ *       409:
+ *         description: Conflito ao registrar presenças
+ */
+router.post('/bulk',
+  autenticar,
+  // opcional: validar corpo antes
+  registrarPresencasBulk
 );
 
 export default router;

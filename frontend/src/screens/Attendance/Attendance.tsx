@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { format } from "date-fns";
+import React, { useEffect, useState } from "react";
+import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "../../components/ui/button";
 import { SidebarSection } from "../../components/layout/SidebarSection";
@@ -7,201 +7,442 @@ import { Checkbox } from "../../components/ui/checkbox";
 import { CalendarIcon, PencilIcon, SaveIcon, XIcon, TrashIcon } from "lucide-react";
 import { toast } from "sonner";
 import { DeleteConfirmationModal } from "../../components/modals/shared/DeleteConfirmationModal";
+import { AttendanceModal } from "../../components/modals/attendance/AttendanceModal";
+import { ObservationModal } from "../../components/modals/attendance/ObservationModal";
+import { presencaService } from "../../services/presencaService";
+import { studentsService } from "../../services/students";
+// se tiver serviço de aulas, importe-o; se não, crie similar ao studentsService
+import { http } from "../../lib/http";
 
 interface Student {
   id: number;
   name: string;
   present: boolean;
   absent: boolean;
+  presencaId?: number | null; // id do registro de presença quando existir
+  observacao?: string; // observação por aluno
 }
 
 interface AttendanceRecord {
   date: string;
-  period: string;
+  idAula: number | string;
+  aulaTitle?: string;
   students: Student[];
+  presencaIds?: number[]; // lista de presencas associadas ao registro
 }
 
-const mockStudents: Student[] = [
-  { id: 1, name: "João Silva", present: false, absent: false },
-  { id: 2, name: "Maria Santos", present: false, absent: false },
-  { id: 3, name: "Pedro Oliveira", present: false, absent: false },
-  { id: 4, name: "Ana Costa", present: false, absent: false },
-  { id: 5, name: "Lucas Pereira", present: false, absent: false },
-];
-
-const periods = [
-  "1º Período - 07:00",
-  "2º Período - 08:00",
-  "3º Período - 09:00",
-  "4º Período - 10:00",
-  "5º Período - 11:00",
-];
+interface Aula {
+  id: number | string;
+  titulo?: string;
+  data?: string;
+}
 
 export const Attendance = (): JSX.Element => {
   const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), "yyyy-MM-dd"));
-  const [selectedPeriod, setSelectedPeriod] = useState<string>(periods[0]);
-  const [students, setStudents] = useState<Student[]>(mockStudents);
+  const [aulas, setAulas] = useState<Aula[]>([]);
+  const [selectedAulaId, setSelectedAulaId] = useState<number | string | "">("");
+  const [students, setStudents] = useState<Student[]>([]);
   const [attendanceHistory, setAttendanceHistory] = useState<AttendanceRecord[]>([]);
   const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null);
   const [recordToDelete, setRecordToDelete] = useState<AttendanceRecord | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [attendanceModalOpen, setAttendanceModalOpen] = useState(false);
+  // modal context para visualizar presenças de um registro específico
+  const [modalAulaId, setModalAulaId] = useState<number | string | "">("");
+  const [modalDate, setModalDate] = useState<string | undefined>(undefined);
 
-  const handleAttendance = (studentId: number, type: 'present' | 'absent') => {
-    const studentsToUpdate = editingRecord ? 
-      editingRecord.students : 
-      students;
+  // observação modal states (apenas per-aluno)
+  const [observationModalOpen, setObservationModalOpen] = useState(false);
+  // per-student observation editor
+  const [observationTargetStudentId, setObservationTargetStudentId] = useState<number | null>(null);
+  const [observationInitial, setObservationInitial] = useState<string>("");
 
-    const updatedStudents = studentsToUpdate.map(student =>
-      student.id === studentId
-        ? {
-            ...student,
-            present: type === 'present' ? !student.present : false,
-            absent: type === 'absent' ? !student.absent : false
-          }
-        : student
-    );
-
-    if (editingRecord) {
-      setEditingRecord({ ...editingRecord, students: updatedStudents });
-    } else {
-      setStudents(updatedStudents);
+  const loadAulas = async () => {
+    try {
+      const res = await http.get("/aulas"); // ajuste URL se necessário
+      const data = res.data;
+      setAulas(Array.isArray(data) ? data : (data && data.aulas) ? data.aulas : []);
+      if (Array.isArray(data) && data.length > 0 && !selectedAulaId) {
+        setSelectedAulaId(data[0].id);
+      }
+    } catch (err) {
+      console.warn("Não foi possível carregar aulas:", err);
     }
   };
 
-  const markAllPresent = () => {
-    const studentsToUpdate = editingRecord ? 
-      editingRecord.students : 
-      students;
+  const loadStudents = async () => {
+    try {
+      const res = await studentsService.list({ limit: 500 });
+      const payload = res as any;
+      const alunos = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload.alunos)
+        ? payload.alunos
+        : Array.isArray(payload.data)
+        ? payload.data
+        : [];
 
-    const updatedStudents = studentsToUpdate.map(student => ({
-      ...student,
-      present: true,
-      absent: false
-    }));
-
-    if (editingRecord) {
-      setEditingRecord({ ...editingRecord, students: updatedStudents });
-    } else {
-      setStudents(updatedStudents);
+      const mapped: Student[] = (alunos as any[]).map((a: any) => ({
+        id: Number(a.id),
+        name: a.nome ?? a.nome_completo ?? a.nome_aluno ?? String(a.id),
+        present: false,
+        absent: false,
+        presencaId: null
+      }));
+      setStudents(mapped);
+    } catch (err) {
+      console.error("Erro ao carregar alunos:", err);
+      setStudents([]);
     }
-    
+  };
+
+  useEffect(() => {
+    loadAulas();
+    loadStudents();
+  }, []);
+
+  // carga histórico para aula/data selecionada
+  const loadHistory = async () => {
+    if (!selectedAulaId) {
+      setAttendanceHistory([]);
+      return;
+    }
+    try {
+      setLoading(true);
+      // busca presencas para a aula na data selecionada
+      const res = await presencaService.list({ idAula: selectedAulaId, dataInicio: selectedDate, dataFim: selectedDate });
+      const presencas = Array.isArray(res) ? res : (res && res.presencas) ? res.presencas : [];
+      if (presencas.length === 0) {
+        setAttendanceHistory([]);
+        return;
+      }
+      // agrupa por data (deve ser apenas selectedDate)
+      const studentsMap: Record<number, Student> = {};
+      students.forEach(s => { studentsMap[s.id] = { ...s }; });
+
+      presencas.forEach((p: any) => {
+        const idAluno = Number(p.idAluno ?? p.id_aluno ?? (p.aluno && p.aluno.id));
+        const status = p.status;
+        if (!studentsMap[idAluno]) {
+          studentsMap[idAluno] = {
+            id: idAluno,
+            name: p.aluno?.nome ?? String(idAluno),
+            present: false,
+            absent: false,
+            presencaId: null
+          };
+        }
+        studentsMap[idAluno].present = status === "presente";
+        studentsMap[idAluno].absent = status === "falta";
+        studentsMap[idAluno].presencaId = p.id;
+      });
+
+      const studentsList = Object.values(studentsMap);
+      const aulaTitle = (aulas.find(a => String(a.id) === String(selectedAulaId))?.titulo) ?? "";
+
+      const record: AttendanceRecord = {
+        date: selectedDate,
+        idAula: selectedAulaId,
+        aulaTitle,
+        students: studentsList,
+        presencaIds: presencas.map((p: any) => p.id)
+      };
+
+      setAttendanceHistory([record]);
+    } catch (err) {
+      console.error("Erro ao carregar histórico:", err);
+      setAttendanceHistory([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // recarregar histórico sempre que mudar aula ou data
+    if (selectedAulaId) loadHistory();
+  }, [selectedAulaId, selectedDate, students]);
+
+  // inicia edição de um registro do histórico
+  const startEditing = (record: AttendanceRecord) => {
+    // garante seleção da aula e data correspondentes
+    setSelectedAulaId(record.idAula);
+    setSelectedDate(record.date);
+    // copia e normaliza flags present/absent para evitar valores indefinidos
+    const studentsCopy = record.students.map((s) => ({
+      ...s,
+      present: !!s.present,
+      absent: !!s.absent
+    }));
+    setEditingRecord({ ...record, students: studentsCopy });
+  };
+
+  // cancela edição - limpa estado e reseta marcações locais
+  const cancelEditing = () => {
+    setEditingRecord(null);
+    // reseta marcações na lista principal de alunos
+    setStudents((prev) => prev.map((s) => ({ ...s, present: false, absent: false })));
+  };
+
+  const handleAttendance = (studentId: number, type: 'present' | 'absent') => {
+    const target = editingRecord ? editingRecord.students : students;
+    const updated = target.map(s => s.id === studentId ? {
+      ...s,
+      present: type === 'present' ? !s.present : false,
+      absent: type === 'absent' ? !s.absent : false
+    } : s);
+
+    if (editingRecord) setEditingRecord({ ...editingRecord, students: updated });
+    else setStudents(updated);
+  };
+
+  const markAllPresent = () => {
+    const target = editingRecord ? editingRecord.students : students;
+    const updated = target.map(s => ({ ...s, present: true, absent: false }));
+    if (editingRecord) setEditingRecord({ ...editingRecord, students: updated });
+    else setStudents(updated);
     toast.success("Todos os alunos marcados como presentes");
   };
 
   const markAllAbsent = () => {
-    const studentsToUpdate = editingRecord ? 
-      editingRecord.students : 
-      students;
-
-    const updatedStudents = studentsToUpdate.map(student => ({
-      ...student,
-      present: false,
-      absent: true
-    }));
-
-    if (editingRecord) {
-      setEditingRecord({ ...editingRecord, students: updatedStudents });
-    } else {
-      setStudents(updatedStudents);
-    }
-    
+    const target = editingRecord ? editingRecord.students : students;
+    const updated = target.map(s => ({ ...s, present: false, absent: true }));
+    if (editingRecord) setEditingRecord({ ...editingRecord, students: updated });
+    else setStudents(updated);
     toast.success("Todos os alunos marcados como ausentes");
   };
 
-  const saveAttendance = () => {
+  // salva presenças: cria presenca por aluno marcado (parallel)
+  const saveAttendance = async () => {
+    if (!selectedAulaId) {
+      toast.error("Selecione uma aula antes de salvar.");
+      return;
+    }
     try {
-      const hasAttendanceMarked = students.some(student => student.present || student.absent);
-      
-      if (!hasAttendanceMarked) {
+      const target = students;
+      const marked = target.filter(s => s.present || s.absent);
+      if (marked.length === 0) {
         toast.error("Marque pelo menos uma presença ou falta antes de salvar.");
         return;
       }
+      setLoading(true);
 
-      const newRecord: AttendanceRecord = {
-        date: selectedDate,
-        period: selectedPeriod,
-        students: [...students],
-      };
+      const listRes = await presencaService.list({ idAula: selectedAulaId, dataInicio: selectedDate, dataFim: selectedDate });
+      const existingPresencas = Array.isArray(listRes) ? listRes : (listRes && listRes.presencas) ? listRes.presencas : [];
+      const existingByAluno = new Map<number, any>();
+      existingPresencas.forEach((p: any) => {
+        const idAluno = Number(p.idAluno ?? p.id_aluno ?? (p.aluno && p.aluno.id));
+        if (idAluno) existingByAluno.set(idAluno, p);
+      });
 
-      const existingRecord = attendanceHistory.find(
-        record => record.date === selectedDate && record.period === selectedPeriod
-      );
+      const toCreate = marked.filter(s => !existingByAluno.has(s.id));
+      const toUpdate = marked.filter(s => existingByAluno.has(s.id));
 
-      if (existingRecord) {
-        toast.warning("Já existe uma chamada registrada para esta data e período.");
-        return;
+      // primeiro atualiza os que já existem
+      await Promise.all(toUpdate.map(s => {
+        const pres = existingByAluno.get(s.id);
+        if (!pres) return Promise.resolve(null);
+        return presencaService.update(pres.id, {
+          status: s.present ? "presente" : "falta",
+          data_registro: selectedDate,
+          observacao: s.observacao ?? undefined
+        });
+      }));
+
+      // depois cria todos os novos em uma única requisição (previne race/unique errors)
+      if (toCreate.length > 0) {
+        const payload = toCreate.map(s => ({
+          idAluno: s.id,
+          idAula: selectedAulaId,
+          status: (s.present ? "presente" : "falta") as
+            | "presente"
+            | "falta"
+            | "atraso"
+            | "falta_justificada",
+          data_registro: selectedDate,
+          observacao: s.observacao ?? undefined
+        }));
+        await presencaService.bulkCreate(payload);
       }
 
-      setAttendanceHistory(prev => [...prev, newRecord]);
-      
-      setStudents(mockStudents.map(student => ({ ...student, present: false, absent: false })));
-      
       toast.success("Presenças salvas com sucesso!", {
-        description: `${format(new Date(selectedDate), "dd/MM/yyyy")} - ${selectedPeriod}`,
+        description: `${format(parseISO(selectedDate), "dd/MM/yyyy")} - ${aulas.find(a => String(a.id) === String(selectedAulaId))?.titulo ?? ""}`
       });
-    } catch (error) {
+
+      setStudents(prev => prev.map(p => ({ ...p, present: false, absent: false, presencaId: null })));
+      await loadHistory();
+    } catch (err) {
+      console.error(err);
       toast.error("Erro ao salvar presenças. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const startEditing = (record: AttendanceRecord) => {
-    setEditingRecord(record);
-    setSelectedDate(record.date);
-    setSelectedPeriod(record.period);
+  // observação modal handlers: confirma observação apenas por aluno
+  const handleObservationConfirm = async (observacao: string) => {
+    setObservationModalOpen(false);
+    if (observationTargetStudentId !== null) {
+      if (editingRecord) {
+        setEditingRecord({
+          ...editingRecord,
+          students: editingRecord.students.map(s =>
+            s.id === observationTargetStudentId ? { ...s, observacao } : s
+          )
+        });
+      } else {
+        setStudents(prev => prev.map(s => s.id === observationTargetStudentId ? { ...s, observacao } : s));
+      }
+      setObservationTargetStudentId(null);
+      setObservationInitial("");
+    }
+    // se não houver target, nada a fazer (modal não é usado para salvar global)
   };
 
-  const cancelEditing = () => {
-    setEditingRecord(null);
-    setSelectedDate(format(new Date(), "yyyy-MM-dd"));
-    setSelectedPeriod(periods[0]);
-    setStudents(mockStudents.map(student => ({ ...student, present: false, absent: false })));
+  // salva sem abrir modal de observação (modal é apenas per-aluno)
+  const promptObservationAndSave = async () => {
+    await performSaveAttendance();
   };
 
-  const saveEditedAttendance = () => {
+  const promptObservationAndSaveEdit = async () => {
+    await performSaveEditedAttendance();
+  };
+
+  const performSaveAttendance = async (observacao?: string) => {
+    if (!selectedAulaId) {
+      toast.error("Selecione uma aula antes de salvar.");
+      return;
+    }
     try {
-      if (!editingRecord) return;
-
-      const hasAttendanceMarked = editingRecord.students.some(
-        student => student.present || student.absent
-      );
-      
-      if (!hasAttendanceMarked) {
+      const target = students;
+      const marked = target.filter(s => s.present || s.absent);
+      if (marked.length === 0) {
         toast.error("Marque pelo menos uma presença ou falta antes de salvar.");
         return;
       }
+      setLoading(true);
 
-      setAttendanceHistory(prev => 
-        prev.map(record => 
-          record.date === editingRecord.date && record.period === editingRecord.period
-            ? editingRecord
-            : record
-        )
-      );
+      const listRes = await presencaService.list({ idAula: selectedAulaId, dataInicio: selectedDate, dataFim: selectedDate });
+      const existingPresencas = Array.isArray(listRes) ? listRes : (listRes && listRes.presencas) ? listRes.presencas : [];
+      const existingByAluno = new Map<number, any>();
+      existingPresencas.forEach((p: any) => {
+        const idAluno = Number(p.idAluno ?? p.id_aluno ?? (p.aluno && p.aluno.id));
+        if (idAluno) existingByAluno.set(idAluno, p);
+      });
+
+      const toCreate = marked.filter(s => !existingByAluno.has(s.id));
+      const toUpdate = marked.filter(s => existingByAluno.has(s.id));
+
+      // primeiro atualiza os que já existem
+      await Promise.all(toUpdate.map(s => {
+        const pres = existingByAluno.get(s.id);
+        if (!pres) return Promise.resolve(null);
+        return presencaService.update(pres.id, {
+          status: s.present ? "presente" : "falta",
+          data_registro: selectedDate,
+          observacao: s.observacao ?? undefined
+        });
+      }));
+
+      // depois cria todos os novos em uma única requisição (previne race/unique errors)
+      if (toCreate.length > 0) {
+        const payload = toCreate.map(s => ({
+          idAluno: s.id,
+          idAula: selectedAulaId,
+          status: (s.present ? "presente" : "falta") as
+            | "presente"
+            | "falta"
+            | "atraso"
+            | "falta_justificada",
+          data_registro: selectedDate,
+          observacao: s.observacao ?? undefined
+        }));
+        await presencaService.bulkCreate(payload);
+      }
+
+      toast.success("Presenças salvas com sucesso!", {
+        description: `${format(parseISO(selectedDate), "dd/MM/yyyy")} - ${aulas.find(a => String(a.id) === String(selectedAulaId))?.titulo ?? ""}`
+      });
+
+      setStudents(prev => prev.map(p => ({ ...p, present: false, absent: false, presencaId: null })));
+      await loadHistory();
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao salvar presenças. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const performSaveEditedAttendance = async (observacao?: string) => {
+    if (!editingRecord) return;
+    try {
+      const { students: edStudents, presencaIds } = editingRecord;
+      setLoading(true);
+      if (presencaIds && presencaIds.length > 0) {
+        await Promise.all(presencaIds.map((id) => presencaService.delete(id)));
+      } else {
+        const listRes = await presencaService.list({ idAula: editingRecord.idAula, dataInicio: editingRecord.date, dataFim: editingRecord.date });
+        const presencas = Array.isArray(listRes) ? listRes : (listRes && listRes.presencas) ? listRes.presencas : [];
+        if (presencas.length) {
+          await Promise.all(presencas.map((p: any) => presencaService.delete(p.id)));
+        }
+      }
+
+      const toCreate = edStudents.filter(s => s.present || s.absent);
+      await Promise.all(toCreate.map(s => presencaService.create({
+        idAluno: s.id,
+        idAula: editingRecord.idAula,
+        status: s.present ? "presente" : "falta",
+        data_registro: editingRecord.date,
+        observacao: s.observacao ?? observacao ?? undefined
+      })));
 
       toast.success("Registro atualizado com sucesso!", {
-        description: `${format(new Date(editingRecord.date), "dd/MM/yyyy")} - ${editingRecord.period}`,
+        description: `${format(parseISO(editingRecord.date), "dd/MM/yyyy")} - ${editingRecord.aulaTitle ?? ""}`
       });
 
-      cancelEditing();
-    } catch (error) {
+      setEditingRecord(null);
+      await loadHistory();
+    } catch (err) {
+      console.error(err);
       toast.error("Erro ao atualizar registro. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const deleteRecord = (recordToDelete: AttendanceRecord) => {
+  const deleteRecord = async (record: AttendanceRecord) => {
     try {
-      setAttendanceHistory(prev => 
-        prev.filter(record => 
-          !(record.date === recordToDelete.date && record.period === recordToDelete.period)
-        )
-      );
-      
+      setLoading(true);
+      // apaga todos os ids conhecidos; se não tiver ids, tenta listar e apagar
+      if (record.presencaIds && record.presencaIds.length > 0) {
+        await Promise.all(record.presencaIds.map(id => presencaService.delete(id)));
+      } else {
+        const listRes = await presencaService.list({ idAula: record.idAula, dataInicio: record.date, dataFim: record.date });
+        const presencas = Array.isArray(listRes) ? listRes : (listRes && listRes.presencas) ? listRes.presencas : [];
+        if (presencas.length) {
+          await Promise.all(presencas.map((p: any) => presencaService.delete(p.id)));
+        }
+      }
+
       toast.success("Registro removido com sucesso!", {
-        description: `${format(new Date(recordToDelete.date), "dd/MM/yyyy")} - ${recordToDelete.period}`,
+        description: `${format(parseISO(record.date), "dd/MM/yyyy")} - ${record.aulaTitle ?? ""}`
       });
+
       setRecordToDelete(null);
-    } catch (error) {
+      await loadHistory();
+    } catch (err) {
+      console.error(err);
       toast.error("Erro ao remover registro. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const openStudentObservation = (studentId: number, initial = "") => {
+    setObservationTargetStudentId(studentId);
+    setObservationInitial(initial);
+    setObservationModalOpen(true);
   };
 
   return (
@@ -223,24 +464,35 @@ export const Attendance = (): JSX.Element => {
                   className="border-none outline-none w-full"
                 />
               </div>
-              
+
               <select
-                value={selectedPeriod}
-                onChange={(e) => setSelectedPeriod(e.target.value)}
+                value={selectedAulaId}
+                onChange={(e) => setSelectedAulaId(e.target.value)}
                 className="bg-white rounded-lg shadow-sm p-2 border w-full sm:w-auto sm:flex-1 sm:max-w-xs"
               >
-                {periods.map((period) => (
-                  <option key={period} value={period}>{period}</option>
+                <option value="">Selecione uma Aula</option>
+                {aulas.map((a) => (
+                  <option key={String(a.id)} value={String(a.id)}>
+                    {a.titulo ?? `Aula ${a.id}`}
+                  </option>
                 ))}
               </select>
+
+              {/* botão "Ver Presenças" movido para o Histórico abaixo (ao lado esquerdo do Editar) */}
             </div>
 
-            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 overflow-x-auto">
+            <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 overflow-x-auto relative">
+              {loading && (
+                <div className="absolute inset-0 z-40 flex items-center justify-center bg-white/70">
+                  <div className="text-center text-gray-700">Carregando...</div>
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
                 <h2 className="text-base sm:text-lg font-semibold">
-                  Chamada - {format(new Date(selectedDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+                  Chamada - {format(parseISO(selectedDate), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                 </h2>
-                <span className="text-gray-600">{selectedPeriod}</span>
+                <span className="text-gray-600">{aulas.find(a => String(a.id) === String(selectedAulaId))?.titulo ?? ""}</span>
               </div>
 
               <div className="min-w-[600px]">
@@ -248,6 +500,7 @@ export const Attendance = (): JSX.Element => {
                   <thead>
                     <tr className="border-b">
                       <th className="text-left py-4">Aluno</th>
+                      <th className="text-left py-4">Obs</th>
                       <th className="text-center py-4">
                         <div className="flex items-center justify-center gap-2">
                           Presente
@@ -277,9 +530,19 @@ export const Attendance = (): JSX.Element => {
                     </tr>
                   </thead>
                   <tbody>
-                    {students.map((student) => (
+                    {(editingRecord ? editingRecord.students : students).map((student) => (
                       <tr key={student.id} className="border-b">
                         <td className="py-4">{student.name}</td>
+                        <td className="py-4">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => openStudentObservation(student.id, student.observacao ?? "")}
+                            className="text-gray-700 hover:text-gray-900"
+                          >
+                            {student.observacao ? "Editar" : "Adicionar"}
+                          </Button>
+                        </td>
                         <td className="text-center py-4">
                           <Checkbox
                             checked={student.present}
@@ -312,7 +575,7 @@ export const Attendance = (): JSX.Element => {
                       Cancelar
                     </Button>
                     <Button 
-                      onClick={saveEditedAttendance}
+                      onClick={promptObservationAndSaveEdit}
                       className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
                     >
                       <SaveIcon className="w-4 h-4 mr-2" />
@@ -321,7 +584,7 @@ export const Attendance = (): JSX.Element => {
                   </>
                 ) : (
                   <Button 
-                    onClick={saveAttendance} 
+                    onClick={promptObservationAndSave} 
                     className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                   >
                     Salvar Presenças
@@ -340,11 +603,24 @@ export const Attendance = (): JSX.Element => {
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-2">
                           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
                             <span className="font-medium">
-                              {format(new Date(record.date), "dd/MM/yyyy")}
+                              {format(parseISO(record.date), "dd/MM/yyyy")}
                             </span>
-                            <span className="text-gray-600">{record.period}</span>
+                            <span className="text-gray-600">{record.aulaTitle}</span>
                           </div>
                           <div className="flex items-center gap-2">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setModalAulaId(record.idAula);
+                                setModalDate(record.date);
+                                setAttendanceModalOpen(true);
+                              }}
+                              className="text-gray-700 hover:text-gray-900 flex-1 sm:flex-none"
+                              disabled={!!editingRecord}
+                            >
+                              Ver
+                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
@@ -381,6 +657,29 @@ export const Attendance = (): JSX.Element => {
         </div>
       </div>
 
+      <AttendanceModal
+        isOpen={attendanceModalOpen}
+        onClose={() => {
+          setAttendanceModalOpen(false);
+          setModalAulaId("");
+          setModalDate(undefined);
+        }}
+        idAula={modalAulaId}
+        date={modalDate}
+      />
+
+      <ObservationModal
+        isOpen={observationModalOpen}
+        initial={observationInitial}
+        onClose={() => {
+          setObservationModalOpen(false);
+          setObservationTargetStudentId(null);
+          setObservationInitial("");
+        }}
+        onConfirm={handleObservationConfirm}
+        title="Observação"
+      />
+
       <DeleteConfirmationModal
         isOpen={!!recordToDelete}
         onClose={() => setRecordToDelete(null)}
@@ -389,9 +688,9 @@ export const Attendance = (): JSX.Element => {
         description={
           recordToDelete
             ? `Tem certeza que deseja remover o registro de ${format(
-                new Date(recordToDelete.date),
+                parseISO(recordToDelete.date),
                 "dd/MM/yyyy"
-              )} - ${recordToDelete.period}? Esta ação não pode ser desfeita.`
+              )} - ${recordToDelete.aulaTitle ?? ""}? Esta ação não pode ser desfeita.`
             : ""
         }
       />

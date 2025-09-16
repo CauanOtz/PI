@@ -27,8 +27,7 @@ export const validateRegistrarPresenca = [
     .withMessage('Status de presença inválido. Valores aceitos: presente, falta'),
   body('data_registro')
     .optional({ nullable: true })
-    .isISO8601().withMessage('A data de registro deve estar no formato YYYY-MM-DD.')
-    .toDate(),
+    .isISO8601().withMessage('A data de registro deve estar no formato YYYY-MM-DD.'),
   body('observacao')
     .optional({ nullable: true })
     .isString().withMessage('A observação deve ser um texto.')
@@ -49,12 +48,10 @@ export const validateListarPresencas = [
     .toInt(),
   query('dataInicio')
     .optional()
-    .isISO8601().withMessage('A data de início deve estar no formato YYYY-MM-DD.')
-    .toDate(),
+    .isISO8601().withMessage('A data de início deve estar no formato YYYY-MM-DD.'),
   query('dataFim')
     .optional()
-    .isISO8601().withMessage('A data de fim deve estar no formato YYYY-MM-DD.')
-    .toDate(),
+    .isISO8601().withMessage('A data de fim deve estar no formato YYYY-MM-DD.'),
   query('status')
     .optional()
     .isIn(['presente', 'falta', 'atraso', 'falta_justificada'])
@@ -81,8 +78,7 @@ export const validateAtualizarPresenca = [
     .withMessage('Status de presença inválido. Valores aceitos: presente, falta, atraso, falta_justificada'),
   body('data_registro')
     .optional()
-    .isISO8601().withMessage('A data de registro deve estar no formato YYYY-MM-DD.')
-    .toDate(),
+    .isISO8601().withMessage('A data de registro deve estar no formato YYYY-MM-DD.'),
   body('observacao')
     .optional()
     .isString().withMessage('A observação deve ser um texto.')
@@ -98,12 +94,10 @@ export const validateHistoricoAluno = [
     .toInt(),
   query('dataInicio')
     .optional()
-    .isISO8601().withMessage('A data de início deve estar no formato YYYY-MM-DD.')
-    .toDate(),
+    .isISO8601().withMessage('A data de início deve estar no formato YYYY-MM-DD.'),
   query('dataFim')
     .optional()
-    .isISO8601().withMessage('A data de fim deve estar no formato YYYY-MM-DD.')
-    .toDate(),
+    .isISO8601().withMessage('A data de fim deve estar no formato YYYY-MM-DD.'),
   validateRequest
 ];
 
@@ -114,7 +108,6 @@ export const validatePresencasPorAula = [
     .toInt(),
   query('data')
     .optional()
-    .isISO8601().withMessage('A data deve estar no formato YYYY-MM-DD.')
-    .toDate(),
+    .isISO8601().withMessage('A data deve estar no formato YYYY-MM-DD.'),
   validateRequest
 ];

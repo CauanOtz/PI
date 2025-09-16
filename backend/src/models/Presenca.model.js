@@ -62,6 +62,7 @@ const Presenca = sequelize.define('Presenca', {
   idAluno: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    field: 'id_aluno',
     references: {
       model: 'alunos',
       key: 'id'
@@ -72,6 +73,7 @@ const Presenca = sequelize.define('Presenca', {
   idAula: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    field: 'id_aula',
     references: {
       model: 'aulas',
       key: 'id'
@@ -87,11 +89,13 @@ const Presenca = sequelize.define('Presenca', {
   data_registro: {
     type: DataTypes.DATEONLY,
     allowNull: false,
-    defaultValue: DataTypes.NOW
+    defaultValue: DataTypes.NOW,
+    field: 'data_registro'
   },
   observacao: {
     type: DataTypes.STRING(500),
-    allowNull: true
+    allowNull: true,
+    field: 'observacao'
   }
 }, {
   tableName: 'presencas',

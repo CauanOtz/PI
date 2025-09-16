@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import Presenca from '../models/Presenca.model.js';
 import Aluno from '../models/Aluno.model.js';
 import Aula from '../models/Aula.model.js';
+import { sequelize } from '../config/database.js';
 
 // Funções auxiliares para respostas padronizadas
 const sendError = (res, status, message) => {
@@ -19,7 +20,21 @@ const handleNotFound = (entity, res) => {
 
 // Função para formatar a data para YYYY-MM-DD
 const formatDate = (date) => {
-  return new Date(date).toISOString().split('T')[0];
+  // aceita string "YYYY-MM-DD" sem conversão
+  if (!date) {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  }
+  if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    return date;
+  }
+
+  // se receber Date ou outra string, converte para data local (evita deslocamento UTC)
+  const d = date instanceof Date ? date : new Date(date);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 };
 
 /**
@@ -88,39 +103,47 @@ const formatDate = (date) => {
  */
 export const registrarPresenca = async (req, res, next) => {
   try {
+    console.log("RegistrarPresenca - body:", req.body);
     const { idAluno, idAula, status, observacao, data_registro } = req.body;
-    
-    // Verifica se o aluno existe
-    const aluno = await Aluno.findByPk(idAluno);
-    if (!aluno) return handleNotFound('Aluno', res);
-    
-    // Verifica se a aula existe
-    const aula = await Aula.findByPk(idAula);
-    if (!aula) return handleNotFound('Aula', res);
-    
-    // Verifica se já existe um registro de presença para este aluno nesta data
-    const dataFormatada = formatDate(data_registro || new Date());
-    
-    const presencaExistente = await Presenca.findOne({
-      where: { idAluno, data_registro: dataFormatada, idAula }
+
+    // coerção explícita e normalização da data para evitar mismatch (string vs number / timezone)
+    const idAlunoNum = Number(idAluno);
+    const idAulaNum = Number(idAula);
+    const dataFormatada = (function(d) {
+      if (!d) {
+        const now = new Date();
+        return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+      }
+      if (typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+      const dt = d instanceof Date ? d : new Date(d);
+      return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+    })(data_registro);
+
+    console.log("Normalized inputs:", { idAlunoRaw: idAluno, idAulaRaw: idAula, idAlunoNum, idAulaNum, dataFormatada, status, observacao, types: { typeofIdAluno: typeof idAluno, typeofIdAula: typeof idAula } });
+
+    const where = { idAluno: idAlunoNum, idAula: idAulaNum, data_registro: dataFormatada };
+    const existing = await Presenca.findAll({ where });
+    console.log("Presenca.findAll result count:", existing.length, existing.map(e => ({ id: e.id, idAluno: e.idAluno, idAula: e.idAula, data_registro: e.data_registro, createdAt: e.createdAt })));
+
+    // then do atomic create
+    const result = await sequelize.transaction(async (t) => {
+      const [presenca, created] = await Presenca.findOrCreate({
+        where,
+        defaults: { status, observacao },
+        transaction: t
+      });
+      return { presenca, created };
     });
-    
-    if (presencaExistente) {
+
+    if (!result.created) {
       return sendError(res, 409, 'Já existe um registro de presença para este aluno nesta data');
     }
-    
-    // Cria o registro de presença
-    const presenca = await Presenca.create({
-      idAluno,
-      idAula,
-      status,
-      observacao,
-      data_registro: dataFormatada
-    });
-    
-    return sendSuccess(res, 201, presenca);
-  } catch (error) {
-    next(error);
+    return sendSuccess(res, 201, result.presenca);
+  } catch (createErr) {
+    if (createErr && createErr.name === "SequelizeUniqueConstraintError") {
+      return sendError(res, 409, "Já existe um registro de presença para este aluno nesta data");
+    }
+    throw createErr;
   }
 };
 
@@ -501,5 +524,147 @@ export const atualizarPresenca = async (req, res, next) => {
     return sendSuccess(res, 200, presencaAtualizada);
   } catch (error) {
     next(error);
+  }
+};
+
+/**
+ * @openapi
+ * /presencas/bulk:
+ *   post:
+ *     summary: Registra múltiplas presenças em uma única requisição
+ *     tags: [Presenças]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               type: object
+ *               required:
+ *                 - idAluno
+ *                 - idAula
+ *                 - status
+ *               properties:
+ *                 idAluno:
+ *                   type: integer
+ *                   description: ID do aluno
+ *                   example: 1
+ *                 idAula:
+ *                   type: integer
+ *                   description: ID da aula
+ *                   example: 1
+ *                 status:
+ *                   type: string
+ *                   enum: [presente, falta, atraso, falta_justificada]
+ *                   description: Status da presença
+ *                   example: "presente"
+ *                 data_registro:
+ *                   type: string
+ *                   format: date
+ *                   description: Data do registro (opcional, padrão é a data atual)
+ *                   example: "2024-07-30"
+ *                 observacao:
+ *                   type: string
+ *                   description: Observações sobre a presença (opcional)
+ *                   example: "Chegou atrasado 15 minutos"
+ *     responses:
+ *       200:
+ *         description: Presenças registradas com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 sucesso:
+ *                   type: boolean
+ *                 resultados:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       presenca:
+ *                         $ref: '#/components/schemas/Presenca'
+ *                       created:
+ *                         type: boolean
+ *       400:
+ *         description: Dados inválidos
+ *       401:
+ *         description: Não autorizado
+ *       409:
+ *         description: Conflito de registro único ao inserir presenças
+ */
+export const registrarPresencasBulk = async (req, res, next) => {
+  try {
+    const itemsRaw = Array.isArray(req.body) ? req.body : [];
+    if (itemsRaw.length === 0) return sendError(res, 400, "Nenhum item fornecido");
+
+    // Normaliza e valida itens, cria chave composta para deduplicar
+    const allowedStatus = new Set(['presente', 'falta', 'atraso', 'falta_justificada']);
+    const dedupeMap = new Map(); // key => normalized item
+
+    for (const it of itemsRaw) {
+      const idAluno = Number(it.idAluno);
+      const idAula = Number(it.idAula);
+      const data_registro = formatDate(it.data_registro);
+      const status = String(it.status ?? '').trim();
+
+      if (!idAluno || !idAula) {
+        // Ignora entradas inválidas (ou poderia retornar 400)
+        console.warn('registrarPresencasBulk: item ignorado por id inválido', it);
+        continue;
+      }
+      if (!allowedStatus.has(status)) {
+        console.warn('registrarPresencasBulk: status inválido, usando "presente" por padrão', status, it);
+      }
+
+      const normalized = {
+        idAluno,
+        idAula,
+        status: allowedStatus.has(status) ? status : 'presente',
+        data_registro,
+        observacao: it.observacao ?? null
+      };
+
+      const key = `${idAluno}|${idAula}|${data_registro}`;
+      // mantêm o último item para a mesma chave (pode trocar para first se preferir)
+      dedupeMap.set(key, normalized);
+    }
+
+    const items = Array.from(dedupeMap.values());
+    if (items.length === 0) return sendError(res, 400, "Nenhum item válido para inserir");
+
+    const results = [];
+    await sequelize.transaction(async (t) => {
+      // Use upsert para inserir ou atualizar conforme a constraint única composta
+      // Faz sequencialmente para evitar conflitos com múltiplas operações concorrentes
+      for (const it of items) {
+        // upsert usa a constraint única para decidir insert vs update
+        await Presenca.upsert({
+          idAluno: it.idAluno,
+          idAula: it.idAula,
+          status: it.status,
+          data_registro: it.data_registro,
+          observacao: it.observacao
+        }, { transaction: t });
+
+        // Recupera o registro atual para retornar no resultado
+        const pres = await Presenca.findOne({
+          where: { idAluno: it.idAluno, idAula: it.idAula, data_registro: it.data_registro },
+          transaction: t
+        });
+        results.push({ presenca: pres ? pres.get({ plain: true }) : null });
+      }
+    });
+
+    return sendSuccess(res, 200, { sucesso: true, resultados: results });
+  } catch (err) {
+    console.error('registrarPresencasBulk error:', err);
+    if (err && err.name === 'SequelizeUniqueConstraintError') {
+      return sendError(res, 409, 'Conflito de registro único ao inserir presenças');
+    }
+    next(err);
   }
 };
