@@ -4,7 +4,6 @@ import { studentsService } from '../../services/students';
 vi.mock('../../lib/http', () => ({ http: { get: vi.fn(), post: vi.fn(), put: vi.fn(), delete: vi.fn() } }));
 import { http } from '../../lib/http';
 
-// Mirrors pattern used in other *Service.errors.test.ts files
 describe('studentsService (error paths)', () => {
   const build = (msg: string, status = 500) => {
     const e: any = new Error(msg);

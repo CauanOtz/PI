@@ -1,5 +1,5 @@
-// src/lib/format.ts
-// Centraliza funções de formatação e normalização usadas em múltiplas telas.
+
+import { cpf as cpfValidator } from 'cpf-cnpj-validator';
 
 /** Remove todos os caracteres não numéricos. */
 export const digitsOnly = (value: unknown): string => {
@@ -14,6 +14,13 @@ export const formatCPF = (value: unknown): string => {
   if (d.length <= 6) return d.replace(/(\d{3})(\d+)/, '$1.$2');
   if (d.length <= 9) return d.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
   return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+};
+
+/** Valida CPF usando a mesma biblioteca do backend. */
+export const isValidCPF = (value: unknown): boolean => {
+  const d = digitsOnly(value);
+  if (d.length !== 11) return false;
+  return cpfValidator.isValid(d);
 };
 
 /** Retorna data/hora local friendly ou traço se inválida. */
@@ -36,4 +43,4 @@ export const truncate = (text: string, max = 120): string => {
   return text.length <= max ? text : text.slice(0, max - 1) + '…';
 };
 
-export default { digitsOnly, formatCPF, formatDateTime, toBoolean, truncate };
+export default { digitsOnly, formatCPF, isValidCPF, formatDateTime, toBoolean, truncate };

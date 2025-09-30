@@ -153,7 +153,11 @@ export const Users = (): JSX.Element => {
       load();
     } catch (err: any) {
       console.error(err);
-      toast.error(err?.response?.data?.mensagem || "Falha ao remover usuário");
+      toast.error(
+        err?.response?.data?.mensagem ||
+        err?.response?.data?.message ||
+        "Falha ao remover usuário"
+      );
     }
   };
 
@@ -280,7 +284,11 @@ export const Users = (): JSX.Element => {
             load();
           } catch (err: any) {
             console.error(err);
-            toast.error(err?.response?.data?.mensagem || "Falha ao criar usuário");
+            toast.error(
+              err?.response?.data?.mensagem ||
+              err?.response?.data?.message ||
+              "Falha ao criar usuário"
+            );
           }
         }}
       />
@@ -306,7 +314,11 @@ export const Users = (): JSX.Element => {
              load();
            } catch (err: any) {
              console.error(err);
-             toast.error(err?.response?.data?.mensagem || "Falha ao atualizar usuário");
+             toast.error(
+               err?.response?.data?.mensagem ||
+               err?.response?.data?.message ||
+               "Falha ao atualizar usuário"
+             );
            }
          }}
       />

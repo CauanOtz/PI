@@ -1,4 +1,5 @@
 import React from "react";
+import { digitsOnly, formatCPF as maskCPF, isValidCPF } from "../../../lib/format";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../ui/dialog";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
@@ -30,17 +31,7 @@ const formatPhone = (value: string) => {
   return `(${digits.slice(0,2)}) ${digits.slice(2,7)}-${digits.slice(7)}`;
 };
 
-// máscara CPF: 000.000.000-00
-const formatCPF = (value: string) => {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-  if (!digits) return "";
-  if (digits.length <= 3) return digits;
-  if (digits.length <= 6) return `${digits.slice(0,3)}.${digits.slice(3)}`;
-  if (digits.length <= 9) return `${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6)}`;
-  return `${digits.slice(0,3)}.${digits.slice(3,6)}.${digits.slice(6,9)}-${digits.slice(9,11)}`;
-};
-
-const cleanDigits = (value: string) => value.replace(/\D/g, "");
+const cleanDigits = digitsOnly;
 
 export const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClose, onSubmit }) => {
   const [form, setForm] = React.useState<CreateUserData>({ nome: "", email: "", telefone: "", cpf: "", senha: "", role: "responsavel" });
@@ -50,6 +41,10 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClos
     const cpfClean = cleanDigits(form.cpf);
     if (cpfClean.length !== 11) {
       toast.error("CPF inválido — informe 11 dígitos.");
+      return;
+    }
+    if (!isValidCPF(cpfClean)) {
+      toast.error("CPF inválido.");
       return;
     }
     onSubmit({ ...form, cpf: cpfClean }); // envia somente dígitos (inclui role)
@@ -83,7 +78,26 @@ export const CreateUserModal: React.FC<CreateUserModalProps> = ({ isOpen, onClos
 
           <div className="space-y-2">
             <Label htmlFor="cpf">CPF</Label>
-            <Input id="cpf" placeholder="000.000.000-00" value={form.cpf} onChange={(e) => setForm(s => ({ ...s, cpf: formatCPF(e.target.value) }))} required />
+            <Input
+              id="cpf"
+              placeholder="000.000.000-00"
+              value={form.cpf}
+              maxLength={14} /* 000.000.000-00 */
+              onChange={(e) => {
+                const formatted = maskCPF(e.target.value);
+                if (formatted.length <= 14) {
+                  setForm(s => ({ ...s, cpf: formatted }));
+                }
+              }}
+              onKeyDown={(e) => {
+                // Bloqueia entrada adicional se já completo
+                const isDigit = /[0-9]/.test(e.key);
+                if (isDigit && digitsOnly(form.cpf).length >= 11 && window.getSelection()?.toString() === '') {
+                  e.preventDefault();
+                }
+              }}
+              required
+            />
           </div>
 
           <div className="space-y-2">
