@@ -100,4 +100,28 @@ const Notificacao = sequelize.define('Notificacao', {
   updatedAt: 'atualizadoEm'
 });
 
+Notificacao.associate = (models) => {
+  // Notificação pertence a um usuário (criador) identificado pelo CPF
+  Notificacao.belongsTo(models.Usuario, {
+    foreignKey: 'criadoPor',
+    as: 'criador',
+    targetKey: 'cpf'
+  });
+
+  // Relação many-to-many via UsuarioNotificacao (destinatários)
+  Notificacao.belongsToMany(models.Usuario, {
+    through: models.UsuarioNotificacao,
+    foreignKey: 'notificacaoId',
+    otherKey: 'cpfUsuario',
+    targetKey: 'cpf',
+    as: 'destinatarios'
+  });
+
+  // Acesso direto às associações UsuarioNotificacao
+  Notificacao.hasMany(models.UsuarioNotificacao, {
+    foreignKey: 'notificacaoId',
+    as: 'usuarioNotificacoes'
+  });
+};
+
 export default Notificacao;

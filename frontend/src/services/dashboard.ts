@@ -1,5 +1,6 @@
 // ...new file...
 import { http } from "../lib/http";
+import { notificacaoService } from './notificacao';
 
 /**
  * Helpers para extrair arrays / paginacao de respostas backend com formatos variados.
@@ -51,6 +52,12 @@ export const dashboardService = {
   },
 
   async getNotifications() {
+    try {
+      const list = await notificacaoService.list(1, 20);
+      if (Array.isArray(list) && list.length > 0) return list;
+    } catch (err) {
+    }
+
     const candidates = ["/notificacoes", "/notificacao", "/notifications", "/notifies"];
     for (const path of candidates) {
       try {

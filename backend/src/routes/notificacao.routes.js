@@ -457,6 +457,15 @@ router.get(
   listarNotificacoesUsuario
 );
 
+router.get(
+  '/minhas',
+  autenticar,
+  (req, res, next) => {
+    req.params.cpfUsuario = req.usuario.cpf;
+    return listarNotificacoesUsuario(req, res, next);
+  }
+);
+
 /**
  * @openapi
  * /notificacoes/{idNotificacao}/marcar-lida:

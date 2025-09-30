@@ -10,6 +10,7 @@ import alunoRoutes from './routes/aluno.routes.js'; // Importe as rotas de aluno
 import responsavelAlunoRoutes from './routes/responsavel-aluno.routes.js'; // Importe as rotas de responsavel-aluno
 import presencaRoutes from './routes/presenca.routes.js'; // Importe as rotas de presença
 import responsavelRoutes from './routes/responsavel.routes.js'; // Importe as rotas de responsavel
+import notificacaoRoutes from './routes/notificacao.routes.js'; // Importe as rotas de notificações
 dotenv.config();
 const app = express();
 
@@ -44,6 +45,7 @@ app.use('/api/v2/alunos', alunoRoutes); // Rotas de aluno sob /api/v2/alunos
 app.use('/api/v2/responsaveis-alunos', responsavelAlunoRoutes); // Rotas de responsavel-aluno sob /api/v2/responsaveis-alunos
 app.use('/api/v2/presencas', presencaRoutes); // Rotas de presença sob /api/v2/presencas
 app.use('/api/v2/responsaveis', responsavelRoutes); // Rotas de responsavel sob /api/v2/responsaveis
+app.use('/api/v2/notificacoes', notificacaoRoutes); // Rotas de notificações sob /api/v2/notificacoes
 
 app.use((req, res, next) => {
   res.status(404).json({ message: 'Rota não encontrada.' });

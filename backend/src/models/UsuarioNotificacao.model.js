@@ -81,4 +81,17 @@ const UsuarioNotificacao = sequelize.define('UsuarioNotificacao', {
   ]
 });
 
+UsuarioNotificacao.associate = (models) => {
+  UsuarioNotificacao.belongsTo(models.Notificacao, {
+    foreignKey: 'notificacaoId',
+    as: 'Notificacao'
+  });
+
+  UsuarioNotificacao.belongsTo(models.Usuario, {
+    foreignKey: 'cpfUsuario',
+    targetKey: 'cpf',
+    as: 'Usuario'
+  });
+};
+
 export default UsuarioNotificacao;

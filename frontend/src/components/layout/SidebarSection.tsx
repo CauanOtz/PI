@@ -66,6 +66,11 @@ export const SidebarSection = (): JSX.Element | null => {
       path: "/files",
     },
     {
+      icon: <SparklesIcon className="w-4 h-4 text-blue-300" />,
+      label: "Notificações",
+      path: "/notificacoes",
+    },
+    {
       icon: <SettingsIcon className="w-4 h-4 text-orange-400" />,
       label: "Configurações",
       path: "/settings",
@@ -77,6 +82,11 @@ export const SidebarSection = (): JSX.Element | null => {
       icon: <HomeIcon className="w-4 h-4 text-blue-400" />,
       label: "Painel do Aluno",
       path: "/guardian-dashboard",
+    },
+    {
+      icon: <SparklesIcon className="w-4 h-4 text-blue-300" />,
+      label: "Notificações",
+      path: "/minhas-notificacoes",
     },
     {
       icon: <SettingsIcon className="w-4 h-4 text-orange-400" />,

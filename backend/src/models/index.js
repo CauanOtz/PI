@@ -9,7 +9,7 @@ import ResponsavelAluno from './ResponsavelAluno.model.js';
 import Notificacao from './Notificacao.model.js';
 import Presenca from './Presenca.model.js';
 import Aula from './Aula.model.js';
-import UsuarioNotificacao from './UsuarioNotificacao.model.js';
+import UsuarioNotificacao from './UsuarioNotificacao.model.js'; 
 
 // Initialize models
 const models = {
@@ -23,7 +23,6 @@ const models = {
   UsuarioNotificacao,
 };
 
-// Run associations
 Object.values(models).forEach(model => {
   if (typeof model.associate === 'function') {
     model.associate(models);

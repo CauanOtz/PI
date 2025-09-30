@@ -14,6 +14,7 @@ import { Card } from "../../components/ui/card";
 import { NotificationsDropdown } from "../../components/ui/notifications-dropdown";
 import { toast } from "sonner";
 import { dashboardService } from "../../services/dashboard";
+import { notificacaoService } from '../../services/notificacao';
 
 export const Dashboard = (): JSX.Element => {
   const navigate = useNavigate();
@@ -76,10 +77,26 @@ export const Dashboard = (): JSX.Element => {
 
   const handleReadNotification = (id: string) => {
     setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+    (async () => {
+      try {
+        await notificacaoService.markAsRead(id);
+      } catch (err) {
+        console.error('Erro ao marcar notificação como lida', err);
+        toast.error('Não foi possível marcar notificação como lida');
+      }
+    })();
   };
   const handleDeleteNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-    toast.success("Notificação removida");
+    (async () => {
+      try {
+        await notificacaoService.delete(id);
+        setNotifications((prev) => prev.filter((n) => n.id !== id));
+        toast.success("Notificação removida");
+      } catch (err) {
+        console.error('Erro ao remover notificação', err);
+        toast.error('Não foi possível remover notificação');
+      }
+    })();
   };
   const handleMarkAllAsRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));

@@ -2,6 +2,7 @@
 import Usuario from '../models/Usuario.model.js';
 import { Op } from 'sequelize';
 import bcrypt from 'bcrypt';
+import { normalizeCpf, formatCpf, isValidCpf } from '../utils/cpf.js';
 /**
  * @openapi
  * tags:
@@ -81,17 +82,19 @@ export const registrarUsuario = async (req, res, next) => {
     if(!cpf){
       return res.status(400).json({ message: 'CPF é obrigatório.' });
     }
-  
+    
     // aceita apenas valores permitidos; se vier errado, mantemos 'responsavel'
     const allowedRoles = ['admin', 'responsavel'];
     role = (typeof role === 'string' && allowedRoles.includes(role)) ? role : 'responsavel';
     
-    // limpa e formata CPF recebido (aceita dígitos ou já formatado)
-    const cpfDigits = (cpf || "").toString().replace(/\D/g, "");
-    if (!cpfDigits || cpfDigits.length !== 11) {
+    const cpfDigits = normalizeCpf(cpf);
+    if (!cpfDigits) {
       return res.status(400).json({ message: 'CPF inválido. Envie 11 dígitos.' });
     }
-    const cpfFormatado = cpfDigits.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    if (!isValidCpf(cpfDigits)) {
+      return res.status(400).json({ message: 'CPF inválido.' });
+    }
+    const cpfFormatado = formatCpf(cpfDigits);
     cpf = cpfFormatado; // sobrescreve para usar na criação/cheque
 
     // normaliza/valida telefone (aceita dígitos ou máscara)
@@ -417,10 +420,11 @@ export const buscarPorCPF = async (req, res, next) => {
       });
     }
 
-    const { cpf } = req.params;
+  const { cpf } = req.params;
 
-    // Formata o CPF para o formato do banco de dados (se necessário)
-    const cpfFormatado = cpf.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  const cpfDigits = normalizeCpf(cpf);
+  if (!cpfDigits) return res.status(400).json({ mensagem: 'CPF inválido' });
+  const cpfFormatado = formatCpf(cpfDigits);
 
     const usuario = await Usuario.findOne({
       where: { cpf: cpfFormatado },
@@ -501,8 +505,9 @@ export const atualizarUsuarioPorCPF = async (req, res, next) => {
     const { cpf } = req.params;
     const { nome, email, telefone, role } = req.body; // aceitar role no body
 
-    // Formata o CPF para o formato do banco de dados
-    const cpfFormatado = cpf.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  const cpfDigits = normalizeCpf(cpf);
+  if (!cpfDigits) return res.status(400).json({ mensagem: 'CPF inválido' });
+  const cpfFormatado = formatCpf(cpfDigits);
 
     // Busca o usuário
     const usuario = await Usuario.findOne({
@@ -613,10 +618,11 @@ export const excluirUsuarioPorCPF = async (req, res, next) => {
       });
     }
 
-    const { cpf } = req.params;
+  const { cpf } = req.params;
 
-    // Formata o CPF para o formato do banco de dados
-    const cpfFormatado = cpf.replace(/\D/g, '').replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  const cpfDigits = normalizeCpf(cpf);
+  if (!cpfDigits) return res.status(400).json({ mensagem: 'CPF inválido' });
+  const cpfFormatado = formatCpf(cpfDigits);
 
     // Verifica se o usuário está tentando se auto-excluir
     if (req.usuario.cpf === cpfFormatado) {

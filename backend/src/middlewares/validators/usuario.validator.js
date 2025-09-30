@@ -1,5 +1,6 @@
 // src/middlewares/validators/usuario.validator.js
 import { query, body, validationResult, param } from 'express-validator';
+import { normalizeCpf, isValidCpf, formatCpf } from '../../utils/cpf.js';
 
 export const validarCPF = (cpf) => {
   if (!cpf) return false;
@@ -133,8 +134,12 @@ export const validateBuscarPorCPF = [
   param('cpf')
     .notEmpty().withMessage('CPF é obrigatório')
     .customSanitizer(v => (v ? v.toString().replace(/\D/g, '') : v))
-    .isLength({ min: 11, max: 11 }).withMessage('CPF inválido'),
-  
+    .custom((value) => {
+      if (!value || value.length !== 11) throw new Error('CPF inválido');
+      return true;
+    })
+    .customSanitizer(v => formatCpf(v)),
+
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -149,7 +154,11 @@ export const validateAtualizarUsuario = [
   param('cpf')
     .notEmpty().withMessage('CPF é obrigatório')
     .customSanitizer(v => (v ? v.toString().replace(/\D/g, '') : v))
-    .isLength({ min: 11, max: 11 }).withMessage('CPF inválido'),
+    .custom((value) => {
+      if (!value || value.length !== 11) throw new Error('CPF inválido');
+      return true;
+    })
+    .customSanitizer(v => formatCpf(v)),
   
   body('nome')
     .optional()
@@ -183,7 +192,11 @@ export const validateExcluirUsuario = [
   param('cpf')
     .notEmpty().withMessage('CPF é obrigatório')
     .customSanitizer(v => (v ? v.toString().replace(/\D/g, '') : v))
-    .isLength({ min: 11, max: 11 }).withMessage('CPF inválido'),
+    .custom((value) => {
+      if (!value || value.length !== 11) throw new Error('CPF inválido');
+      return true;
+    })
+    .customSanitizer(v => formatCpf(v)),
   
   (req, res, next) => {
     const errors = validationResult(req);

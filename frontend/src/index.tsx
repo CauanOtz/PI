@@ -11,6 +11,8 @@ import { Files } from "./screens/Files/Files";
 import { Settings } from "./screens/Settings/Settings";
 import { Exams } from "./screens/Exams/Exams";
 import { Calendar } from "./screens/Calendar/Calendar";
+import { NotificationsAdmin } from "./screens/Notifications/NotificationsAdmin";
+import { NotificationsGuardian } from "./screens/Notifications/NotificationsGuardian";
 import { Toaster } from 'sonner';
 import { AuthProvider } from "./context/AuthProvider";
 import PrivateRoute from "./routes/PrivateRoute";
@@ -37,6 +39,8 @@ function App() {
             <Route path="/users" element={<Users />} />
             <Route path="/class" element={<Class />} />
             <Route path="/guardian-dashboard" element={<GuardianDashboard />} />
+            <Route path="/notificacoes" element={<NotificationsAdmin />} />
+            <Route path="/minhas-notificacoes" element={<NotificationsGuardian />} />
           </Route>
         </Routes>
       </AuthProvider>
