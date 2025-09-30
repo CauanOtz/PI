@@ -1,53 +1,80 @@
-// src/config/database.js
+﻿// src/config/database.js
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
-import path from 'path'; // Para construir caminhos de forma segura
-import { fileURLToPath } from 'url'; // Para obter o caminho do diretório atual com ES Modules
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
-// Helper para obter o __dirname em ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const dbDialect = process.env.DB_DIALECT || 'sqlite';
-// Define o storage com base no dialect. Se não for sqlite, pode ser undefined.
+const dbLogging = process.env.DB_LOGGING === 'true' ? console.log : false;
 const dbStorage = dbDialect === 'sqlite'
-    ? (process.env.DB_STORAGE || path.join(path.dirname(__dirname), 'dev.sqlite')) // Salva na raiz do projeto
-    : undefined;
+  ? (process.env.DB_STORAGE || path.join(path.dirname(__dirname), 'dev.sqlite'))
+  : undefined;
+const databaseUrl = process.env.DATABASE_URL;
 
 let sequelize;
 
-if (dbDialect === 'sqlite') {
+if (databaseUrl) {
+  const sslEnabled = process.env.DB_SSL === 'true' || process.env.SUPABASE_USE_SSL === 'true';
+  const dialectOptions = sslEnabled
+    ? {
+        ssl: {
+          require: true,
+          rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED === 'true'
+        }
+      }
+    : undefined;
+
+  sequelize = new Sequelize(databaseUrl, {
+    dialect: dbDialect,
+    logging: dbLogging,
+    dialectOptions,
+  });
+} else if (dbDialect === 'sqlite') {
   sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: dbStorage, // Caminho para o arquivo do banco de dados
-    logging: console.log, // ou false para desabilitar logs SQL
+    storage: dbStorage,
+    logging: dbLogging,
   });
 } else {
-  // Configuração para outros bancos de dados (MySQL, PostgreSQL, etc.)
-  // Adapte conforme sua necessidade se for alternar entre bancos
   const dbName = process.env.DB_NAME || 'teste_escola_dev';
   const dbUser = process.env.DB_USER || 'root';
   const dbHost = process.env.DB_HOST || 'localhost';
   const dbPassword = process.env.DB_PASSWORD || 'yourpassword';
+  const dbPort = process.env.DB_PORT ? Number(process.env.DB_PORT) : undefined;
+
+  const sslEnabled = process.env.DB_SSL === 'true' || process.env.SUPABASE_USE_SSL === 'true';
+  const dialectOptions = sslEnabled
+    ? {
+        ssl: {
+          require: true,
+          rejectUnauthorized: process.env.DB_SSL_REJECT_UNAUTHORIZED === 'true'
+        }
+      }
+    : undefined;
 
   sequelize = new Sequelize(dbName, dbUser, dbPassword, {
     host: dbHost,
-    dialect: dbDialect, // Ex: 'mysql', 'postgres'
-    logging: console.log,
+    port: dbPort,
+    dialect: dbDialect,
+    logging: dbLogging,
+    dialectOptions,
   });
 }
 
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
-    console.log(`Conexão com o banco de dados (${dbDialect}) estabelecida com sucesso.`);
+    console.log(`Conexao com o banco de dados (${dbDialect}) estabelecida com sucesso.`);
     if (dbDialect === 'sqlite') {
       console.log(`Banco de dados SQLite em: ${dbStorage}`);
     }
   } catch (error) {
-    console.error(`Não foi possível conectar ao banco de dados (${dbDialect}):`, error);
+    console.error(`Nao foi possivel conectar ao banco de dados (${dbDialect}):`, error);
   }
 };
 

@@ -1,0 +1,10 @@
+﻿node_modules
+npm-debug.log
+*log
+.devcontainer/
+dist
+coverage
+dev.sqlite
+dev_cli.sqlite
+uploads/
+env
