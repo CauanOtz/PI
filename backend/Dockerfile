@@ -22,7 +22,6 @@ COPY .sequelizerc ./
 COPY src ./src
 COPY config ./config
 COPY migrations ./migrations
-COPY seeders ./seeders
 
 RUN mkdir -p /data && mkdir -p uploads/documentos
 VOLUME ["/data", "/app/uploads"]
