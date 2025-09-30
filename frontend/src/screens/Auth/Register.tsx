@@ -1,4 +1,4 @@
-import React from "react";
+// React import removed (new JSX runtime)
 import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";

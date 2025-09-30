@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 export const Settings = (): JSX.Element => {
   const [notifications, setNotifications] = React.useState(true);
-  const [theme, setTheme] = React.useState<'light' | 'dark'>('light');
+  const [/*theme*/, /*setTheme*/] = React.useState<'light' | 'dark'>('light');
   const [language, setLanguage] = React.useState('pt-BR');
 
   const handleSave = () => {

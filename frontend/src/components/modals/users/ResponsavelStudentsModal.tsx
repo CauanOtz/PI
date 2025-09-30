@@ -1,7 +1,7 @@
 import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../ui/dialog";
 import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
+// Removed unused Input import
 
 interface Student {
   id: number;

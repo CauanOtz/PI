@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "../../components/ui/button";
@@ -212,71 +212,7 @@ export const Attendance = (): JSX.Element => {
   };
 
   // salva presenças: cria presenca por aluno marcado (parallel)
-  const saveAttendance = async () => {
-    if (!selectedAulaId) {
-      toast.error("Selecione uma aula antes de salvar.");
-      return;
-    }
-    try {
-      const target = students;
-      const marked = target.filter(s => s.present || s.absent);
-      if (marked.length === 0) {
-        toast.error("Marque pelo menos uma presença ou falta antes de salvar.");
-        return;
-      }
-      setLoading(true);
-
-      const listRes = await presencaService.list({ idAula: selectedAulaId, dataInicio: selectedDate, dataFim: selectedDate });
-      const existingPresencas = Array.isArray(listRes) ? listRes : (listRes && listRes.presencas) ? listRes.presencas : [];
-      const existingByAluno = new Map<number, any>();
-      existingPresencas.forEach((p: any) => {
-        const idAluno = Number(p.idAluno ?? p.id_aluno ?? (p.aluno && p.aluno.id));
-        if (idAluno) existingByAluno.set(idAluno, p);
-      });
-
-      const toCreate = marked.filter(s => !existingByAluno.has(s.id));
-      const toUpdate = marked.filter(s => existingByAluno.has(s.id));
-
-      // primeiro atualiza os que já existem
-      await Promise.all(toUpdate.map(s => {
-        const pres = existingByAluno.get(s.id);
-        if (!pres) return Promise.resolve(null);
-        return presencaService.update(pres.id, {
-          status: s.present ? "presente" : "falta",
-          data_registro: selectedDate,
-          observacao: s.observacao ?? undefined
-        });
-      }));
-
-      // depois cria todos os novos em uma única requisição (previne race/unique errors)
-      if (toCreate.length > 0) {
-        const payload = toCreate.map(s => ({
-          idAluno: s.id,
-          idAula: selectedAulaId,
-          status: (s.present ? "presente" : "falta") as
-            | "presente"
-            | "falta"
-            | "atraso"
-            | "falta_justificada",
-          data_registro: selectedDate,
-          observacao: s.observacao ?? undefined
-        }));
-        await presencaService.bulkCreate(payload);
-      }
-
-      toast.success("Presenças salvas com sucesso!", {
-        description: `${format(parseISO(selectedDate), "dd/MM/yyyy")} - ${aulas.find(a => String(a.id) === String(selectedAulaId))?.titulo ?? ""}`
-      });
-
-      setStudents(prev => prev.map(p => ({ ...p, present: false, absent: false, presencaId: null })));
-      await loadHistory();
-    } catch (err) {
-      console.error(err);
-      toast.error("Erro ao salvar presenças. Tente novamente.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  // Previously had a separate saveAttendance; logic unified into performSaveAttendance
 
   // observação modal handlers: confirma observação apenas por aluno
   const handleObservationConfirm = async (observacao: string) => {
@@ -307,7 +243,7 @@ export const Attendance = (): JSX.Element => {
     await performSaveEditedAttendance();
   };
 
-  const performSaveAttendance = async (observacao?: string) => {
+  const performSaveAttendance = async (_observacao?: string) => {
     if (!selectedAulaId) {
       toast.error("Selecione uma aula antes de salvar.");
       return;
@@ -373,7 +309,7 @@ export const Attendance = (): JSX.Element => {
     }
   };
 
-  const performSaveEditedAttendance = async (observacao?: string) => {
+  const performSaveEditedAttendance = async (_observacao?: string) => {
     if (!editingRecord) return;
     try {
       const { students: edStudents, presencaIds } = editingRecord;
@@ -394,7 +330,7 @@ export const Attendance = (): JSX.Element => {
         idAula: editingRecord.idAula,
         status: s.present ? "presente" : "falta",
         data_registro: editingRecord.date,
-        observacao: s.observacao ?? observacao ?? undefined
+  observacao: s.observacao ?? _observacao ?? undefined
       })));
 
       toast.success("Registro atualizado com sucesso!", {

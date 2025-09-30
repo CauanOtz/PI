@@ -1,4 +1,4 @@
-import React from "react";
+// React import removed (new JSX runtime)
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthProvider";
 

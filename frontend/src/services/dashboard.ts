@@ -10,7 +10,7 @@ const extractBody = (res: any) => {
   return body;
 };
 
-const extractArray = (payload: any, keys = ["alunos", "items", "rows", "data"]) => {
+const extractArray = (payload: any, keys = ["alunos", "items", "rows", "data"]): any[] => {
   if (!payload) return [];
   if (Array.isArray(payload)) return payload;
   for (const k of keys) {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -10,7 +10,7 @@ import { Button } from '../../components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../components/ui/dialog'
 import { Input } from '../../components/ui/input'
 import { Label } from '../../components/ui/label'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { DeleteConfirmationModal } from '../../components/modals/shared/DeleteConfirmationModal'
 
@@ -25,7 +25,7 @@ interface Task {
 export const Calendar = (): JSX.Element => {
   const [tasks, setTasks] = useState<Task[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [/*selectedDate*/, setSelectedDate] = useState<Date | null>(null) // kept setter for future use
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',

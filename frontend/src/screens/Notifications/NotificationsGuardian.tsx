@@ -215,16 +215,6 @@ export const NotificationsGuardian = (): JSX.Element => {
     }
   };
 
-  const remove = async (id: string) => {
-    try {
-      await notificacaoService.delete(id);
-      setNotifications(prev => prev.filter(n => n.id !== id));
-      toast.success('Notificação removida');
-    } catch (err) {
-      console.error(err);
-      toast.error('Falha ao excluir notificação');
-    }
-  };
 
   return (
     <div className="bg-gray-50 flex flex-row justify-center w-full min-h-screen mt-16">

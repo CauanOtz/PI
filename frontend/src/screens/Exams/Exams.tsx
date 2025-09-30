@@ -5,7 +5,7 @@ import { Input } from "../../components/ui/input";
 import { Plus, Search, PencilIcon, Trash2Icon } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../components/ui/dialog";
 import { Label } from "../../components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
+// Removed unused select components import
 import { toast } from "sonner";
 import { DeleteConfirmationModal } from "../../components/modals/shared/DeleteConfirmationModal";
 

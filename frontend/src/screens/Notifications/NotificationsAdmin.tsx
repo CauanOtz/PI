@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SidebarSection } from '../../components/layout/SidebarSection';
 import { usuariosService, BackendUsuario } from '../../services/users';
 import { notificacaoService } from '../../services/notificacao';
@@ -6,27 +6,22 @@ import { http } from '../../lib/http';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { DeleteConfirmationModal } from '../../components/modals/shared/DeleteConfirmationModal';
-import { PencilIcon, TrashIcon, XIcon, CheckIcon, UsersIcon, SendIcon, RotateCcwIcon } from 'lucide-react';
+import { UsersIcon } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
+// StatusBadge now handled inside table component
+import { NotificationEditor } from '../../components/notifications/NotificationEditor';
+import { NotificationsTable } from '../../components/notifications/NotificationsTable';
+import { extractErrorMessage } from '../../lib/errors';
+import { formatCPF } from '../../lib/format';
 
-const cleanDigits = (value: string) => (value || '').toString().replace(/\D/g, '');
-const formatCPF = (value: string) => {
-  const d = cleanDigits(value);
-  if (d.length <= 3) return d;
-  if (d.length <= 6) return d.replace(/(\d{3})(\d+)/, '$1.$2');
-  if (d.length <= 9) return d.replace(/(\d{3})(\d{3})(\d+)/, '$1.$2.$3');
-  return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-};
+// CPF format uses shared helper now (formatCPF)
 
 const tipos = ['info', 'alerta', 'urgente', 'sistema'] as const;
 
 export const NotificationsAdmin = (): JSX.Element => {
   const navigate = useNavigate();
-  const [title, setTitle] = useState('');
-  const [message, setMessage] = useState('');
-  const [tipo, setTipo] = useState<typeof tipos[number]>('info');
-  const [dataExpiracao, setDataExpiracao] = useState<string | undefined>(undefined);
+  const [editorValues, setEditorValues] = useState({ titulo: '', mensagem: '', tipo: 'info', dataExpiracao: undefined as string | undefined });
   const [responsaveis, setResponsaveis] = useState<BackendUsuario[]>([]);
   const [selected, setSelected] = useState<string[]>([]);
   const [query, setQuery] = useState('');
@@ -82,9 +77,8 @@ export const NotificationsAdmin = (): JSX.Element => {
         console.warn('Nenhum responsável encontrado nas respostas. Última resposta:', res);
         setResponsaveis([]);
       } catch (err: any) {
-        console.error('Erro ao carregar responsáveis:', err?.response ?? err);
-        const msg = err?.response?.data?.message || err?.response?.statusText || err?.message || 'Falha ao carregar responsáveis';
-        toast.error(String(msg));
+        console.error('Erro ao carregar responsáveis:', err);
+        toast.error(extractErrorMessage(err, 'Falha ao carregar responsáveis'));
       }
     })();
   }, []);
@@ -104,12 +98,12 @@ export const NotificationsAdmin = (): JSX.Element => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim() || !message.trim()) return toast.error('Título e mensagem são obrigatórios');
+  const submitEditor = async () => {
+    const { titulo, mensagem, tipo, dataExpiracao } = editorValues;
+    if (!titulo.trim() || !mensagem.trim()) return toast.error('Título e mensagem são obrigatórios');
     setLoading(true);
     try {
-      const payload: any = { titulo: title, mensagem: message, tipo };
+      const payload: any = { titulo, mensagem, tipo };
       if (dataExpiracao) payload.dataExpiracao = dataExpiracao;
       const created = await http.post('/notificacoes', payload).then(r => r.data);
       const id = created?.notificacao?.id ?? created?.id ?? created?.data?.id;
@@ -145,10 +139,11 @@ export const NotificationsAdmin = (): JSX.Element => {
         toast.success('Notificação criada como rascunho (sem destinatários)');
       }
       // limpar formulário independentemente do sucesso de envio
-      setTitle(''); setMessage(''); setSelected([]); setDataExpiracao(undefined);
-    } catch (err) {
-      console.error(err);
-      toast.error('Falha ao criar/enviar notificação');
+      setEditorValues({ titulo: '', mensagem: '', tipo: 'info', dataExpiracao: undefined });
+      setSelected([]);
+    } catch (err: any) {
+      console.error('Falha ao criar/enviar notificação', err);
+      toast.error(extractErrorMessage(err, 'Falha ao criar/enviar notificação'));
     } finally {
       setLoading(false);
     }
@@ -166,14 +161,9 @@ export const NotificationsAdmin = (): JSX.Element => {
       const list = await notificacaoService.list(1, limit);
       setAllNotifications(Array.isArray(list) ? list : []);
       setShowAll(true);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Falha ao carregar notificações:', err);
-      const msg =
-        (err as any)?.response?.data?.errors?.[0]?.message ||
-        (err as any)?.response?.data?.mensagem ||
-        (err as any)?.message ||
-        'Falha ao carregar notificações';
-      toast.error(String(msg));
+      toast.error(extractErrorMessage(err, 'Falha ao carregar notificações'));
     } finally {
       setListLoading(false);
     }
@@ -219,8 +209,7 @@ export const NotificationsAdmin = (): JSX.Element => {
       toast.success(res?.mensagem || 'Notificação atualizada');
       cancelEdit();
     } catch (err: any) {
-      const msg = err?.response?.data?.mensagem || err?.message || 'Falha ao salvar edição';
-      toast.error(String(msg));
+      toast.error(extractErrorMessage(err, 'Falha ao salvar edição'));
     } finally {
       setSavingEdit(false);
     }
@@ -241,8 +230,7 @@ export const NotificationsAdmin = (): JSX.Element => {
       if (editingId === notif.id) cancelEdit();
       toast.success(res?.mensagem || 'Notificação excluída');
     } catch (err: any) {
-      const msg = err?.response?.data?.mensagem || err?.message || 'Falha ao excluir';
-      toast.error(String(msg));
+      toast.error(extractErrorMessage(err, 'Falha ao excluir'));
     } finally {
       setDeletingId(null);
       setDeleteTarget(null);
@@ -265,75 +253,18 @@ export const NotificationsAdmin = (): JSX.Element => {
               {showAll ? 'Ocultar notificações' : 'Ver todas as notificações'}
             </button>
           </div>
-
-          <form onSubmit={handleSubmit} className="mb-10">
+          <div className="mb-10">
             <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              {/* Coluna Form */}
               <div className="xl:col-span-2 space-y-6">
-                <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold flex items-center gap-2"><SendIcon className="w-5 h-5 text-blue-600" /> Nova Notificação</h2>
-                    <span className="text-xs text-gray-400">Campos obrigatórios marcados com *</span>
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Título *</label>
-                      <Input value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Reunião de pais" className="mt-1" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Mensagem *</label>
-                      <textarea
-                        value={message}
-                        onChange={e => setMessage(e.target.value)}
-                        rows={5}
-                        placeholder="Descreva os detalhes da notificação..."
-                        className="mt-1 block w-full rounded border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-3 py-2 text-sm resize-y min-h-[140px]"
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Tipo</label>
-                        <select
-                          value={tipo}
-                          onChange={e => setTipo(e.target.value as any)}
-                          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        >
-                          {tipos.map(t => <option key={t} value={t}>{t}</option>)}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Data Expiração</label>
-                        <input
-                          type="datetime-local"
-                          value={dataExpiracao ?? ''}
-                          onChange={e => setDataExpiracao(e.target.value || undefined)}
-                          className="mt-1 block w-full rounded border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                      </div>
-                      <div className="flex items-end">
-                        <div className="w-full flex gap-2">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full"
-                            onClick={() => { setTitle(''); setMessage(''); setDataExpiracao(undefined); }}
-                          >
-                            <RotateCcwIcon className="w-4 h-4 mr-1" /> Limpar
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
+                <NotificationEditor
+                  values={editorValues}
+                  tipos={tipos}
+                  loading={loading}
+                  onChange={patch => setEditorValues(v => ({ ...v, ...patch }))}
+                  onSubmit={submitEditor}
+                  onReset={() => setEditorValues({ titulo: '', mensagem: '', tipo: 'info', dataExpiracao: undefined })}
+                />
                 <div className="flex gap-3 pt-2">
-                  <Button
-                    disabled={loading}
-                    type="submit"
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    {loading ? 'Enviando...' : 'Criar e Enviar'}
-                  </Button>
                   <Button
                     type="button"
                     variant="outline"
@@ -341,8 +272,6 @@ export const NotificationsAdmin = (): JSX.Element => {
                   >Cancelar</Button>
                 </div>
               </div>
-
-              {/* Coluna Destinatários */}
               <div className="space-y-4">
                 <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100 h-full flex flex-col">
                   <div className="flex items-center justify-between mb-4">
@@ -402,7 +331,7 @@ export const NotificationsAdmin = (): JSX.Element => {
                 </div>
               </div>
             </div>
-          </form>
+          </div>
 
           {showAll && (
             <section className="mt-10">
@@ -417,149 +346,23 @@ export const NotificationsAdmin = (): JSX.Element => {
               ) : allNotifications.length === 0 ? (
                 <div className="text-sm text-gray-500">Nenhuma notificação encontrada.</div>
               ) : (
-                <div className="bg-white rounded-lg shadow-md overflow-x-auto">
-                  <table className="min-w-full text-sm">
-                    <thead className="bg-gray-100 text-left">
-                      <tr>
-                        <th className="px-4 py-2">Título</th>
-                        <th className="px-4 py-2">Tipo</th>
-                        <th className="px-4 py-2">Criada em</th>
-                        <th className="px-4 py-2">Destinatários</th>
-                        <th className="px-4 py-2">Status</th>
-                        <th className="px-4 py-2">Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {allNotifications.map((notif: any) => {
-                        const createdAt = notif?.criadoEm || notif?.createdAt || notif?.dataEnvio;
-                        const destinatarios =
-                          notif?.destinatarios?.length ??
-                          notif?.usuarios?.length ??
-                          notif?.UsuarioNotificacoes?.length ??
-                          notif?.usuarioNotificacoes?.length ??
-                          0;
-                        const expirou = notif?.dataExpiracao && new Date(notif.dataExpiracao).getTime() < Date.now();
-                        return (
-                          <tr key={notif.id} className="border-t">
-                            <td className="px-4 py-2 font-medium text-gray-800">
-                              {editingId === notif.id ? (
-                                <input
-                                  value={editTitulo}
-                                  onChange={e => setEditTitulo(e.target.value)}
-                                  className="w-full border rounded px-2 py-1 text-sm"
-                                />
-                              ) : (
-                                notif?.titulo ?? notif?.title ?? '—'
-                              )}
-                            </td>
-                            <td className="px-4 py-2 capitalize">
-                              {editingId === notif.id ? (
-                                <select
-                                  value={editTipo}
-                                  onChange={e => setEditTipo(e.target.value as any)}
-                                  className="border rounded px-2 py-1 text-sm"
-                                >
-                                  {tipos.map(t => <option key={t} value={t}>{t}</option>)}
-                                </select>
-                              ) : (
-                                notif?.tipo ?? notif?.type ?? 'info'
-                              )}
-                            </td>
-                            <td className="px-4 py-2">{createdAt ? new Date(createdAt).toLocaleString() : '—'}</td>
-                            <td className="px-4 py-2">{destinatarios}</td>
-                            <td className="px-4 py-2">
-                              {expirou ? (
-                                <span className="text-xs font-semibold text-red-600 bg-red-50 px-2 py-1 rounded-full">Expirada</span>
-                              ) : (
-                                <span className="text-xs font-semibold text-green-600 bg-green-50 px-2 py-1 rounded-full">Ativa</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-2 whitespace-nowrap align-top">
-                              {editingId === notif.id ? (
-                                <div className="flex flex-col gap-2 w-56">
-                                  <div className="flex items-center gap-2 justify-center">
-                                    <Button
-                                      type="button"
-                                      disabled={savingEdit}
-                                      onClick={saveEdit}
-                                      size="sm"
-                                      className="bg-green-600 hover:bg-green-700 text-white"
-                                    >
-                                      {savingEdit ? 'Salvando' : (
-                                        <span className="flex items-center gap-1"><CheckIcon className="w-4 h-4" />Salvar</span>
-                                      )}
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      disabled={savingEdit}
-                                      onClick={cancelEdit}
-                                      className="border-gray-300"
-                                    >
-                                      <span className="flex items-center gap-1"><XIcon className="w-4 h-4" />Cancelar</span>
-                                    </Button>
-                                  </div>
-                                  <div className="space-y-2">
-                                    <textarea
-                                      value={editMensagem}
-                                      onChange={e => setEditMensagem(e.target.value)}
-                                      rows={3}
-                                      className="w-full border rounded px-2 py-1 text-xs"
-                                      placeholder="Mensagem"
-                                    />
-                                    <div>
-                                      <label className="block text-[10px] font-medium text-gray-600 mb-1">Data Expiração</label>
-                                      <input
-                                        type="datetime-local"
-                                        value={editDataExp}
-                                        onChange={e => setEditDataExp(e.target.value)}
-                                        className="w-full border rounded px-2 py-1 text-xs"
-                                      />
-                                      {editDataExp && (
-                                        <button
-                                          type="button"
-                                          className="mt-1 text-[10px] text-red-600 underline"
-                                          onClick={() => setEditDataExp('')}
-                                        >Remover expiração</button>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="flex justify-center gap-2">
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => openEdit(notif)}
-                                    className="text-blue-600 hover:text-blue-700"
-                                    aria-label="Editar notificação"
-                                  >
-                                    <PencilIcon className="w-4 h-4" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    disabled={deletingId === notif.id}
-                                    onClick={() => openDeleteModal(notif)}
-                                    className="text-red-600 hover:text-red-700 disabled:opacity-50"
-                                    aria-label="Excluir notificação"
-                                  >
-                                    {deletingId === notif.id ? (
-                                      <span className="text-[10px] px-1">...</span>
-                                    ) : (
-                                      <TrashIcon className="w-4 h-4" />
-                                    )}
-                                  </Button>
-                                </div>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
+                <NotificationsTable
+                  items={allNotifications}
+                  editingId={editingId}
+                  savingEdit={savingEdit}
+                  deletingId={deletingId}
+                  editFields={{ titulo: editTitulo, mensagem: editMensagem, tipo: editTipo, dataExp: editDataExp }}
+                  onChangeEdit={patch => {
+                    if (patch.titulo !== undefined) setEditTitulo(patch.titulo);
+                    if (patch.mensagem !== undefined) setEditMensagem(patch.mensagem);
+                    if (patch.tipo !== undefined) setEditTipo(patch.tipo as any);
+                    if (patch.dataExp !== undefined) setEditDataExp(patch.dataExp);
+                  }}
+                  onOpenEdit={openEdit as any}
+                  onCancelEdit={cancelEdit}
+                  onSaveEdit={saveEdit}
+                  onDelete={openDeleteModal as any}
+                />
               )}
             </section>
           )}

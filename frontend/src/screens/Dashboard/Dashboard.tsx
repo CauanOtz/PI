@@ -1,13 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { SidebarSection } from "../../components/layout/SidebarSection";
 import {
   FileTextIcon,
   UsersIcon,
   ClipboardCheckIcon,
-  BarChart2Icon,
   CalendarIcon,
-  TrendingUpIcon,
-  AlertCircleIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "../../components/ui/card";
@@ -20,7 +17,7 @@ export const Dashboard = (): JSX.Element => {
   const navigate = useNavigate();
 
   const [totalAlunos, setTotalAlunos] = useState<number | null>(null);
-  const [presenceAvg, setPresenceAvg] = useState<number | null>(null);
+  const [presenceAvg] = useState<number | null>(null); // placeholder until backend provides metric
   const [notifications, setNotifications] = useState<any[]>([]);
   const [recentActivities, setRecentActivities] = useState<any[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);

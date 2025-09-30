@@ -3,7 +3,7 @@ import { SidebarSection } from "../../components/layout/SidebarSection";
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { 
   FileTextIcon, 
-  FolderIcon, 
+  // FolderIcon removed (unused)
   SearchIcon, 
   DownloadIcon,
   PlusIcon,

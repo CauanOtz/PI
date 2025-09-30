@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { SidebarSection } from "../../components/layout/SidebarSection";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
-import { Badge } from "../../components/ui/badge";
 import { BarChart2, Calendar } from "lucide-react";
 import { useAuth } from "../../context/AuthProvider";
 import { getAlunosDoResponsavel } from "../../services/responsavel";

@@ -1,4 +1,4 @@
-import React from 'react';
+// React import removed (new JSX runtime)
 import { X, Trash2, Check, CheckCheck } from 'lucide-react';
 import type { Notification } from '../../types/notifications';
 

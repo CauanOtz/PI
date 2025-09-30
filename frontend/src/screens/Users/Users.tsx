@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { SidebarSection } from "../../components/layout/SidebarSection";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -8,7 +8,6 @@ import { CreateUserModal, EditUserModal } from "../../components/modals/users";
 import { DeleteConfirmationModal } from "../../components/modals/shared";
 import { usuariosService, BackendUsuario, CreateUserPayload, EditUserPayload } from "../../services/users";
 import { studentResponsibleService } from "../../services/studentResponsible";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../components/ui/dialog";
 import ResponsavelStudentsModal from "../../components/modals/users/ResponsavelStudentsModal";
 
 export const Users = (): JSX.Element => {
@@ -19,7 +18,7 @@ export const Users = (): JSX.Element => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editing, setEditing] = useState<BackendUsuario | null>(null);
   const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page] = useState(1);
   const [limit] = useState(10);
 
   const [studentsCount, setStudentsCount] = useState<Record<number, number>>({});
