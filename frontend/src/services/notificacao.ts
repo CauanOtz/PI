@@ -41,6 +41,14 @@ export const notificacaoService = {
     return res?.data;
   },
 
+  async update(notificacaoId: string, data: { titulo?: string; mensagem?: string; tipo?: string; dataExpiracao?: string | null }) {
+    const payload: any = { ...data };
+    // Normaliza campo vazio de dataExpiracao para null (remover expiração)
+    if (payload.dataExpiracao === '') payload.dataExpiracao = null;
+    const res = await http.put(`/notificacoes/${notificacaoId}`, payload);
+    return res?.data;
+  },
+
   async enviar(notificacaoId: string, usuarios: string[]) {
     const res = await http.post(`/notificacoes/${notificacaoId}/enviar`, { usuarios });
     return res?.data;
