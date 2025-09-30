@@ -160,10 +160,6 @@ export const Dashboard = (): JSX.Element => {
                   </div>
                   <div className="p-2 rounded-lg bg-gray-50">{stat.icon}</div>
                 </div>
-                <div className="flex items-center mt-4">
-                  <TrendingUpIcon className={`w-4 h-4 text-gray-400 mr-1`} />
-                  <span className="text-xs sm:text-sm text-gray-500">Dados carregados do backend</span>
-                </div>
               </Card>
             ))}
           </div>
