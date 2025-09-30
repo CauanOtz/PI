@@ -9,7 +9,7 @@ interface NotificationsDropdownProps {
   notifications: Notification[];
   onReadNotification: (id: string) => void;
   onDeleteNotification: (id: string) => void;
-  onMarkAllAsRead: () => void;
+  onMarkAllAsRead?: () => void;
 }
 
 export const NotificationsDropdown = ({
@@ -112,7 +112,7 @@ export const NotificationsDropdown = ({
         notifications={notifications}
         onReadNotification={onReadNotification}
         onDeleteNotification={onDeleteNotification}
-        onMarkAllAsRead={onMarkAllAsRead}
+        {...(onMarkAllAsRead ? { onMarkAllAsRead } : {})}
       />
     </>
   );

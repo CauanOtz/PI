@@ -42,6 +42,18 @@ export const notificacaoService = {
     return res?.data;
   },
 
+  async listUsuariosNotificacao(notificacaoId: string, page: number = 1, limit: number = 50) {
+    const res = await http.get(`/notificacoes/${notificacaoId}/usuarios`, { params: { page, limit } });
+    const body = unwrap(res);
+    // respostas possíveis: { usuarios: [...] }, { dados: { usuarios: [...] } }, array direto
+    const candidates = [body, body?.usuarios, body?.dados, body?.dados?.usuarios];
+    for (const c of candidates) {
+      if (Array.isArray(c)) return c;
+      if (Array.isArray(c?.usuarios)) return c.usuarios;
+    }
+    return [];
+  },
+
   async update(notificacaoId: string, data: NotificacaoUpdatePayload) {
     const payload: NotificacaoUpdatePayload = { ...data };
     // Normaliza campo vazio de dataExpiracao para null (remover expiração)

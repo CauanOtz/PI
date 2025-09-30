@@ -633,6 +633,7 @@ export const listarUsuariosNotificacao = async (req, res, next) => {
       where,
       include: [{
         model: Usuario,
+        as: 'Usuario', // alias precisa bater com o definido em UsuarioNotificacao.associate
         attributes: ['nome', 'email', 'cpf']
       }],
       order: [['criado_em', 'DESC']],

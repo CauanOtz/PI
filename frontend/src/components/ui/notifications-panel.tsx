@@ -8,7 +8,7 @@ interface NotificationsPanelProps {
   notifications: Notification[];
   onReadNotification: (id: string) => void;
   onDeleteNotification: (id: string) => void;
-  onMarkAllAsRead: () => void;
+  onMarkAllAsRead?: () => void;
 }
 
 export const NotificationsPanel = ({
@@ -46,7 +46,7 @@ export const NotificationsPanel = ({
               )}
             </div>
             <div className="flex items-center gap-2">
-              {unreadCount > 0 && (
+              {unreadCount > 0 && onMarkAllAsRead && (
                 <button 
                   onClick={onMarkAllAsRead}
                   className="p-2 hover:bg-gray-100 rounded-full text-blue-600"
