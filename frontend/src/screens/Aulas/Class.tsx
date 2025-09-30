@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { SidebarSection } from '../../components/layout/SidebarSection';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { PlusIcon, SearchIcon, PencilIcon, TrashIcon } from 'lucide-react';
@@ -68,93 +67,97 @@ export const Class: React.FC = () => {
   };
 
   return (
-    <div className="bg-white flex flex-row justify-center w-full mt-16">
+    <div className="bg-white flex flex-row justify-center w-full mt-16 min-h-screen">
       <div className="bg-white overflow-hidden w-full max-w-[1440px] relative">
         <SidebarSection />
-        <div className="flex flex-col p-4 sm:p-6 lg:p-8 lg:ml-[283px]">
-        <header className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Aulas</h1>
-            <p className="text-slate-600">Gerencie as aulas da escola</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
-              <Input className="pl-10 w-52" placeholder="Buscar aulas..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+        <div className="flex flex-col p-4 sm:p-6 lg:p-8 lg:ml-[283px] pb-20">
+          {/* Cabeçalho */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+            <div>
+              <h1 className="text-xl sm:text-2xl font-bold">Aulas</h1>
+              <p className="text-gray-600 mt-1">Gerencie as aulas da escola</p>
             </div>
             <Button onClick={() => setCreateOpen(true)} className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto">
               <PlusIcon className="w-4 h-4 mr-2" />
               Nova Aula
             </Button>
           </div>
-        </header>
 
-        <div className="grid grid-cols-1 gap-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Lista de Aulas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="text-center py-8 text-gray-500">Carregando...</div>
-              ) : aulas.length === 0 ? (
-                <div className="text-center py-8 text-gray-500">Nenhuma aula cadastrada.</div>
-              ) : (
-                <div className="overflow-auto">
-                  <div className="min-w-[700px]">
-                    <table className="w-full">
-                      <thead>
-                        <tr className="border-b">
-                          <th className="text-left p-4">Título</th>
-                          <th className="text-center p-4 hidden sm:table-cell">Data</th>
-                          <th className="text-center p-4 hidden md:table-cell">Horário</th>
-                          <th className="text-center p-4 hidden lg:table-cell">ID</th>
-                          <th className="text-center p-4">Ações</th>
+          {/* Busca */}
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+            <div className="bg-white p-4 rounded-lg shadow-sm flex-1">
+              <div className="relative">
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
+                <Input
+                  type="text"
+                  placeholder="Buscar por título..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 w-full"
+                />
+              </div>
+            </div>
+            <div className="flex items-center text-sm text-gray-600 px-1">
+              <span>Total: {aulas.length}</span>
+            </div>
+          </div>
+
+          {/* Tabela */}
+          <div className="bg-white rounded-lg shadow-md overflow-x-auto">
+            <div className="min-w-[780px]">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-4">Título</th>
+                    <th className="text-center p-4">Data</th>
+                    <th className="text-center p-4 hidden sm:table-cell">Horário</th>
+                    <th className="text-center p-4 hidden md:table-cell">ID</th>
+                    <th className="text-center p-4">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan={5} className="p-8 text-center">Carregando...</td></tr>
+                  ) : aulas.filter(a => a.titulo?.toLowerCase().includes(searchTerm.toLowerCase() || '')).length === 0 ? (
+                    <tr><td colSpan={5} className="p-8 text-center text-gray-500">Nenhuma aula encontrada</td></tr>
+                  ) : (
+                    aulas
+                      .filter(a => a.titulo?.toLowerCase().includes(searchTerm.toLowerCase() || ''))
+                      .map(a => (
+                        <tr key={a.id} className="border-b last:border-0 hover:bg-slate-50 transition-colors">
+                          <td className="p-4">
+                            <div className="font-medium text-slate-800">{a.titulo}</div>
+                          </td>
+                          <td className="p-4 text-center whitespace-nowrap">{a.data || '-'}</td>
+                          <td className="p-4 text-center whitespace-nowrap hidden sm:table-cell">{a.horario || '-'}</td>
+                          <td className="p-4 text-center whitespace-nowrap hidden md:table-cell">#{a.id}</td>
+                          <td className="p-4">
+                            <div className="flex justify-center gap-1">
+                              <Button variant="ghost" size="sm" onClick={() => { setEditing(a); setEditOpen(true); }} className="text-blue-600 hover:text-blue-700">
+                                <PencilIcon className="w-4 h-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(a)} className="text-red-600 hover:text-red-700">
+                                <TrashIcon className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody>
-                        {aulas.filter(a => a.titulo?.toLowerCase().includes(searchTerm.toLowerCase() || ''))
-                        .map(a => (
-                          <tr key={a.id} className="border-b last:border-0">
-                            <td className="p-4">
-                              <div>
-                                <div className="font-medium">{a.titulo}</div>
-                                <div className="text-sm text-gray-500 sm:hidden">#{a.id}</div>
-                              </div>
-                            </td>
-                            <td className="p-4 text-center hidden sm:table-cell">{a.data}</td>
-                            <td className="p-4 text-center hidden md:table-cell">{a.horario}</td>
-                            <td className="p-4 text-center hidden lg:table-cell">#{a.id}</td>
-                            <td className="p-4">
-                              <div className="flex justify-center gap-2">
-                                <Button size="sm" variant="ghost" onClick={() => { setEditing(a); setEditOpen(true); }} className="text-blue-600 hover:text-blue-700">
-                                  <PencilIcon className="w-4 h-4" />
-                                </Button>
-                                <Button size="sm" variant="ghost" onClick={() => setDeleteTarget(a)} className="text-red-600 hover:text-red-700">
-                                  <TrashIcon className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                      ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
-        <CreateAulaModal isOpen={createOpen} onClose={() => setCreateOpen(false)} onSubmit={handleCreate} />
-        <EditAulaModal isOpen={editOpen} onClose={() => setEditOpen(false)} aula={editing} onSubmit={handleEdit} />
-        <DeleteConfirmationModal
-          isOpen={!!deleteTarget}
-          onClose={() => setDeleteTarget(null)}
-          onConfirm={() => { if (deleteTarget) { handleDelete(deleteTarget.id); setDeleteTarget(null); } }}
-          title="Remover Aula"
-          description={`Tem certeza que deseja remover a aula "${deleteTarget?.titulo}"? Esta ação não pode ser desfeita.`}
-        />
+          <CreateAulaModal isOpen={createOpen} onClose={() => setCreateOpen(false)} onSubmit={handleCreate} />
+          <EditAulaModal isOpen={editOpen} onClose={() => setEditOpen(false)} aula={editing} onSubmit={handleEdit} />
+          <DeleteConfirmationModal
+            isOpen={!!deleteTarget}
+            onClose={() => setDeleteTarget(null)}
+            onConfirm={() => { if (deleteTarget) { handleDelete(deleteTarget.id); setDeleteTarget(null); } }}
+            title="Remover Aula"
+            description={`Tem certeza que deseja remover a aula "${deleteTarget?.titulo}"? Esta ação não pode ser desfeita.`}
+          />
         </div>
       </div>
     </div>
