@@ -12,7 +12,7 @@ const options = {
     },
     servers: [
       {
-        url: `http://localhost:${process.env.PORT || 3000}/api/v2`,
+        url: `${process.env.BACK_ORIGIN}`,
         description: 'Servidor de Desenvolvimento',
       },
     ],
