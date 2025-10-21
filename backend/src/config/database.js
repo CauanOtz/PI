@@ -1,4 +1,5 @@
-﻿// src/config/database.js
+import logger from '../utils/logger.js';
+// src/config/database.js
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -10,7 +11,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const dbDialect = process.env.DB_DIALECT || 'sqlite';
-const dbLogging = process.env.DB_LOGGING === 'true' ? console.log : false;
+const dbLogging = process.env.DB_LOGGING === 'true' ? (msg => logger.debug(msg)) : false;
 const dbStorage = dbDialect === 'sqlite'
   ? (process.env.DB_STORAGE || path.join(path.dirname(__dirname), 'dev.sqlite'))
   : undefined;
@@ -69,13 +70,15 @@ if (databaseUrl) {
 const testConnection = async () => {
   try {
     await sequelize.authenticate();
-    console.log(`Conexao com o banco de dados (${dbDialect}) estabelecida com sucesso.`);
+    logger.info(`Conexao com o banco de dados (${dbDialect}) estabelecida com sucesso.`);
     if (dbDialect === 'sqlite') {
-      console.log(`Banco de dados SQLite em: ${dbStorage}`);
+      logger.info(`Banco de dados SQLite em: ${dbStorage}`);
     }
   } catch (error) {
-    console.error(`Nao foi possivel conectar ao banco de dados (${dbDialect}):`, error);
+    logger.error(`Nao foi possivel conectar ao banco de dados (${dbDialect})`, { error });
   }
 };
 
 export { sequelize, testConnection };
+
+

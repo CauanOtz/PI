@@ -1,7 +1,10 @@
 // src/app.js
+import errorHandler from './middlewares/error.middleware.js';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import morgan from 'morgan';
+import logger from './utils/logger.js';
 import setupSwagger from './config/swagger.js'; // Importe a configuração do Swagger
 // import mainRoutes from './routes/index.js'; // Descomente quando tiver rotas
 import aulaRoutes from './routes/aula.routes.js'; // Importe suas rotas de aula
@@ -19,6 +22,13 @@ app.use(cors({ origin: FRONT_ORIGIN, credentials: false })); // true se usar coo
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// HTTP request logging via morgan -> winston
+app.use(
+  morgan(process.env.MORGAN_FORMAT || 'combined', {
+    stream: { write: (msg) => logger.http(msg.trim()) },
+  })
+);
+
 // Configurar Swagger
 setupSwagger(app);
 
@@ -30,14 +40,6 @@ app.get('/', (req, res) => {
 // O prefixo /api/v1 é um exemplo, ajuste conforme sua necessidade e o que foi configurado no swagger.js
 // app.use('/api/v1', mainRoutes);
 
-// eslint-disable-next-line no-unused-vars
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  const statusCode = err.statusCode || 500;
-  const message = err.message || 'Ocorreu um erro interno no servidor.';
-  res.status(statusCode).json({ message, ...(process.env.NODE_ENV === 'development' && { stack: err.stack }) });
-});
-
 // Use suas rotas com um prefixo
 app.use('/api/v2/aulas', aulaRoutes); // Rotas de aula sob /api/v2/aulas
 app.use('/api/v2/usuarios', usuarioRoutes); // Rotas de usuário sob /api/v2/usuarios
@@ -48,7 +50,15 @@ app.use('/api/v2/responsaveis', responsavelRoutes); // Rotas de responsavel sob 
 app.use('/api/v2/notificacoes', notificacaoRoutes); // Rotas de notificações sob /api/v2/notificacoes
 
 app.use((req, res, next) => {
-  res.status(404).json({ message: 'Rota não encontrada.' });
+  const err = new Error('Rota n�o encontrada.');
+  err.status = 404;
+  next(err);
 });
 
+// Error handler centralizado (sempre por último)
+app.use(errorHandler);
+
 export default app;
+
+
+

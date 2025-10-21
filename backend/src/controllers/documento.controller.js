@@ -60,7 +60,7 @@ export const adicionarDocumento = async (req, res, next) => {
         }
 
         const { alunoId } = req.params;
-        const { descricao } = req.body;
+        const { descricao, tipo: tipoInput } = req.body;
         const usuarioId = req.usuario.id;
 
         // Aqui você deve verificar se o aluno existe
@@ -71,12 +71,16 @@ export const adicionarDocumento = async (req, res, next) => {
         //   return res.status(404).json({ mensagem: 'Aluno não encontrado' });
         // }
 
+        // Determina o tipo (enum de negócio) a partir do corpo; se ausente, OUTRO
+        const TIPOS_PERMITIDOS = ['RG', 'CPF', 'CERTIDAO_NASCIMENTO', 'COMPROVANTE_ENDERECO', 'OUTRO'];
+        const tipo = TIPOS_PERMITIDOS.includes(String(tipoInput)) ? String(tipoInput) : 'OUTRO';
+
         // Cria o documento no banco de dados
         const documento = await Documento.create({
             nome: req.file.originalname,
             descricao: descricao || null,
             caminhoArquivo: req.file.path,
-            tipo: req.file.mimetype,
+            tipo,
             tamanho: req.file.size,
             alunoId: parseInt(alunoId, 10),
             usuarioId: usuarioId
