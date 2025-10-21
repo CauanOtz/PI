@@ -1,14 +1,15 @@
 // src/config/swagger.js
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import basicAuth from 'express-basic-auth';
 
 const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'API do Diario de Classe',
+      title: 'API do Diário de Classe',
       version: '2.0.0',
-      description: 'Documentação da API para o sistema de Diario de Classe.',
+      description: 'Documentação da API para o sistema de Diário de Classe.',
     },
     servers: [
       {
@@ -22,177 +23,11 @@ const options = {
           type: 'http',
           scheme: 'bearer',
           bearerFormat: 'JWT',
-          description: 'Insira o token JWT no formato: Bearer <token>'
-        }
+          description: 'Insira o token JWT no formato: Bearer <token>',
+        },
       },
-      schemas: {
-        Usuario: {
-          type: 'object',
-          properties: {
-            id: {
-              type: 'integer',
-              example: 1
-            },
-            nome: {
-              type: 'string',
-              example: 'João da Silva'
-            },
-            email: {
-              type: 'string',
-              format: 'email',
-              example: 'joao@escola.com'
-            },
-            telefone: {
-              type: 'string',
-              example: '(11) 98765-4321'
-            },
-            cpf: {
-              type: 'string',
-              example: '123.456.789-09'
-            },
-            role: {
-              type: 'string',
-              enum: ['admin', 'responsavel'],
-              example: 'responsavel'
-            },
-            createdAt: {
-              type: 'string',
-              format: 'date-time'
-            },
-            updatedAt: {
-              type: 'string',
-              format: 'date-time'
-            }
-          }
-        },
-        Error: {
-          type: 'object',
-          properties: {
-            mensagem: {
-              type: 'string',
-              example: 'Mensagem de erro descritiva'
-            }
-          }
-        },
-        ValidationError: {
-          type: 'object',
-          properties: {
-            errors: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  msg: { type: 'string' },
-                  param: { type: 'string' },
-                  location: { type: 'string' }
-                }
-              }
-            }
-          }
-        },
-        Aluno: {
-          type: 'object',
-          properties: {
-            id: {
-              type: 'integer',
-              example: 1
-            },
-            nome: {
-              type: 'string',
-              example: 'Maria Oliveira'
-            },
-            idade: {
-              type: 'integer',
-              example: 10
-            },
-            endereco: {
-              type: 'string',
-              example: 'Rua das Flores, 123 - Centro',
-              nullable: true
-            },
-            contato: {
-              type: 'string',
-              example: '(11) 98765-4321',
-              nullable: true
-            },
-            responsaveisIds: {
-              type: 'integer',
-              example: [1]
-            },
-            created_at: {
-              type: 'string',
-              format: 'date-time'
-            },
-            updated_at: {
-              type: 'string',
-              format: 'date-time'
-            },
-            responsavel: {
-              $ref: '#/components/schemas/Usuario'
-            }
-          }
-        },
-        NovoAluno: {
-          type: 'object',
-          required: ['nome', 'idade', 'responsavel_id'],
-          properties: {
-            nome: {
-              type: 'string',
-              example: 'Maria Oliveira'
-            },
-            idade: {
-              type: 'integer',
-              example: 10
-            },
-            endereco: {
-              type: 'string',
-              example: 'Rua das Flores, 123 - Centro',
-              nullable: true
-            },
-            contato: {
-              type: 'string',
-              example: '(11) 98765-4321',
-              nullable: true
-            },
-            responsaveisIds: {
-              type: 'integer',
-              example: [1]
-            }
-          }
-        }
-      },
-      responses: {
-        UnauthorizedError: {
-          description: 'Token de acesso ausente ou inválido',
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/Error'
-              },
-              example: {
-                mensagem: 'Token não fornecido'
-              }
-            }
-          }
-        },
-        ForbiddenError: {
-          description: 'Acesso negado',
-          content: {
-            'application/json': {
-              schema: {
-                $ref: '#/components/schemas/Error'
-              },
-              example: {
-                mensagem: 'Acesso negado. Apenas administradores podem acessar este recurso.'
-              }
-            }
-          }
-        }
-      }
     },
-    security: [{
-      bearerAuth: []
-    }]
+    security: [{ bearerAuth: [] }],
   },
   apis: ['./src/routes/*.js', './src/controllers/*.js', './src/models/*.js'],
 };
@@ -200,26 +35,37 @@ const options = {
 const swaggerSpec = swaggerJsdoc(options);
 
 const setupSwagger = (app) => {
-  app.use('/api-docs', 
-    swaggerUi.serve, 
+  const users = {};
+  if (process.env.SWAGGER_USER && process.env.SWAGGER_PASS) {
+    users[process.env.SWAGGER_USER] = process.env.SWAGGER_PASS;
+  }
+
+  const maybeAuth = Object.keys(users).length ? [basicAuth({ users, challenge: true })] : [];
+
+  app.use(
+    '/api-docs',
+    ...maybeAuth,
+    swaggerUi.serve,
     swaggerUi.setup(swaggerSpec, {
       explorer: true,
-      customSiteTitle: "API Diário de Classe - Documentação",
+      customSiteTitle: 'API Diário de Classe - Documentação',
       customCss: `
         .topbar { background-color: #1e3a8a !important; }
         .swagger-ui .info .title { color: #1e3a8a; }
         .swagger-ui .opblock-tag { color: #1e3a8a; }
       `,
       swaggerOptions: {
-        defaultModelsExpandDepth: -1, // Esconde os schemas por padrão
+        defaultModelsExpandDepth: -1,
         displayRequestDuration: true,
         docExpansion: 'list',
         filter: true,
-        showCommonExtensions: true
-      }
+        showCommonExtensions: true,
+      },
     })
   );
+
   console.log(`Documentação da API disponível em http://localhost:${process.env.PORT || 3000}/api-docs`);
 };
 
 export default setupSwagger;
+
