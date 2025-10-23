@@ -1,3 +1,5 @@
+﻿import { requireAdmin } from '../middlewares/authorization.middleware.js';
+import { validateIdParam } from '../middlewares/validators/param.validator.js';
 // src/routes/presenca.routes.js
 import { Router } from 'express';
 import { 
@@ -31,7 +33,7 @@ const router = Router();
  *       properties:
  *         id:
  *           type: integer
- *           description: ID da presença
+ *           description: ID da presenÃ§a
  *         idAluno:
  *           type: integer
  *           description: ID do aluno
@@ -41,22 +43,22 @@ const router = Router();
  *         status:
  *           type: string
  *           enum: [presente, falta]
- *           description: Status da presença (presente ou falta)
+ *           description: Status da presenÃ§a (presente ou falta)
  *         data_registro:
  *           type: string
  *           format: date
- *           description: Data do registro da presença
+ *           description: Data do registro da presenÃ§a
  *         observacao:
  *           type: string
- *           description: Observações sobre a presença
+ *           description: ObservaÃ§Ãµes sobre a presenÃ§a
  *         createdAt:
  *           type: string
  *           format: date-time
- *           description: Data de criação do registro
+ *           description: Data de criaÃ§Ã£o do registro
  *         updatedAt:
  *           type: string
  *           format: date-time
- *           description: Data da última atualização do registro
+ *           description: Data da Ãºltima atualizaÃ§Ã£o do registro
  *         aluno:
  *           $ref: '#/components/schemas/Aluno'
  *         aula:
@@ -72,26 +74,26 @@ const router = Router();
  *         updatedAt: "2024-07-30T14:30:00.000Z"
  *         aluno:
  *           id: 1
- *           nome: "João Silva"
+ *           nome: "JoÃ£o Silva"
  *         aula:
  *           id: 1
- *           titulo: "Aula de Matemática"
+ *           titulo: "Aula de MatemÃ¡tica"
  *           data: "2024-07-30T19:00:00.000Z"
  */
 
 /**
  * @openapi
  * tags:
- *   name: Presenças
- *   description: Gerenciamento de presenças dos alunos nas aulas
+ *   name: PresenÃ§as
+ *   description: Gerenciamento de presenÃ§as dos alunos nas aulas
  */
 
 /**
  * @openapi
  * /presencas:
  *   post:
- *     summary: Registra uma nova presença
- *     tags: [Presenças]
+ *     summary: Registra uma nova presenÃ§a
+ *     tags: [PresenÃ§as]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -116,32 +118,32 @@ const router = Router();
  *               status:
  *                 type: string
  *                 enum: [presente, falta, atraso, falta_justificada]
- *                 description: Status da presença
+ *                 description: Status da presenÃ§a
  *                 example: "presente"
  *               data_registro:
  *                 type: string
  *                 format: date
- *                 description: Data do registro (opcional, padrão é a data atual)
+ *                 description: Data do registro (opcional, padrÃ£o Ã© a data atual)
  *                 example: "2024-07-30"
  *               observacao:
  *                 type: string
- *                 description: Observações sobre a presença (opcional)
+ *                 description: ObservaÃ§Ãµes sobre a presenÃ§a (opcional)
  *                 example: "Chegou atrasado 15 minutos"
  *     responses:
  *       201:
- *         description: Presença registrada com sucesso
+ *         description: PresenÃ§a registrada com sucesso
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Presenca'
+ *               $ref: '#/components/schemas/SuccessPresenca'
  *       400:
- *         description: Dados inválidos
+ *         description: Dados invÃ¡lidos
  *       401:
- *         description: Não autorizado
+ *         description: NÃ£o autorizado
  *       404:
- *         description: Aluno ou Aula não encontrado
+ *         description: Aluno ou Aula nÃ£o encontrado
  *       409:
- *         description: Já existe um registro de presença para este aluno nesta data
+ *         description: JÃ¡ existe um registro de presenÃ§a para este aluno nesta data
  */
 router.post('/', 
   autenticar, 
@@ -153,8 +155,8 @@ router.post('/',
  * @openapi
  * /presencas:
  *   get:
- *     summary: Lista todas as presenças com filtros opcionais
- *     tags: [Presenças]
+ *     summary: Lista todas as presenÃ§as com filtros opcionais
+ *     tags: [PresenÃ§as]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -173,7 +175,7 @@ router.post('/',
  *         schema:
  *           type: string
  *           format: date
- *         description: Data de início para filtro (YYYY-MM-DD)
+ *         description: Data de inÃ­cio para filtro (YYYY-MM-DD)
  *       - in: query
  *         name: dataFim
  *         schema:
@@ -185,20 +187,18 @@ router.post('/',
  *         schema:
  *           type: string
  *           enum: [presente, falta, atraso, falta_justificada]
- *         description: Filtrar por status de presença
+ *         description: Filtrar por status de presenÃ§a
  *     responses:
  *       200:
- *         description: Lista de presenças
+ *         description: Lista de presenÃ§as
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Presenca'
+ *               $ref: '#/components/schemas/SuccessPresencas'
  *       400:
- *         description: Parâmetros de filtro inválidos
+ *         description: ParÃ¢metros de filtro invÃ¡lidos
  *       401:
- *         description: Não autorizado
+ *         description: NÃ£o autorizado
  */
 router.get('/', 
   autenticar, 
@@ -234,8 +234,8 @@ router.get('/alunos/:idAluno',
  * @openapi
  * /presencas/aulas/{idAula}:
  *   get:
- *     summary: Lista as presenças de uma aula específica
- *     tags: [Presenças]
+ *     summary: Lista as presenÃ§as de uma aula especÃ­fica
+ *     tags: [PresenÃ§as]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -250,30 +250,28 @@ router.get('/alunos/:idAluno',
  *         schema:
  *           type: string
  *           format: date
- *         description: Data específica para filtrar as presenças (opcional)
+ *         description: Data especÃ­fica para filtrar as presenÃ§as (opcional)
  *     responses:
  *       200:
- *         description: Lista de presenças da aula
+ *         description: Lista de presenÃ§as da aula
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Presenca'
+ *               $ref: '#/components/schemas/SuccessPresencas'
  *       400:
- *         description: ID da aula inválido
+ *         description: ID da aula invÃ¡lido
  *       401:
- *         description: Não autorizado
+ *         description: NÃ£o autorizado
  *       404:
- *         description: Aula não encontrada
+ *         description: Aula nÃ£o encontrada
  */
 
 /**
  * @openapi
  * /presencas/alunos/{idAluno}:
  *   get:
- *     summary: Lista o histórico de presença de um aluno
- *     tags: [Presenças]
+ *     summary: Lista o histÃ³rico de presenÃ§a de um aluno
+ *     tags: [PresenÃ§as]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -288,7 +286,7 @@ router.get('/alunos/:idAluno',
  *         schema:
  *           type: string
  *           format: date
- *         description: Data de início para filtro (YYYY-MM-DD)
+ *         description: Data de inÃ­cio para filtro (YYYY-MM-DD)
  *       - in: query
  *         name: dataFim
  *         schema:
@@ -297,27 +295,25 @@ router.get('/alunos/:idAluno',
  *         description: Data de fim para filtro (YYYY-MM-DD)
  *     responses:
  *       200:
- *         description: Histórico de presenças do aluno
+ *         description: HistÃ³rico de presenÃ§as do aluno
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Presenca'
+ *               $ref: '#/components/schemas/SuccessPresencas'
  *       400:
- *         description: ID do aluno inválido
+ *         description: ID do aluno invÃ¡lido
  *       401:
- *         description: Não autorizado
+ *         description: NÃ£o autorizado
  *       404:
- *         description: Aluno não encontrado
+ *         description: Aluno nÃ£o encontrado
  */
 
 /**
  * @openapi
  * /presencas/{id}:
  *   get:
- *     summary: Obtém um registro de presença específico
- *     tags: [Presenças]
+ *     summary: ObtÃ©m um registro de presenÃ§a especÃ­fico
+ *     tags: [PresenÃ§as]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -326,22 +322,22 @@ router.get('/alunos/:idAluno',
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID do registro de presença
+ *         description: ID do registro de presenÃ§a
  *     responses:
  *       200:
- *         description: Registro de presença encontrado
+ *         description: Registro de presenÃ§a encontrado
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Presenca'
+ *               $ref: '#/components/schemas/SuccessPresenca'
  *       400:
- *         description: ID inválido
+ *         description: ID invÃ¡lido
  *       401:
- *         description: Não autorizado
+ *         description: NÃ£o autorizado
  *       404:
- *         description: Registro de presença não encontrado
+ *         description: Registro de presenÃ§a nÃ£o encontrado
  */
-router.get('/:id', 
+router.get('/:id', validateIdParam('id'), 
   autenticar, 
   validateObterPresenca, 
   obterPresenca
@@ -351,8 +347,8 @@ router.get('/:id',
  * @openapi
  * /presencas/{id}:
  *   put:
- *     summary: Atualiza o status de uma presença
- *     tags: [Presenças]
+ *     summary: Atualiza o status de uma presenÃ§a
+ *     tags: [PresenÃ§as]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -361,7 +357,7 @@ router.get('/:id',
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID do registro de presença
+ *         description: ID do registro de presenÃ§a
  *     requestBody:
  *       required: true
  *       content:
@@ -372,7 +368,7 @@ router.get('/:id',
  *               status:
  *                 type: string
  *                 enum: [presente, falta, atraso, falta_justificada]
- *                 description: Novo status da presença
+ *                 description: Novo status da presenÃ§a
  *                 example: "atraso"
  *               data_registro:
  *                 type: string
@@ -381,23 +377,23 @@ router.get('/:id',
  *                 example: "2024-07-30"
  *               observacao:
  *                 type: string
- *                 description: Observações sobre a presença (opcional)
+ *                 description: ObservaÃ§Ãµes sobre a presenÃ§a (opcional)
  *                 example: "Chegou atrasado 15 minutos"
  *     responses:
  *       200:
- *         description: Presença atualizada com sucesso
+ *         description: PresenÃ§a atualizada com sucesso
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Presenca'
+ *               $ref: '#/components/schemas/SuccessPresenca'
  *       400:
- *         description: Dados inválidos
+ *         description: Dados invÃ¡lidos
  *       401:
- *         description: Não autorizado
+ *         description: NÃ£o autorizado
  *       404:
- *         description: Registro de presença não encontrado
+ *         description: Registro de presenÃ§a nÃ£o encontrado
  */
-router.put('/:id', 
+router.put('/:id', validateIdParam('id'),  autenticar, requireAdmin, validateIdParam('id'), 
   autenticar, 
   validateAtualizarPresenca, 
   atualizarPresenca
@@ -407,8 +403,8 @@ router.put('/:id',
  * @openapi
  * /presencas/{id}:
  *   delete:
- *     summary: Remove um registro de presença
- *     tags: [Presenças]
+ *     summary: Remove um registro de presenÃ§a
+ *     tags: [PresenÃ§as]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -417,33 +413,33 @@ router.put('/:id',
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID do registro de presença a ser removido
+ *         description: ID do registro de presenÃ§a a ser removido
  *     responses:
  *       204:
- *         description: Registro de presença removido com sucesso
+ *         description: Registro de presenÃ§a removido com sucesso
  *       401:
- *         description: Não autorizado
+ *         description: NÃ£o autorizado
  *       404:
- *         description: Registro de presença não encontrado
+ *         description: Registro de presenÃ§a nÃ£o encontrado
  */
-router.delete('/:id', 
+router.delete('/:id', validateIdParam('id'), 
   autenticar,
   validateObterPresenca,
   async (req, res, next) => {
     try {
       const { id } = req.params;
       
-      // Verifica se o registro de presença existe
+      // Verifica se o registro de presenÃ§a existe
       const presenca = await Presenca.findByPk(id);
       
       if (!presenca) {
-        return res.status(404).json({ message: 'Registro de presença não encontrado' });
+        return res.status(404).json({ message: 'Registro de presenÃ§a nÃ£o encontrado' });
       }
       
-      // Remove o registro de presença
+      // Remove o registro de presenÃ§a
       await presenca.destroy();
       
-      // Resposta sem conteúdo (204 - No Content) para operação de sucesso
+      // Resposta sem conteÃºdo (204 - No Content) para operaÃ§Ã£o de sucesso
       res.status(204).end();
     } catch (error) {
       next(error);
@@ -455,8 +451,8 @@ router.delete('/:id',
  * @openapi
  * /presencas/bulk:
  *   post:
- *     summary: Registra múltiplas presenças em uma única requisição
- *     tags: [Presenças]
+ *     summary: Registra mÃºltiplas presenÃ§as em uma Ãºnica requisiÃ§Ã£o
+ *     tags: [PresenÃ§as]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -486,39 +482,40 @@ router.delete('/:id',
  *                     status:
  *                       type: string
  *                       enum: [presente, falta, atraso, falta_justificada]
- *                       description: Status da presença
+ *                       description: Status da presenÃ§a
  *                       example: "presente"
  *                     data_registro:
  *                       type: string
  *                       format: date
- *                       description: Data do registro (opcional, padrão é a data atual)
+ *                       description: Data do registro (opcional, padrÃ£o Ã© a data atual)
  *                       example: "2024-07-30"
  *                     observacao:
  *                       type: string
- *                       description: Observações sobre a presença (opcional)
+ *                       description: ObservaÃ§Ãµes sobre a presenÃ§a (opcional)
  *                       example: "Chegou atrasado 15 minutos"
  *     responses:
  *       201:
- *         description: Presenças registradas com sucesso
+ *         description: PresenÃ§as registradas com sucesso
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Presenca'
+ *               $ref: '#/components/schemas/SuccessPresencas'
  *       400:
- *         description: Dados inválidos
+ *         description: Dados invÃ¡lidos
  *       401:
- *         description: Não autorizado
+ *         description: NÃ£o autorizado
  *       404:
- *         description: Aluno ou Aula não encontrado
+ *         description: Aluno ou Aula nÃ£o encontrado
  *       409:
- *         description: Conflito ao registrar presenças
+ *         description: Conflito ao registrar presenÃ§as
  */
-router.post('/bulk',
+router.post('/bulk', autenticar, requireAdmin,
   autenticar,
   // opcional: validar corpo antes
   registrarPresencasBulk
 );
 
 export default router;
+
+
+

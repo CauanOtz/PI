@@ -4,6 +4,8 @@ import ResponsavelAluno from '../models/ResponsavelAluno.model.js';
 import fs from 'fs';
 import path from 'path';
 import Aluno from '../models/Aluno.model.js';
+import { DocumentoDTO } from '../dto/index.js';
+import { created, ok } from '../utils/response.js';
 
 /**
  * @openapi
@@ -40,7 +42,7 @@ import Aluno from '../models/Aluno.model.js';
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Documento'
+ *               $ref: '#/components/schemas/SuccessDocumento'
  *       400:
  *         description: Dados inválidos
  *       401:
@@ -86,11 +88,8 @@ export const adicionarDocumento = async (req, res, next) => {
             usuarioId: usuarioId
         });
 
-        // Remove a senha do usuário da resposta
-        const documentoResposta = documento.get({ plain: true });
-        delete documentoResposta.usuario?.senha;
-
-        res.status(201).json(documentoResposta);
+        const dto = DocumentoDTO.from(documento, { makeDownloadUrl: true, baseUrl: '/api/v2/alunos' });
+        return created(res, dto);
     } catch (error) {
         // Em caso de erro, remove o arquivo enviado
         if (req.file && fs.existsSync(req.file.path)) {
@@ -162,7 +161,7 @@ const verificarPermissao = async (usuario, alunoId) => {
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/Documento'
+ *                 $ref: '#/components/schemas/DocumentoDTO'
  *       401:
  *         description: Não autorizado
  *       403:
@@ -198,7 +197,7 @@ export const listarDocumentos = async (req, res, next) => {
         });
 
         // Passo 4: Retornar 200 OK com a lista de documentos (que pode ser vazia)
-        res.status(200).json(documentos);
+        return ok(res, { documentos: documentos.map(d => DocumentoDTO.from(d, { makeDownloadUrl: true, baseUrl: '/api/v2/alunos' })) });
     } catch (error) {
         next(error);
     }
@@ -316,17 +315,14 @@ export const obterDocumento = async (req, res, next) => {
  *               descricao:
  *                 type: string
  *                 description: Nova descrição do documento
- *               tipo:
- *                 type: string
- *                 enum: [pdf, docx, jpg, jpeg, png, txt]
- *                 description: Novo tipo do documento
+ *               
  *     responses:
  *       200:
  *         description: Documento atualizado com sucesso
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Documento'
+ *               $ref: '#/components/schemas/SuccessDocumento'
  *       400:
  *         description: Dados inválidos
  *       401:
@@ -339,7 +335,7 @@ export const obterDocumento = async (req, res, next) => {
 export const atualizarDocumento = async (req, res, next) => {
     try {
         const { alunoId, documentoId } = req.params;
-        const { nome, descricao, tipo } = req.body;
+        const { nome, descricao } = req.body;
         const usuarioId = req.usuario.id;
 
         // Verifica se o aluno existe
@@ -372,7 +368,6 @@ export const atualizarDocumento = async (req, res, next) => {
         const camposAtualizados = {};
         if (nome !== undefined) camposAtualizados.nome = nome;
         if (descricao !== undefined) camposAtualizados.descricao = descricao;
-        if (tipo !== undefined) camposAtualizados.tipo = tipo;
 
         // Se não houver campos para atualizar, retorna o documento sem alterações
         if (Object.keys(camposAtualizados).length === 0) {
@@ -391,7 +386,7 @@ export const atualizarDocumento = async (req, res, next) => {
             attributes: { exclude: ['caminhoArquivo'] }
         });
 
-        res.status(200).json(documentoAtualizado);
+        return ok(res, DocumentoDTO.from(documentoAtualizado, { makeDownloadUrl: true, baseUrl: '/api/v2/alunos' }));
 
     } catch (error) {
         next(error);
@@ -566,3 +561,10 @@ export const downloadDocumento = async (req, res, next) => {
         next(error);
     }
 };
+
+
+
+
+
+
+

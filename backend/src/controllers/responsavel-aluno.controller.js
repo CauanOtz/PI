@@ -2,6 +2,7 @@
 import ResponsavelAluno from '../models/ResponsavelAluno.model.js';
 import Usuario from '../models/Usuario.model.js';
 import Aluno from '../models/Aluno.model.js';
+import { ok, created } from '../utils/response.js';
 
 /**
  * @openapi
@@ -82,9 +83,7 @@ export const vincularResponsavel = async (req, res, next) => {
       id_aluno: idAluno
     });
 
-    return res.status(201).json({ 
-      mensagem: 'Respons√°vel vinculado com sucesso' 
-    });
+    return created(res, { mensagem: 'Respons·vel vinculado com sucesso' });
 
   } catch (error) {
     next(error);
@@ -145,12 +144,12 @@ export const desvincularResponsavel = async (req, res, next) => {
     // Remove o v√≠nculo
     await vinculo.destroy();
 
-    return res.status(200).json({ 
-      mensagem: 'Respons√°vel desvinculado com sucesso' 
-    });
+    return ok(res, { mensagem: 'Respons·vel desvinculado com sucesso' });
 
   } catch (error) {
     next(error);
   }
 };
+
+
 

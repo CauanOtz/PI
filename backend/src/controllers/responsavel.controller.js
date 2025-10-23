@@ -1,6 +1,8 @@
 // src/controllers/responsavel.controller.js
 import Aluno from '../models/Aluno.model.js';
 import Usuario from '../models/Usuario.model.js';
+import { AlunoDTO, PaginationDTO } from '../dto/index.js';
+import { ok } from '../utils/response.js';
 
 /**
  * @openapi
@@ -118,21 +120,14 @@ export const listarAlunosPorResponsavel = async (req, res, next) => {
     });
 
     const totalPages = Math.ceil(count / limit);
-
-    res.status(200).json({
-      sucesso: true,
-      dados: {
-        alunos: alunos,
-        paginacao: {
-          total: count,
-          paginaAtual: page,
-          totalPaginas: totalPages,
-          itensPorPagina: limit,
-          temProximaPagina: page < totalPages,
-          temPaginaAnterior: page > 1,
-        },
-      },
+    const alunosDTO = AlunoDTO.list(alunos, { includeResponsaveis: false });
+    const paginacao = new PaginationDTO({
+      total: count,
+      paginaAtual: page,
+      totalPaginas: totalPages,
+      itensPorPagina: limit,
     });
+    return ok(res, { alunos: alunosDTO, paginacao });
   } catch (error) {
     console.error('Erro ao listar alunos por responsável:', error);
     next(error);

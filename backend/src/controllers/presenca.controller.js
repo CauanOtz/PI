@@ -4,10 +4,12 @@ import Presenca from '../models/Presenca.model.js';
 import Aluno from '../models/Aluno.model.js';
 import Aula from '../models/Aula.model.js';
 import { sequelize } from '../config/database.js';
+import { PresencaDTO } from '../dto/index.js';
+import { ok, created } from '../utils/response.js';
 
 // Funções auxiliares para respostas padronizadas
 const sendError = (res, status, message) => {
-  return res.status(status).json({ message });
+  return res.status(status).json({ erros: [{ mensagem: message }] });
 };
 
 const sendSuccess = (res, status, data) => {
@@ -138,7 +140,7 @@ export const registrarPresenca = async (req, res, next) => {
     if (!result.created) {
       return sendError(res, 409, 'Já existe um registro de presença para este aluno nesta data');
     }
-    return sendSuccess(res, 201, result.presenca);
+    return created(res, PresencaDTO.from(result.presenca));
   } catch (createErr) {
     if (createErr && createErr.name === "SequelizeUniqueConstraintError") {
       return sendError(res, 409, "Já existe um registro de presença para este aluno nesta data");
@@ -224,7 +226,7 @@ export const listarPresencas = async (req, res, next) => {
       order: [['data_registro', 'DESC']]
     });
     
-    return sendSuccess(res, 200, presencas);
+    { const lista = PresencaDTO.list(presencas); return ok(res, { presencas: lista }); }
   } catch (error) {
     next(error);
   }
@@ -232,7 +234,7 @@ export const listarPresencas = async (req, res, next) => {
 
 /**
  * @openapi
- * /aulas/{idAula}/presencas:
+ * /presencas/aulas/{idAula}:
  *   get:
  *     summary: Lista as presenças de uma aula específica
  *     tags: [Presenças]
@@ -295,14 +297,7 @@ export const listarPresencasPorAula = async (req, res, next) => {
       order: [[ 'aluno', 'nome', 'ASC' ]]
     });
     
-    return sendSuccess(res, 200, {
-      aula: {
-        id: aula.id,
-        titulo: aula.titulo,
-        data: aula.data
-      },
-      presencas
-    });
+    { const lista = PresencaDTO.list(presencas); return ok(res, { aula: { id: aula.id, titulo: aula.titulo, data: aula.data }, presencas: lista }); }
   } catch (error) {
     next(error);
   }
@@ -310,7 +305,7 @@ export const listarPresencasPorAula = async (req, res, next) => {
 
 /**
  * @openapi
- * /alunos/{idAluno}/presencas:
+ * /presencas/alunos/{idAluno}:
  *   get:
  *     summary: Lista o histórico de presença de um aluno
  *     tags: [Presenças]
@@ -381,14 +376,7 @@ export const listarHistoricoAluno = async (req, res, next) => {
       order: [['data_registro', 'DESC']]
     });
     
-    return sendSuccess(res, 200, {
-      aluno: {
-        id: aluno.id,
-        nome: aluno.nome,
-        matricula: aluno.id // Substituído por ID, já que matrícula não existe
-      },
-      historico: presencas
-    });
+    { const hist = PresencaDTO.list(presencas); return ok(res, { aluno: { id: aluno.id, nome: aluno.nome, matricula: aluno.id }, historico: hist }); }
   } catch (error) {
     next(error);
   }
@@ -436,7 +424,7 @@ export const obterPresenca = async (req, res, next) => {
     
     if (!presenca) return handleNotFound('Registro de presença', res);
     
-    return sendSuccess(res, 200, presenca);
+    return ok(res, PresencaDTO.from(presenca));
     
     res.json(presenca);
   } catch (error) {
@@ -514,6 +502,21 @@ export const atualizarPresenca = async (req, res, next) => {
     if (status) camposAtualizados.status = status;
     if (data_registro) camposAtualizados.data_registro = formatDate(data_registro);
     if (observacao !== undefined) camposAtualizados.observacao = observacao;
+
+    // Evitar colis�o com constraint �nica ao alterar data_registro
+    if (camposAtualizados.data_registro) {
+      const colisao = await Presenca.findOne({
+        where: {
+          idAluno: presenca.idAluno,
+          idAula: presenca.idAula,
+          data_registro: camposAtualizados.data_registro,
+          id: { [Op.ne]: presenca.id },
+        },
+      });
+      if (colisao) {
+        return res.status(409).json({ mensagem: 'J� existe presen�a para este aluno nesta aula e data' });
+      }
+    }
     
     // Atualiza apenas os campos que foram fornecidos
     await presenca.update(camposAtualizados);
@@ -521,7 +524,7 @@ export const atualizarPresenca = async (req, res, next) => {
     // Recarrega o registro para garantir que temos os dados mais recentes
     const presencaAtualizada = await presenca.reload();
     
-    return sendSuccess(res, 200, presencaAtualizada);
+    return ok(res, PresencaDTO.from(presencaAtualizada));
   } catch (error) {
     next(error);
   }
@@ -655,11 +658,11 @@ export const registrarPresencasBulk = async (req, res, next) => {
           where: { idAluno: it.idAluno, idAula: it.idAula, data_registro: it.data_registro },
           transaction: t
         });
-        results.push({ presenca: pres ? pres.get({ plain: true }) : null });
+        results.push({ presenca: pres ? PresencaDTO.from(pres) : null });
       }
     });
 
-    return sendSuccess(res, 200, { sucesso: true, resultados: results });
+    return ok(res, { resultados: results });
   } catch (err) {
     console.error('registrarPresencasBulk error:', err);
     if (err && err.name === 'SequelizeUniqueConstraintError') {
@@ -668,3 +671,9 @@ export const registrarPresencasBulk = async (req, res, next) => {
     next(err);
   }
 };
+
+
+
+
+
+

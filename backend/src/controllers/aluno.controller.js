@@ -5,6 +5,8 @@ import Usuario from '../models/Usuario.model.js'; // Modelo de Usuário para os 
 import { Op } from 'sequelize';
 import ResponsavelAluno from '../models/ResponsavelAluno.model.js'; // Modelo de associação para Many-to-Many
 import Documento from '../models/Documento.model.js'; // Modelo de documento para inclusão na exclusão
+import { AlunoDTO, PaginationDTO } from '../dto/index.js';
+import { ok } from '../utils/response.js';
 import fs from 'fs'; // Importando o módulo fs para manipulação de arquivos
 
 /**
@@ -42,7 +44,7 @@ import fs from 'fs'; // Importando o módulo fs para manipulação de arquivos
  *           type: string
  *         description: Termo de busca para filtrar alunos por nome
  *       - in: query
- *         name: responsaveisIds
+ *         name: responsavelId
  *         schema:
  *           type: integer
  *         description: ID do responsável para filtrar alunos associados a ele.
@@ -112,22 +114,10 @@ export const listarAlunos = async (req, res, next) => {
 
     const totalPages = Math.ceil(count / limit);
 
-    res.status(200).json({
-      sucesso: true,
-      dados: {
-        alunos: alunos,
-        paginacao: {
-          total: count,
-          paginaAtual: page,
-          totalPaginas: totalPages,
-          itensPorPagina: limit,
-          temProximaPagina: page < totalPages,
-          temPaginaAnterior: page > 1
-        }
-      }
-    });
+    const alunosDTO = AlunoDTO.list(alunos, { includeResponsaveis: true });
+    const paginacao = new PaginationDTO({ total: count, paginaAtual: page, totalPaginas: totalPages, itensPorPagina: limit });
+    return ok(res, { alunos: alunosDTO, paginacao });
   } catch (error) {
-    console.error('Erro ao listar alunos:', error);
     next(error);
   }
 };
@@ -184,10 +174,8 @@ export const obterAlunoPorId = async (req, res, next) => {
       });
     }
 
-    res.status(200).json({
-      sucesso: true,
-      dados: aluno
-    });
+    const dto = AlunoDTO.from(aluno, { includeResponsaveis: true });
+    return ok(res, { aluno: dto });
   } catch (error) {
     console.error('Erro ao buscar aluno por ID:', error);
     next(error);
@@ -470,7 +458,8 @@ export const atualizarAluno = async (req, res, next) => {
       ]
     });
 
-    res.status(200).json(alunoAtualizado);
+    const dto = AlunoDTO.from(alunoAtualizado, { includeResponsaveis: true });
+    return ok(res, { aluno: dto });
   } catch (error) {
     await transaction.rollback();
     if (error.name === 'SequelizeValidationError') {
@@ -565,3 +554,17 @@ export const excluirAluno = async (req, res, next) => {
     next(error);
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+

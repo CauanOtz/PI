@@ -1,3 +1,4 @@
+﻿import { requireAdmin } from '../middlewares/authorization.middleware.js';
 // src/routes/usuario.routes.js
 import { Router } from 'express';
 import * as usuarioController from '../controllers/usuario.controller.js';
@@ -6,20 +7,20 @@ import { autenticar } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-// Rota para registro de usuário
-router.post('/registrar', validateRegistroUsuario, usuarioController.registrarUsuario);
+// Rota para registro de usuÃ¡rio
+router.post('/registrar', autenticar, requireAdmin, validateRegistroUsuario, usuarioController.registrarUsuario);
 
 // Rota para login
 router.post('/login', validateLogin, usuarioController.login);
 
-// Outras rotas de usuário podem ser adicionadas aqui
-// Rota para listar usuários
-router.get('/', validateListarUsuarios, usuarioController.listarUsuarios);
+// Outras rotas de usuÃ¡rio podem ser adicionadas aqui
+// Rota para listar usuÃ¡rios
+router.get('/', autenticar, requireAdmin, validateListarUsuarios, usuarioController.listarUsuarios);
 
-// Rota para obter os dados do usuário logado
+// Rota para obter os dados do usuÃ¡rio logado
 router.get('/me', autenticar, usuarioController.obterMeusDados);
 
-// Rota para buscar usuário por CPF (apenas admin)
+// Rota para buscar usuÃ¡rio por CPF (apenas admin)
 router.get(
     '/:cpf',
     autenticar,
@@ -27,7 +28,7 @@ router.get(
     usuarioController.buscarPorCPF
 );
 
-// Rota para atualizar usuário por CPF (apenas admin)
+// Rota para atualizar usuÃ¡rio por CPF (apenas admin)
 router.put(
     '/:cpf',
     autenticar,
@@ -35,7 +36,7 @@ router.put(
     usuarioController.atualizarUsuarioPorCPF
 );
 
-// Rota para excluir usuário por CPF (apenas admin)
+// Rota para excluir usuÃ¡rio por CPF (apenas admin)
 router.delete(
     '/:cpf',
     autenticar,
@@ -44,3 +45,4 @@ router.delete(
 );
 
 export default router;
+

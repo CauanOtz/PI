@@ -1,3 +1,5 @@
+﻿import { NotificacaoDTO, PaginationDTO } from '../dto/index.js';
+import { ok, created } from '../utils/response.js';
 import { Op } from 'sequelize';
 import Notificacao from '../models/Notificacao.model.js';
 import Usuario from '../models/Usuario.model.js';
@@ -13,8 +15,17 @@ import { normalizeCpf, formatCpf } from '../utils/cpf.js';
 export const criarNotificacao = async (req, res, next) => {
   try {
     const { titulo, mensagem, tipo, dataExpiracao, usuarios: rawUsuarios } = req.body;
-    const criadoPor = req.usuario.cpf; // Obtém o CPF do usuário autenticado
+    const criadoPorDigits = normalizeCpf(req.usuario?.cpf || '');
+    const criadoPor = criadoPorDigits ? formatCpf(criadoPorDigits) : null;
+    if (!criadoPor) {
+      return res.status(400).json({ mensagem: 'CPF do usu�rio autenticado ausente ou inv�lido' });
+    }
+     // Obtém o CPF do usuário autenticado
 
+    const criador = await Usuario.findOne({ where: { cpf: criadoPor }, attributes: ['cpf'] });
+    if (!criador) {
+      return res.status(400).json({ mensagem: 'Usu�rio do token n�o encontrado' });
+    }
     const notificacao = await Notificacao.create({
       titulo,
       mensagem,
@@ -105,23 +116,15 @@ export const criarNotificacao = async (req, res, next) => {
         }
       } catch (assocErr) {
         // Não falhamos a criação caso associação falhe; retornamos aviso
-        return res.status(201).json({
-          mensagem: 'Notificação criada, mas houve erro ao associar destinatários',
-          erroAssociacao: assocErr.message,
-          notificacao
-        });
+        return created(res, NotificacaoDTO.from(notificacao));
       }
     }
 
-    res.status(201).json({
-      mensagem: 'Notificação criada com sucesso',
-      notificacao: {
-        ...notificacao.get({ plain: true }),
-        destinatarios: destinatariosAssociados,
-        metaEntrega
-      }
-    });
+    return created(res, NotificacaoDTO.from(notificacao));
   } catch (error) {
+    if (error && error.name === 'SequelizeValidationError') {
+      return res.status(400).json({ mensagem: error.message });
+    }
     next(error);
   }
 };
@@ -196,17 +199,11 @@ export const listarNotificacoes = async (req, res, next) => {
       });
     }
 
-    res.status(200).json({
-      notificacoes: payload,
-      paginacao: {
-        total: count,
-        totalPages,
-        currentPage: page,
-        hasNext: page < totalPages,
-        hasPrevious: page > 1
-      }
-    });
+    { const notificacoesDTO = NotificacaoDTO.list(payload, { includeDestinatarios: true }); const paginacao = new PaginationDTO({ total: count, paginaAtual: page, totalPaginas: totalPages, itensPorPagina: limit }); return ok(res, { notificacoes: notificacoesDTO, paginacao }); }
   } catch (error) {
+    if (error && error.name === 'SequelizeValidationError') {
+      return res.status(400).json({ mensagem: error.message });
+    }
     next(error);
   }
 };
@@ -217,62 +214,40 @@ export const listarNotificacoes = async (req, res, next) => {
 export const obterNotificacao = async (req, res, next) => {
   try {
     const { id } = req.params;
-    
     const notificacao = await Notificacao.findByPk(id, {
-      include: [{
-        model: Usuario,
-        as: 'criador',
-        attributes: ['nome', 'email']
-      }]
+      include: [
+        { model: Usuario, as: 'criador', attributes: ['nome', 'email'] },
+      ],
     });
-
     if (!notificacao) {
-      return res.status(404).json({
-        mensagem: 'Notificação não encontrada'
-      });
+      return res.status(404).json({ mensagem: 'Notificação não encontrada' });
     }
-
-    res.status(200).json(notificacao);
+    return ok(res, NotificacaoDTO.from(notificacao));
   } catch (error) {
     next(error);
   }
 };
 
 /**
- * Atualiza uma notificação
+ * Atualiza uma notificação (apenas criador ou admin)
  */
 export const atualizarNotificacao = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { titulo, mensagem, tipo, dataExpiracao } = req.body;
-
     const notificacao = await Notificacao.findByPk(id);
-    
     if (!notificacao) {
-      return res.status(404).json({
-        mensagem: 'Notificação não encontrada'
-      });
+      return res.status(404).json({ mensagem: 'Notificação não encontrada' });
     }
-
-    // Verifica se o usuário é o criador da notificação ou admin
     if (notificacao.criadoPor !== req.usuario.cpf && req.usuario.role !== 'admin') {
-      return res.status(403).json({
-        mensagem: 'Você não tem permissão para atualizar esta notificação'
-      });
+      return res.status(403).json({ mensagem: 'Você não tem permissão para atualizar esta notificação' });
     }
-
-    // Atualiza apenas os campos fornecidos
-    if (titulo) notificacao.titulo = titulo;
-    if (mensagem) notificacao.mensagem = mensagem;
-    if (tipo) notificacao.tipo = tipo;
-    if (dataExpiracao) notificacao.dataExpiracao = dataExpiracao;
-
+    if (titulo !== undefined) notificacao.titulo = titulo;
+    if (mensagem !== undefined) notificacao.mensagem = mensagem;
+    if (tipo !== undefined) notificacao.tipo = tipo;
+    if (dataExpiracao !== undefined) notificacao.dataExpiracao = dataExpiracao;
     await notificacao.save();
-
-    res.status(200).json({
-      mensagem: 'Notificação atualizada com sucesso',
-      notificacao
-    });
+    return ok(res, NotificacaoDTO.from(notificacao));
   } catch (error) {
     next(error);
   }
@@ -306,6 +281,9 @@ export const excluirNotificacao = async (req, res, next) => {
       mensagem: 'Notificação excluída com sucesso'
     });
   } catch (error) {
+    if (error && error.name === 'SequelizeValidationError') {
+      return res.status(400).json({ mensagem: error.message });
+    }
     next(error);
   }
 };
@@ -340,6 +318,7 @@ export const listarNotificacoesUsuario = async (req, res, next) => {
       where,
       include: [{
         model: Notificacao,
+        as: 'Notificacao',
         include: [
           {
             model: Usuario,
@@ -380,17 +359,18 @@ export const listarNotificacoesUsuario = async (req, res, next) => {
       };
     });
 
-    res.status(200).json({
-      notificacoes,
-      paginacao: {
-        total: count,
-        totalPages,
-        currentPage: page,
-        hasNext: page < totalPages,
-        hasPrevious: page > 1
-      }
+    const notificacoesDTO = notificacoes.map(n => NotificacaoDTO.from(n));
+    const paginacao = new PaginationDTO({
+      total: count,
+      paginaAtual: page,
+      totalPaginas: totalPages,
+      itensPorPagina: limit,
     });
+    return ok(res, { notificacoes: notificacoesDTO, paginacao });
   } catch (error) {
+    if (error && error.name === 'SequelizeValidationError') {
+      return res.status(400).json({ mensagem: error.message });
+    }
     next(error);
   }
 };
@@ -463,6 +443,9 @@ export const marcarComoLida = async (req, res, next) => {
       }
     });
   } catch (error) {
+    if (error && error.name === 'SequelizeValidationError') {
+      return res.status(400).json({ mensagem: error.message });
+    }
     next(error);
   }
 };
@@ -582,14 +565,11 @@ export const enviarNotificacao = async (req, res, next) => {
       };
     }
 
-    res.status(201).json({
-      mensagem: 'Notificação enviada com sucesso',
-      totalEnviadas: cpfsExistentes.length,
-      novasAssociacoes,
-      associacoesExistentes,
-      notificacao: notificacaoPayload
-    });
+    return created(res, NotificacaoDTO.from(notificacao));
   } catch (error) {
+    if (error && error.name === 'SequelizeValidationError') {
+      return res.status(400).json({ mensagem: error.message });
+    }
     next(error);
   }
 };
@@ -661,6 +641,16 @@ export const listarUsuariosNotificacao = async (req, res, next) => {
       }
     });
   } catch (error) {
+    if (error && error.name === 'SequelizeValidationError') {
+      return res.status(400).json({ mensagem: error.message });
+    }
     next(error);
   }
 };
+
+
+
+
+
+
+

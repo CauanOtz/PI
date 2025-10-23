@@ -1,5 +1,7 @@
 // src/controllers/aula.controller.js
 import Aula from '../models/Aula.model.js';
+import { AulaDTO } from '../dto/index.js';
+import { ok, created } from '../utils/response.js';
 
 /**
  * @openapi
@@ -11,7 +13,8 @@ import Aula from '../models/Aula.model.js';
 export const listarAulas = async (req, res, next) => {
   try {
     const aulas = await Aula.findAll();
-    res.status(200).json(aulas);
+    const aulasDTO = aulas.map((a) => AulaDTO.from(a));
+    return ok(res, { aulas: aulasDTO });
   } catch (error) {
     next(error); // Passa o erro para o middleware de tratamento de erros global
   }
@@ -35,7 +38,7 @@ export const listarAulas = async (req, res, next) => {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Aula'
+ *               $ref: '#/components/schemas/SuccessAula'
  *       400:
  *         description: Dados de entrada inválidos.
  *         content:
@@ -67,7 +70,7 @@ export const criarAula = async (req, res, next) => {
       descricao,
     });
 
-    res.status(201).json(novaAula);
+    return created(res, AulaDTO.from(novaAula));
   } catch (error) {
     // Se for um erro específico do Sequelize (ex: constraint unique violada, não aplicável aqui ainda)
     // podemos tratá-lo de forma mais específica antes de passar para o handler global.
@@ -103,7 +106,7 @@ export const criarAula = async (req, res, next) => {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Aula'
+ *               $ref: '#/components/schemas/SuccessAula'
  *       400:
  *         description: Dados de entrada inválidos.
  *         content:
@@ -148,7 +151,7 @@ export const atualizarAula = async (req, res, next) => {
     await aula.save();
     
     // Retorna a aula atualizada
-    res.status(200).json(aula);
+    return ok(res, AulaDTO.from(aula));
   } catch (error) {
     next(error);
   }
@@ -177,7 +180,7 @@ export const atualizarAula = async (req, res, next) => {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Aula'
+ *               $ref: '#/components/schemas/SuccessAula'
  *       404:
  *         description: Aula não encontrada.
  *       500:
@@ -196,7 +199,7 @@ export const getAulaPorId = async (req, res, next) => {
     }
     
     // Retorna a aula encontrada
-    res.status(200).json(aula);
+    return ok(res, AulaDTO.from(aula));
   } catch (error) {
     next(error);
   }
@@ -244,3 +247,4 @@ export const excluirAula = async (req, res, next) => {
     next(error);
   }
 };
+

@@ -1,3 +1,4 @@
+﻿import { requireAdmin } from '../middlewares/authorization.middleware.js';
 // src/routes/responsavel-aluno.routes.js
 import { Router } from 'express';
 import { 
@@ -12,7 +13,7 @@ import { autenticar } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-// Rota para vincular responsável a aluno
+// Rota para vincular responsÃ¡vel a aluno
 router.post(
   '/',
   autenticar,
@@ -20,7 +21,7 @@ router.post(
   vincularResponsavel
 );
 
-// Rota para desvincular responsável de aluno
+// Rota para desvincular responsÃ¡vel de aluno
 router.delete(
   '/usuario/:idUsuario/aluno/:idAluno',
   autenticar,
@@ -29,3 +30,4 @@ router.delete(
 );
 
 export default router;
+

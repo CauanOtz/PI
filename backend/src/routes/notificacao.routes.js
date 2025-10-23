@@ -1,3 +1,4 @@
+import { requireAdmin } from '../middlewares/authorization.middleware.js';
 import { Router } from 'express';
 import {
   criarNotificacao,
@@ -69,15 +70,13 @@ const router = Router();
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Notificacao'
+ *               $ref: '#/components/schemas/SuccessNotificacao'
  *       400:
  *         description: Dados inválidos
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */
-router.post(
-  '/',
-  autenticar,
+router.post('/', autenticar, requireAdmin,
   validateCriarNotificacao,
   criarNotificacao
 );
@@ -118,14 +117,7 @@ router.post(
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 notificacoes:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Notificacao'
- *                 paginacao:
- *                   type: object
+ *               $ref: '#/components/schemas/SuccessNotificacoes'
  *                   properties:
  *                     total:
  *                       type: integer
@@ -246,9 +238,7 @@ router.get(
  *       404:
  *         description: Notificação não encontrada
  */
-router.put(
-  '/:id',
-  autenticar,
+router.put('/:id', autenticar, requireAdmin,
   validateNotificacaoId,
   validateCriarNotificacao,
   atualizarNotificacao
@@ -288,9 +278,7 @@ router.put(
  *       404:
  *         description: Notificação não encontrada
  */
-router.delete(
-  '/:id',
-  autenticar,
+router.delete('/:id', autenticar, requireAdmin,
   validateNotificacaoId,
   excluirNotificacao
 );
@@ -368,9 +356,7 @@ router.delete(
  *       404:
  *         description: Notificação não encontrada
  */
-router.get(
-  '/:idNotificacao/usuarios',
-  autenticar,
+router.get('/:idNotificacao/usuarios', autenticar, requireAdmin,
   validateNotificacaoId,
   listarUsuariosNotificacao
 );
@@ -581,12 +567,12 @@ router.post(
  *       404:
  *         description: Notificação não encontrada
  */
-router.post(
-  '/:idNotificacao/enviar',
-  autenticar,
+router.post('/:idNotificacao/enviar', autenticar, requireAdmin,
   validateNotificacaoId,
   validateEnviarNotificacao,
   enviarNotificacao
 );
 
 export default router;
+
+

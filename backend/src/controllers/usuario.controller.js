@@ -1,6 +1,8 @@
 // src/controllers/usuario.controller.js
 import Usuario from '../models/Usuario.model.js';
 import { Op } from 'sequelize';
+import { UsuarioDTO, PaginationDTO } from '../dto/index.js';
+import { ok, created } from '../utils/response.js';
 import bcrypt from 'bcrypt';
 import { normalizeCpf, formatCpf, isValidCpf } from '../utils/cpf.js';
 /**
@@ -41,7 +43,7 @@ import { normalizeCpf, formatCpf, isValidCpf } from '../utils/cpf.js';
  *                 example: "senha123"
  *               cpf:
  *                 type: string
- *                 example: "123.456.789-00"
+ *                 example: "856.871.180-47"
  *               telefone:
  *                 type: string
  *                 example: "(11) 99999-9999"
@@ -55,7 +57,7 @@ import { normalizeCpf, formatCpf, isValidCpf } from '../utils/cpf.js';
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Usuario'
+ *               $ref: '#/components/schemas/SuccessUsuario'
  *       400:
  *         description: Dados de entrada inválidos.
  *       409:
@@ -138,7 +140,7 @@ export const registrarUsuario = async (req, res, next) => {
     const usuarioSemSenha = novoUsuario.get({ plain: true });
     delete usuarioSemSenha.senha;
 
-    res.status(201).json({ usuarioSemSenha, token });
+    return created(res, { usuario: UsuarioDTO.from(novoUsuario), token });
   } catch (error) {
     next(error);
   }
@@ -190,7 +192,7 @@ export const registrarUsuario = async (req, res, next) => {
  *                 usuarios:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/Usuario'
+ *                     $ref: '#/components/schemas/UsuarioDTO'
  *                 total:
  *                   type: integer
  *                   description: Total de itens encontrados
@@ -242,14 +244,7 @@ export const listarUsuarios = async (req, res, next) => {
     const hasNext = page < totalPages;
     const hasPrevious = page > 1;
 
-    res.status(200).json({
-      usuarios,
-      total: count,
-      page: parseInt(page),
-      totalPages,
-      hasNext,
-      hasPrevious
-    });
+    { const usuariosDTO = UsuarioDTO.list(usuarios); const paginacao = new PaginationDTO({ total: count, paginaAtual: parseInt(page), totalPaginas: totalPages, itensPorPagina: limit }); return ok(res, { usuarios: usuariosDTO, paginacao }); }
   } catch (error) {
     next(error);
   }
@@ -269,7 +264,7 @@ export const listarUsuarios = async (req, res, next) => {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Usuario'
+ *               $ref: '#/components/schemas/SuccessUsuario'
  *       401:
  *         description: Não autorizado - token inválido ou não fornecido
  *       404:
@@ -286,7 +281,7 @@ export const obterMeusDados = async (req, res, next) => {
       return res.status(404).json({ mensagem: 'Usuário não encontrado' });
     }
 
-    res.status(200).json(usuario);
+    return ok(res, UsuarioDTO.from(usuario));
   } catch (error) {
     next(error);
   }
@@ -327,7 +322,7 @@ export const obterMeusDados = async (req, res, next) => {
  *               type: object
  *               properties:
  *                 usuario:
- *                   $ref: '#/components/schemas/Usuario'
+ *                   $ref: '#/components/schemas/UsuarioDTO'
  *                 token:
  *                   type: string
  *                   description: Token JWT para autenticação
@@ -369,10 +364,7 @@ export const login = async (req, res, next) => {
     delete usuarioSemSenha.senha;
 
     // Retorna o usuário e o token
-    res.status(200).json({
-      usuario: usuarioSemSenha,
-      token
-    });
+    return ok(res, { usuario: UsuarioDTO.from(usuarioSemSenha), token });
   } catch (error) {
     next(error);
   }
@@ -401,7 +393,7 @@ export const login = async (req, res, next) => {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Usuario'
+ *               $ref: '#/components/schemas/SuccessUsuario'
  *       400:
  *         description: CPF inválido
  *       401:
@@ -437,7 +429,7 @@ export const buscarPorCPF = async (req, res, next) => {
       });
     }
 
-    res.status(200).json(usuario);
+    return ok(res, UsuarioDTO.from(usuario));
   } catch (error) {
     next(error);
   }
@@ -483,7 +475,7 @@ export const buscarPorCPF = async (req, res, next) => {
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Usuario'
+ *               $ref: '#/components/schemas/SuccessUsuario'
  *       400:
  *         description: Dados inválidos
  *       401:
@@ -558,7 +550,7 @@ export const atualizarUsuarioPorCPF = async (req, res, next) => {
     const usuarioSemSenha = usuario.get({ plain: true });
     delete usuarioSemSenha.senha;
 
-    res.status(200).json(usuarioSemSenha);
+    return ok(res, UsuarioDTO.from(usuarioSemSenha));
   } catch (error) {
     if (error.name === 'SequelizeUniqueConstraintError') {
       return res.status(400).json({ 
