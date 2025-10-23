@@ -1,13 +1,14 @@
-// src/controllers/aluno.controller.js
+﻿// src/controllers/aluno.controller.js
 import Aluno from '../models/Aluno.model.js';
 import { sequelize } from '../config/database.js';
-import Usuario from '../models/Usuario.model.js'; // Modelo de Usuário para os Responsáveis
+import Usuario from '../models/Usuario.model.js'; // Modelo de UsuÃ¡rio para os ResponsÃ¡veis
 import { Op } from 'sequelize';
-import ResponsavelAluno from '../models/ResponsavelAluno.model.js'; // Modelo de associação para Many-to-Many
-import Documento from '../models/Documento.model.js'; // Modelo de documento para inclusão na exclusão
+import ResponsavelAluno from '../models/ResponsavelAluno.model.js'; // Modelo de associaÃ§Ã£o para Many-to-Many
+import Documento from '../models/Documento.model.js'; // Modelo de documento para inclusÃ£o na exclusÃ£o
 import { AlunoDTO, PaginationDTO } from '../dto/index.js';
+import AlunoService from '../services/aluno.service.js';
 import { ok } from '../utils/response.js';
-import fs from 'fs'; // Importando o módulo fs para manipulação de arquivos
+import fs from 'fs'; // Importando o mÃ³dulo fs para manipulaÃ§Ã£o de arquivos
 
 /**
  * @openapi
@@ -29,7 +30,7 @@ import fs from 'fs'; // Importando o módulo fs para manipulação de arquivos
  *           type: integer
  *           minimum: 1
  *           default: 1
- *         description: Número da página para paginação
+ *         description: NÃºmero da pÃ¡gina para paginaÃ§Ã£o
  *       - in: query
  *         name: limit
  *         schema:
@@ -37,7 +38,7 @@ import fs from 'fs'; // Importando o módulo fs para manipulação de arquivos
  *           minimum: 1
  *           maximum: 100
  *           default: 10
- *         description: Número de itens por página
+ *         description: NÃºmero de itens por pÃ¡gina
  *       - in: query
  *         name: search
  *         schema:
@@ -47,7 +48,7 @@ import fs from 'fs'; // Importando o módulo fs para manipulação de arquivos
  *         name: responsavelId
  *         schema:
  *           type: integer
- *         description: ID do responsável para filtrar alunos associados a ele.
+ *         description: ID do responsÃ¡vel para filtrar alunos associados a ele.
  *     responses:
  *       200:
  *         description: Lista de alunos
@@ -65,57 +66,26 @@ import fs from 'fs'; // Importando o módulo fs para manipulação de arquivos
  *                   description: Total de alunos encontrados
  *                 page:
  *                   type: integer
- *                   description: Página atual
+ *                   description: PÃ¡gina atual
  *                 totalPages:
  *                   type: integer
- *                   description: Total de páginas
+ *                   description: Total de pÃ¡ginas
  */
 export const listarAlunos = async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
-    const offset = (page - 1) * limit;
 
-    const whereClause = {};
-    const includeClause = [
-      {
-        model: Usuario,
-        as: 'responsaveis', // Usamos 'responsaveis' porque é a alias da associação Many-to-Many
-        attributes: ['id', 'nome', 'email', 'telefone'],
-        through: { attributes: [] } // Não queremos os campos da tabela de junção na resposta do aluno
-      }
-    ];
-
-    if (req.query.search && typeof req.query.search === 'string') {
-      const search = req.query.search.trim().toLowerCase();
-      //o SQLite não suporta o ILIKE -'_'-
-      whereClause[Op.and] = sequelize.where(
-        sequelize.fn('LOWER', sequelize.col('Aluno.nome')),
-        { [Op.like]: `%${search}%` }
-      );
-    }
-
-    // Filtrar alunos por ID de responsável (Many-to-Many)
-    if (req.query.responsavelId) {
-      const responsavelId = parseInt(req.query.responsavelId);
-      if (!isNaN(responsavelId)) {
-        // Ajustamos o include para filtrar pela associação
-        includeClause[0].where = { id: responsavelId };
-      }
-    }
-
-    const { count, rows: alunos } = await Aluno.findAndCountAll({
-      where: whereClause,
-      include: includeClause,
-      limit: limit,
-      offset: offset,
-      order: [['nome', 'ASC']]
+    const { count, rows: alunos, page: svcPage, limit: svcLimit } = await AlunoService.listAll({
+      page,
+      limit,
+      search: req.query.search,
+      responsavelId: req.query.responsavelId,
     });
 
-    const totalPages = Math.ceil(count / limit);
-
+    const totalPages = Math.ceil(count / svcLimit);
     const alunosDTO = AlunoDTO.list(alunos, { includeResponsaveis: true });
-    const paginacao = new PaginationDTO({ total: count, paginaAtual: page, totalPaginas: totalPages, itensPorPagina: limit });
+    const paginacao = new PaginationDTO({ total: count, paginaAtual: svcPage, totalPaginas: totalPages, itensPorPagina: svcLimit });
     return ok(res, { alunos: alunosDTO, paginacao });
   } catch (error) {
     next(error);
@@ -126,7 +96,7 @@ export const listarAlunos = async (req, res, next) => {
  * @openapi
  * /alunos/{id}:
  *   get:
- *     summary: Obtém um aluno pelo ID
+ *     summary: ObtÃ©m um aluno pelo ID
  *     tags: [Alunos]
  *     parameters:
  *       - in: path
@@ -143,41 +113,14 @@ export const listarAlunos = async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/Aluno'
  *       404:
- *         description: Aluno não encontrado
+ *         description: Aluno nÃ£o encontrado
  */
 export const obterAlunoPorId = async (req, res, next) => {
   try {
-    const alunoId = parseInt(req.params.id);
-
-    if (isNaN(alunoId)) {
-      return res.status(400).json({
-        mensagem: 'ID do aluno inválido',
-        detalhes: 'O ID deve ser um número inteiro válido'
-      });
-    }
-
-    const aluno = await Aluno.findByPk(alunoId, {
-      include: [
-        {
-          model: Usuario,
-          as: 'responsaveis',
-          attributes: ['id', 'nome', 'email', 'telefone'],
-          through: { attributes: [] } // Não queremos os campos da tabela de junção na resposta do aluno
-        }
-      ]
-    });
-
-    if (!aluno) {
-      return res.status(404).json({
-        mensagem: 'Aluno não encontrado',
-        detalhes: `Nenhum aluno encontrado com o ID ${alunoId}`
-      });
-    }
-
+    const aluno = await AlunoService.getById(req.params.id);
     const dto = AlunoDTO.from(aluno, { includeResponsaveis: true });
     return ok(res, { aluno: dto });
   } catch (error) {
-    console.error('Erro ao buscar aluno por ID:', error);
     next(error);
   }
 };
@@ -215,7 +158,7 @@ export const obterAlunoPorId = async (req, res, next) => {
  *                 type: array
  *                 items:
  *                   type: integer
- *                 description: IDs dos responsáveis pelo aluno.
+ *                 description: IDs dos responsÃ¡veis pelo aluno.
  *                 example: [1, 2]
  *     responses:
  *       201:
@@ -225,9 +168,9 @@ export const obterAlunoPorId = async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/Aluno'
  *       400:
- *         description: Dados inválidos
+ *         description: Dados invÃ¡lidos
  *       404:
- *         description: Responsável(is) não encontrado(s)
+ *         description: ResponsÃ¡vel(is) nÃ£o encontrado(s)
  */
 export const criarAluno = async (req, res, next) => {
   const transaction = await sequelize.transaction();
@@ -235,38 +178,38 @@ export const criarAluno = async (req, res, next) => {
   try {
     const { nome, idade, endereco, contato, responsaveisIds } = req.body;
 
-    // Validação básica do array de responsáveis
+    // ValidaÃ§Ã£o bÃ¡sica do array de responsÃ¡veis
     if (!responsaveisIds || !Array.isArray(responsaveisIds) || responsaveisIds.length === 0) {
       await transaction.rollback();
       return res.status(400).json({
         sucesso: false,
-        mensagem: 'É necessário fornecer pelo menos um ID de responsável.',
+        mensagem: 'Ã‰ necessÃ¡rio fornecer pelo menos um ID de responsÃ¡vel.',
       });
     }
 
-    // Verifica se todos os responsáveis existem
+    // Verifica se todos os responsÃ¡veis existem
     const responsaveisExistentes = await Usuario.findAll({
       where: {
         id: responsaveisIds,
-        // Opcional: garantir que o usuário tem a role 'responsavel'
+        // Opcional: garantir que o usuÃ¡rio tem a role 'responsavel'
         // role: 'responsavel' 
       },
       transaction,
     });
 
-    // Se o número de responsáveis encontrados não bate com o número de IDs fornecidos, algum ID é inválido
+    // Se o nÃºmero de responsÃ¡veis encontrados nÃ£o bate com o nÃºmero de IDs fornecidos, algum ID Ã© invÃ¡lido
     if (responsaveisExistentes.length !== responsaveisIds.length) {
       await transaction.rollback();
       const foundIds = responsaveisExistentes.map(r => r.id);
       const missingIds = responsaveisIds.filter(id => !foundIds.includes(id));
       return res.status(404).json({
         sucesso: false,
-        mensagem: 'Um ou mais responsáveis não foram encontrados.',
-        detalhes: `IDs de responsáveis não encontrados: ${missingIds.join(', ')}`
+        mensagem: 'Um ou mais responsÃ¡veis nÃ£o foram encontrados.',
+        detalhes: `IDs de responsÃ¡veis nÃ£o encontrados: ${missingIds.join(', ')}`
       });
     }
 
-    // Cria o aluno dentro da transação
+    // Cria o aluno dentro da transaÃ§Ã£o
     const novoAluno = await Aluno.create({
       nome,
       idade,
@@ -274,28 +217,28 @@ export const criarAluno = async (req, res, next) => {
       contato,
     }, { transaction });
 
-    // Cria as associações na tabela de junção
+    // Cria as associaÃ§Ãµes na tabela de junÃ§Ã£o
     if (responsaveisExistentes && responsaveisExistentes.length > 0) {
-      // Usando o método addResponsaveis que é criado automaticamente pelo Sequelize
-      // para a associação belongsToMany
+      // Usando o mÃ©todo addResponsaveis que Ã© criado automaticamente pelo Sequelize
+      // para a associaÃ§Ã£o belongsToMany
       await novoAluno.addResponsaveis(responsaveisExistentes, { transaction });
       
-      // Log para depuração
-      console.log(`Associações criadas para o aluno ID ${novoAluno.id} com os responsáveis:`, 
+      // Log para depuraÃ§Ã£o
+      console.log(`AssociaÃ§Ãµes criadas para o aluno ID ${novoAluno.id} com os responsÃ¡veis:`, 
         responsaveisExistentes.map(r => r.id).join(', '));
     }
 
-    // Finaliza a transação com sucesso
+    // Finaliza a transaÃ§Ã£o com sucesso
     await transaction.commit();
 
-    // Recarrega o aluno com os dados dos responsáveis associados para a resposta final
+    // Recarrega o aluno com os dados dos responsÃ¡veis associados para a resposta final
     const alunoComResponsaveis = await Aluno.findByPk(novoAluno.id, {
       include: [
         {
           model: Usuario,
           as: 'responsaveis',
           attributes: ['id', 'nome', 'email', 'telefone'],
-          through: { attributes: [] } // Oculta os campos da tabela de junção
+          through: { attributes: [] } // Oculta os campos da tabela de junÃ§Ã£o
         }
       ]
     });
@@ -307,7 +250,7 @@ export const criarAluno = async (req, res, next) => {
     });
 
   } catch (error) {
-    // Se qualquer coisa der errado, desfaz todas as operações
+    // Se qualquer coisa der errado, desfaz todas as operaÃ§Ãµes
     await transaction.rollback();
     console.error('Erro detalhado ao criar aluno:', error);
 
@@ -318,12 +261,12 @@ export const criarAluno = async (req, res, next) => {
       }));
       return res.status(400).json({ 
         sucesso: false,
-        mensagem: 'Erro de validação',
+        mensagem: 'Erro de validaÃ§Ã£o',
         erros 
       });
     }
 
-    // Envia um erro genérico para o cliente
+    // Envia um erro genÃ©rico para o cliente
     next(error);
   }
 };
@@ -356,7 +299,7 @@ export const criarAluno = async (req, res, next) => {
  *                 example: 11
  *               endereco:
  *                 type: string
- *                 example: "Rua das Flores, 123 - Centro, São Paulo"
+ *                 example: "Rua das Flores, 123 - Centro, SÃ£o Paulo"
  *               contato:
  *                 type: string
  *                 example: "(11) 98765-1234"
@@ -364,7 +307,7 @@ export const criarAluno = async (req, res, next) => {
  *                 type: array
  *                 items:
  *                   type: integer
- *                 description: IDs dos responsáveis pelo aluno para atualizar.
+ *                 description: IDs dos responsÃ¡veis pelo aluno para atualizar.
  *                 example: [2, 3]
  *     responses:
  *       200:
@@ -374,9 +317,9 @@ export const criarAluno = async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/Aluno'
  *       400:
- *         description: Dados inválidos
+ *         description: Dados invÃ¡lidos
  *       404:
- *         description: Aluno ou responsável(is) não encontrado(s)
+ *         description: Aluno ou responsÃ¡vel(is) nÃ£o encontrado(s)
  */
 export const atualizarAluno = async (req, res, next) => {
   const transaction = await sequelize.transaction();
@@ -387,8 +330,8 @@ export const atualizarAluno = async (req, res, next) => {
     if (isNaN(alunoId)) {
       await transaction.rollback();
       return res.status(400).json({
-        mensagem: 'ID do aluno inválido',
-        detalhes: 'O ID deve ser um número inteiro válido'
+        mensagem: 'ID do aluno invÃ¡lido',
+        detalhes: 'O ID deve ser um nÃºmero inteiro vÃ¡lido'
       });
     }
 
@@ -396,10 +339,10 @@ export const atualizarAluno = async (req, res, next) => {
 
     if (!aluno) {
       await transaction.rollback();
-      return res.status(404).json({ mensagem: 'Aluno não encontrado' });
+      return res.status(404).json({ mensagem: 'Aluno nÃ£o encontrado' });
     }
 
-    // Atualiza os campos básicos do aluno
+    // Atualiza os campos bÃ¡sicos do aluno
     const camposParaAtualizar = {};
     if (nome !== undefined) camposParaAtualizar.nome = nome;
     if (idade !== undefined) camposParaAtualizar.idade = idade;
@@ -408,13 +351,13 @@ export const atualizarAluno = async (req, res, next) => {
 
     await aluno.update(camposParaAtualizar, { transaction });
 
-    // Se houver IDs de responsáveis para atualizar
+    // Se houver IDs de responsÃ¡veis para atualizar
     if (responsaveisIds !== undefined) {
       if (!Array.isArray(responsaveisIds)) {
         await transaction.rollback();
         return res.status(400).json({
           sucesso: false,
-          mensagem: 'A lista de responsáveis deve ser um array de IDs.',
+          mensagem: 'A lista de responsÃ¡veis deve ser um array de IDs.',
         });
       }
 
@@ -432,21 +375,21 @@ export const atualizarAluno = async (req, res, next) => {
           const missingIds = responsaveisIds.filter(id => !foundIds.includes(id));
           return res.status(404).json({
             sucesso: false,
-            mensagem: 'Um ou mais responsáveis para atualização não encontrados',
-            detalhes: `IDs de responsáveis não encontrados: ${missingIds.join(', ')}`
+            mensagem: 'Um ou mais responsÃ¡veis para atualizaÃ§Ã£o nÃ£o encontrados',
+            detalhes: `IDs de responsÃ¡veis nÃ£o encontrados: ${missingIds.join(', ')}`
           });
         }
-        // Usa setResponsaveis para substituir todas as associações existentes
+        // Usa setResponsaveis para substituir todas as associaÃ§Ãµes existentes
         await aluno.setResponsaveis(responsaveisExistentes, { transaction });
       } else {
-        // Se o array estiver vazio, remove todos os responsáveis
+        // Se o array estiver vazio, remove todos os responsÃ¡veis
         await aluno.setResponsaveis([], { transaction });
       }
     }
 
     await transaction.commit();
 
-    // Recarrega o aluno com os dados atualizados e os responsáveis
+    // Recarrega o aluno com os dados atualizados e os responsÃ¡veis
     const alunoAtualizado = await Aluno.findByPk(aluno.id, {
       include: [
         {
@@ -491,7 +434,7 @@ export const atualizarAluno = async (req, res, next) => {
  *       204:
  *         description: Aluno removido com sucesso
  *       404:
- *         description: Aluno não encontrado
+ *         description: Aluno nÃ£o encontrado
  */
 export const excluirAluno = async (req, res, next) => {
   const transaction = await sequelize.transaction();
@@ -503,7 +446,7 @@ export const excluirAluno = async (req, res, next) => {
       await transaction.rollback();
       return res.status(400).json({
         sucesso: false,
-        mensagem: 'ID do aluno inválido'
+        mensagem: 'ID do aluno invÃ¡lido'
       });
     }
 
@@ -513,14 +456,14 @@ export const excluirAluno = async (req, res, next) => {
       await transaction.rollback();
       return res.status(404).json({
         sucesso: false,
-        mensagem: 'Aluno não encontrado'
+        mensagem: 'Aluno nÃ£o encontrado'
       });
     }
 
     // removo o vinculo com documentos 
     await Documento.destroy({ where: { alunoId }, transaction });
 
-    //removo as presenças associadas a ele
+    //removo as presenÃ§as associadas a ele
     if (sequelize.models.Presenca) {
       await sequelize.models.Presenca.destroy({ where: { idAluno: alunoId }, transaction });
     } else {
@@ -533,7 +476,7 @@ export const excluirAluno = async (req, res, next) => {
     // agora removo o aluno
     await aluno.destroy({ transaction });
     
-     // Se chegou até aqui, tudo deu certo
+     // Se chegou atÃ© aqui, tudo deu certo
     await transaction.commit();
     
     // 204 sem mensagem nenhuma msm
@@ -545,8 +488,8 @@ export const excluirAluno = async (req, res, next) => {
     if (error.name === 'SequelizeForeignKeyConstraintError') {
       return res.status(400).json({
         sucesso: false,
-        mensagem: 'Não foi possível excluir o aluno.',
-        detalhes: 'Este aluno ainda possui registros dependentes (como presenças) que não puderam ser removidos.',
+        mensagem: 'NÃ£o foi possÃ­vel excluir o aluno.',
+        detalhes: 'Este aluno ainda possui registros dependentes (como presenÃ§as) que nÃ£o puderam ser removidos.',
         erro: error.message
       });
     }
@@ -554,6 +497,8 @@ export const excluirAluno = async (req, res, next) => {
     next(error);
   }
 };
+
+
 
 
 
