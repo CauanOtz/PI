@@ -1,8 +1,8 @@
 // src/controllers/responsavel-aluno.controller.js
-import ResponsavelAluno from '../models/ResponsavelAluno.model.js';
-import Usuario from '../models/Usuario.model.js';
-import Aluno from '../models/Aluno.model.js';
 import { ok, created } from '../utils/response.js';
+import ResponsavelAlunoService from '../services/responsavel-aluno.service.js';
+
+const responsavelAlunoService = new ResponsavelAlunoService();
 
 /**
  * @openapi
@@ -45,45 +45,17 @@ import { ok, created } from '../utils/response.js';
 export const vincularResponsavel = async (req, res, next) => {
   try {
     const { idUsuario, idAluno } = req.body;
+    const result = await responsavelAlunoService.vincular(idUsuario, idAluno);
 
-    // Verifica se o usuário existe e é um responsável
-    const usuario = await Usuario.findOne({
-      where: { 
-        id: idUsuario,
-        role: 'responsavel' 
-      }
-    });
-
-    if (!usuario) {
-      return res.status(404).json({ 
-        mensagem: 'Responsável não encontrado ou não tem permissão' 
-      });
+    if (result.notFound) {
+      return res.status(404).json({ mensagem: result.message });
     }
 
-    // Verifica se o aluno existe
-    const aluno = await Aluno.findByPk(idAluno);
-    if (!aluno) {
-      return res.status(404).json({ mensagem: 'Aluno não encontrado' });
+    if (result.conflict) {
+      return res.status(409).json({ mensagem: result.message });
     }
 
-    // Verifica se o vínculo já existe
-    const vinculoExistente = await ResponsavelAluno.findOne({
-      where: { id_usuario: idUsuario, id_aluno: idAluno }
-    });
-
-    if (vinculoExistente) {
-      return res.status(409).json({ 
-        mensagem: 'Este responsável já está vinculado a este aluno' 
-      });
-    }
-
-    // Cria o vínculo
-    await ResponsavelAluno.create({
-      id_usuario: idUsuario,
-      id_aluno: idAluno
-    });
-
-    return created(res, { mensagem: 'Respons�vel vinculado com sucesso' });
+    return created(res, { mensagem: 'Responsável vinculado com sucesso' });
 
   } catch (error) {
     next(error);
@@ -126,25 +98,13 @@ export const vincularResponsavel = async (req, res, next) => {
 export const desvincularResponsavel = async (req, res, next) => {
   try {
     const { idUsuario, idAluno } = req.params;
+    const result = await responsavelAlunoService.desvincular(idUsuario, idAluno);
 
-    // Verifica se o vínculo existe
-    const vinculo = await ResponsavelAluno.findOne({
-      where: { 
-        id_usuario: idUsuario,
-        id_aluno: idAluno
-      }
-    });
-
-    if (!vinculo) {
-      return res.status(404).json({ 
-        mensagem: 'Vínculo não encontrado' 
-      });
+    if (result.notFound) {
+      return res.status(404).json({ mensagem: result.message });
     }
 
-    // Remove o vínculo
-    await vinculo.destroy();
-
-    return ok(res, { mensagem: 'Respons�vel desvinculado com sucesso' });
+    return ok(res, { mensagem: 'Responsável desvinculado com sucesso' });
 
   } catch (error) {
     next(error);
