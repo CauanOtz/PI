@@ -103,38 +103,28 @@ export default class AlunoService {
   static async create({ nome, idade, endereco, contato, responsaveisIds }) {
     const transaction = await sequelize.transaction();
     try {
-      if (!responsaveisIds || !Array.isArray(responsaveisIds) || responsaveisIds.length === 0) {
-        const err = new Error('É necessário fornecer pelo menos um ID de responsável.');
-        err.status = 400;
-        throw err;
-      }
-
-      const responsaveisExistentes = await Usuario.findAll({
-        where: { id: responsaveisIds },
-        transaction,
-      });
-      if (responsaveisExistentes.length !== responsaveisIds.length) {
-        const foundIds = responsaveisExistentes.map(r => r.id);
-        const missingIds = responsaveisIds.filter(id => !foundIds.includes(id));
-        const err = new Error(`IDs de responsáveis não encontrados: ${missingIds.join(', ')}`);
-        err.status = 404;
-        throw err;
-      }
-
       const novoAluno = await Aluno.create({ nome, idade, endereco, contato }, { transaction });
-      if (responsaveisExistentes.length > 0) {
-        await novoAluno.addResponsaveis(responsaveisExistentes, { transaction });
+
+      if (responsaveisIds && Array.isArray(responsaveisIds) && responsaveisIds.length > 0) {
+        const responsaveis = await Usuario.findAll({
+          where: { id: responsaveisIds },
+          transaction,
+        });
+        // attach responsaveis
+        await novoAluno.addResponsaveis(responsaveis, { transaction });
       }
+
       await transaction.commit();
 
       const alunoComResponsaveis = await Aluno.findByPk(novoAluno.id, {
         include: [{
           model: Usuario,
           as: 'responsaveis',
-          attributes: ['id', 'nome', 'email', 'telefone'],
+          attributes: ['id', 'nome'],
           through: { attributes: [] },
         }],
       });
+
       return alunoComResponsaveis;
     } catch (e) {
       await transaction.rollback();
@@ -145,58 +135,31 @@ export default class AlunoService {
   static async update(id, { nome, idade, endereco, contato, responsaveisIds }) {
     const transaction = await sequelize.transaction();
     try {
-      const alunoId = parseInt(id);
-      if (isNaN(alunoId)) {
-        const err = new Error('ID do aluno inválido');
-        err.status = 400;
-        throw err;
-      }
-      const aluno = await Aluno.findByPk(alunoId, { transaction });
-      if (!aluno) {
-        const err = new Error('Aluno não encontrado');
-        err.status = 404;
-        throw err;
-      }
-
-      const camposParaAtualizar = {};
-      if (nome !== undefined) camposParaAtualizar.nome = nome;
-      if (idade !== undefined) camposParaAtualizar.idade = idade;
-      if (endereco !== undefined) camposParaAtualizar.endereco = endereco;
-      if (contato !== undefined) camposParaAtualizar.contato = contato;
-      await aluno.update(camposParaAtualizar, { transaction });
-
-      if (responsaveisIds !== undefined) {
-        if (!Array.isArray(responsaveisIds)) {
-          const err = new Error('A lista de responsáveis deve ser um array de IDs.');
-          err.status = 400;
-          throw err;
-        }
-        if (responsaveisIds.length > 0) {
-          const responsaveisExistentes = await Usuario.findAll({ where: { id: responsaveisIds }, transaction });
-          if (responsaveisExistentes.length !== responsaveisIds.length) {
-            const foundIds = responsaveisExistentes.map(r => r.id);
-            const missingIds = responsaveisIds.filter(v => !foundIds.includes(v));
-            const err = new Error(`IDs de responsáveis não encontrados: ${missingIds.join(', ')}`);
-            err.status = 404;
-            throw err;
-          }
-          await aluno.setResponsaveis(responsaveisExistentes, { transaction });
-        } else {
-          await aluno.setResponsaveis([], { transaction });
-        }
-      }
-
-      await transaction.commit();
-
-      const alunoAtualizado = await Aluno.findByPk(aluno.id, {
+      const aluno = await Aluno.findByPk(id, {
         include: [{
           model: Usuario,
           as: 'responsaveis',
-          attributes: ['id', 'nome', 'email', 'telefone'],
-          through: { attributes: [] },
-        }],
+          through: { attributes: [] }
+        }]
       });
-      return alunoAtualizado;
+
+      if (!aluno) {
+        await transaction.commit();
+        return null;
+      }
+
+      await aluno.update({ nome, idade, endereco, contato }, { transaction });
+
+      if (responsaveisIds && Array.isArray(responsaveisIds)) {
+        const responsaveis = await Usuario.findAll({
+          where: { id: responsaveisIds },
+          transaction
+        });
+        await aluno.setResponsaveis(responsaveis, { transaction });
+      }
+
+      await transaction.commit();
+      return aluno;
     } catch (e) {
       await transaction.rollback();
       throw e;
@@ -206,28 +169,35 @@ export default class AlunoService {
   static async remove(id) {
     const transaction = await sequelize.transaction();
     try {
-      const alunoId = parseInt(id);
-      if (isNaN(alunoId)) {
-        const err = new Error('ID do aluno inválido');
-        err.status = 400;
-        throw err;
-      }
-      const aluno = await Aluno.findByPk(alunoId, { transaction });
+      const aluno = await Aluno.findByPk(id);
       if (!aluno) {
-        const err = new Error('Aluno não encontrado');
-        err.status = 404;
-        throw err;
+        await transaction.commit();
+        return null;
       }
 
-      await Documento.destroy({ where: { alunoId }, transaction });
-      if (sequelize.models.Presenca) {
-        await sequelize.models.Presenca.destroy({ where: { idAluno: alunoId }, transaction });
-      } else {
-        await sequelize.query('DELETE FROM presencas WHERE id_aluno = ?', { replacements: [alunoId], transaction });
-      }
-      await ResponsavelAluno.destroy({ where: { id_aluno: alunoId }, transaction });
+      // Remove documentos relacionados
+      await Documento.destroy({
+        where: { aluno_id: id },
+        transaction
+      });
+
+      // Remove presencas relacionadas
+      await sequelize.models.Presenca.destroy({
+        where: { id_aluno: id },
+        transaction
+      });
+
+      // Remove relacionamentos com responsáveis
+      await ResponsavelAluno.destroy({
+        where: { id_aluno: id },
+        transaction
+      });
+
+      // Remove o aluno
       await aluno.destroy({ transaction });
       await transaction.commit();
+  // Return truthy value so controller knows deletion succeeded
+  return true;
     } catch (e) {
       await transaction.rollback();
       throw e;

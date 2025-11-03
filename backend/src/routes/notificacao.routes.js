@@ -84,28 +84,30 @@ router.post('/', autenticar, requireAdmin,
 /**
  * @openapi
  * /notificacoes:
- *   get:
- *     summary: Lista todas as notificações (apenas admin)
- *     tags: [Notificações]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           minimum: 1
- *           default: 1
- *         description: Número da página para paginação
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           minimum: 1
- *           maximum: 100
- *           default: 10
- *         description: Número de itens por página
- *       - in: query
+      200:
+        description: Lista de notificações
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/SuccessNotificacoes'
+                - type: object
+                  properties:
+                    total:
+                      type: integer
+                      example: 15
+                    totalPages:
+                      type: integer
+                      example: 2
+                    currentPage:
+                      type: integer
+                      example: 1
+                    hasNext:
+                      type: boolean
+                      example: true
+                    hasPrevious:
+                      type: boolean
+                      example: false
  *         name: tipo
  *         schema:
  *           type: string
