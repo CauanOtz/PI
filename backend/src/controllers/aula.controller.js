@@ -1,7 +1,7 @@
 // src/controllers/aula.controller.js
-import Aula from '../models/Aula.model.js';
 import { AulaDTO } from '../dto/index.js';
 import { ok, created } from '../utils/response.js';
+import AulaService from '../services/aula.service.js';
 
 /**
  * @openapi
@@ -12,7 +12,7 @@ import { ok, created } from '../utils/response.js';
 
 export const listarAulas = async (req, res, next) => {
   try {
-    const aulas = await Aula.findAll();
+    const aulas = await AulaService.listAll();
     const aulasDTO = aulas.map((a) => AulaDTO.from(a));
     return ok(res, { aulas: aulasDTO });
   } catch (error) {
@@ -63,13 +63,7 @@ export const criarAula = async (req, res, next) => {
     // Os dados já foram validados pelo middleware validateCreateAula
     const { titulo, data, horario, descricao } = req.body;
 
-    const novaAula = await Aula.create({
-      titulo,
-      data,
-      horario,
-      descricao,
-    });
-
+    const novaAula = await AulaService.create({ titulo, data, horario, descricao });
     return created(res, AulaDTO.from(novaAula));
   } catch (error) {
     // Se for um erro específico do Sequelize (ex: constraint unique violada, não aplicável aqui ainda)
@@ -132,26 +126,12 @@ export const atualizarAula = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { titulo, data, horario, descricao } = req.body;
-    
-    // Busca a aula pelo ID
-    const aula = await Aula.findByPk(id);
-    
-    // Se a aula não for encontrada, retorna 404
-    if (!aula) {
+
+    const aulaAtualizada = await AulaService.update(id, { titulo, data, horario, descricao });
+    if (!aulaAtualizada) {
       return res.status(404).json({ message: 'Aula não encontrada.' });
     }
-    
-    // Atualiza apenas os campos fornecidos no corpo da requisição
-    if (titulo !== undefined) aula.titulo = titulo;
-    if (data !== undefined) aula.data = data;
-    if (horario !== undefined) aula.horario = horario;
-    if (descricao !== undefined) aula.descricao = descricao;
-    
-    // Salva as alterações no banco de dados
-    await aula.save();
-    
-    // Retorna a aula atualizada
-    return ok(res, AulaDTO.from(aula));
+    return ok(res, AulaDTO.from(aulaAtualizada));
   } catch (error) {
     next(error);
   }
@@ -189,16 +169,7 @@ export const atualizarAula = async (req, res, next) => {
 export const getAulaPorId = async (req, res, next) => {
   try {
     const { id } = req.params;
-    
-    // Busca a aula pelo ID
-    const aula = await Aula.findByPk(id);
-    
-    // Se a aula não for encontrada, retorna 404
-    if (!aula) {
-      return res.status(404).json({ message: 'Aula não encontrada.' });
-    }
-    
-    // Retorna a aula encontrada
+    const aula = await AulaService.getById(id);
     return ok(res, AulaDTO.from(aula));
   } catch (error) {
     next(error);
@@ -229,19 +200,10 @@ export const getAulaPorId = async (req, res, next) => {
 export const excluirAula = async (req, res, next) => {
   try {
     const { id } = req.params;
-    
-    // Busca a aula pelo ID
-    const aula = await Aula.findByPk(id);
-    
-    // Se a aula não for encontrada, retorna 404
-    if (!aula) {
+    const result = await AulaService.remove(id);
+    if (result === null) {
       return res.status(404).json({ message: 'Aula não encontrada.' });
     }
-    
-    // Remove a aula do banco de dados
-    await aula.destroy();
-    
-    // Retorna status 204 (No Content) para indicar sucesso na remoção
     res.status(204).end();
   } catch (error) {
     next(error);
