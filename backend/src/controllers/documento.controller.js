@@ -1,11 +1,9 @@
 // src/controllers/documento.controller.js
-import Documento from '../models/Documento.model.js';
-import ResponsavelAluno from '../models/ResponsavelAluno.model.js';
-import fs from 'fs';
-import path from 'path';
-import Aluno from '../models/Aluno.model.js';
 import { DocumentoDTO } from '../dto/index.js';
 import { created, ok } from '../utils/response.js';
+import DocumentoService from '../services/documento.service.js';
+
+const documentoService = new DocumentoService();
 
 /**
  * @openapi
@@ -54,89 +52,28 @@ import { created, ok } from '../utils/response.js';
  */
 export const adicionarDocumento = async (req, res, next) => {
     try {
-        // Verifica se o arquivo foi enviado
-        if (!req.file) {
-            return res.status(400).json({
-                mensagem: 'Nenhum arquivo foi enviado'
-            });
-        }
-
         const { alunoId } = req.params;
-        const { descricao, tipo: tipoInput } = req.body;
-        const usuarioId = req.usuario.id;
-
-        // Aqui você deve verificar se o aluno existe
-        // const aluno = await Aluno.findByPk(alunoId);
-        // if (!aluno) {
-        //   // Remove o arquivo enviado
-        //   fs.unlinkSync(req.file.path);
-        //   return res.status(404).json({ mensagem: 'Aluno não encontrado' });
-        // }
-
-        // Determina o tipo (enum de negócio) a partir do corpo; se ausente, OUTRO
-        const TIPOS_PERMITIDOS = ['RG', 'CPF', 'CERTIDAO_NASCIMENTO', 'COMPROVANTE_ENDERECO', 'OUTRO'];
-        const tipo = TIPOS_PERMITIDOS.includes(String(tipoInput)) ? String(tipoInput) : 'OUTRO';
-
-        // Cria o documento no banco de dados
-        const documento = await Documento.create({
-            nome: req.file.originalname,
-            descricao: descricao || null,
-            caminhoArquivo: req.file.path,
+        const { descricao, tipo } = req.body;
+        const result = await documentoService.adicionar({
+            alunoId,
+            arquivo: req.file,
+            descricao,
             tipo,
-            tamanho: req.file.size,
-            alunoId: parseInt(alunoId, 10),
-            usuarioId: usuarioId
+            usuarioId: req.usuario.id
         });
 
-        const dto = DocumentoDTO.from(documento, { makeDownloadUrl: true, baseUrl: '/api/v2/alunos' });
+        if (result.error) {
+            return res.status(result.status).json({ mensagem: result.message });
+        }
+
+        const dto = DocumentoDTO.from(result.documento, { makeDownloadUrl: true, baseUrl: '/api/v2/alunos' });
         return created(res, dto);
     } catch (error) {
-        // Em caso de erro, remove o arquivo enviado
-        if (req.file && fs.existsSync(req.file.path)) {
-            fs.unlinkSync(req.file.path);
-        }
         next(error);
     }
 };
 
-// --- FUNÇÃO AUXILIAR PARA VERIFICAR PERMISSÃO ---
-const verificarPermissao = async (usuario, alunoId) => {
-    try {
-        // 1. Validação dos parâmetros
-        if (!usuario || !usuario.id) {
-            console.error('Usuário inválido ou sem ID');
-            return false;
-        }
 
-        const alunoIdNum = parseInt(alunoId, 10);
-        if (isNaN(alunoIdNum)) {
-            console.error('ID do aluno inválido:', alunoId);
-            return false;
-        }
-
-        // 2. Admins sempre têm permissão
-        if (usuario.role === 'admin') {
-            return true;
-        }
-        
-        // 3. Verifica se o usuário autenticado é um dos responsáveis do aluno
-        console.log(`Verificando permissão: usuário=${usuario.id}, aluno=${alunoIdNum}`);
-        
-        const vinculo = await ResponsavelAluno.findOne({
-            where: {
-                id_usuario: usuario.id,
-                id_aluno: alunoIdNum
-            },
-            logging: console.log // Adiciona log da consulta SQL
-        });
-
-        console.log('Resultado da verificação de permissão:', !!vinculo);
-        return !!vinculo;
-    } catch (error) {
-        console.error('Erro ao verificar permissão:', error);
-        return false;
-    }
-};
 
 /**
  * @openapi
@@ -173,31 +110,21 @@ export const listarDocumentos = async (req, res, next) => {
     try {
         const { alunoId } = req.params;
 
-        // Passo 1: Verificar se o aluno existe
-        const aluno = await Aluno.findByPk(alunoId);
-        if (!aluno) {
-            return res.status(404).json({ mensagem: 'Aluno não encontrado' });
-        }
-
-        // Passo 2: Verificar se o usuário tem permissão para acessar os documentos deste aluno
-        const temPermissao = await verificarPermissao(req.usuario, alunoId);
+        const temPermissao = await documentoService.verificarPermissao(req.usuario, alunoId);
         if (!temPermissao) {
             return res.status(403).json({
                 mensagem: 'Você não tem permissão para acessar estes documentos'
             });
         }
 
-        // Passo 3: Buscar os documentos do aluno
-        const documentos = await Documento.findAll({
-            where: { alunoId },
-            attributes: {
-                exclude: ['alunoId', 'usuarioId', 'caminhoArquivo']
-            },
-            order: [['dataUpload', 'DESC']]
-        });
+        const result = await documentoService.listar(alunoId);
+        if (result.error) {
+            return res.status(result.status).json({ mensagem: result.message });
+        }
 
-        // Passo 4: Retornar 200 OK com a lista de documentos (que pode ser vazia)
-        return ok(res, { documentos: documentos.map(d => DocumentoDTO.from(d, { makeDownloadUrl: true, baseUrl: '/api/v2/alunos' })) });
+        return ok(res, { 
+            documentos: result.documentos.map(d => DocumentoDTO.from(d, { makeDownloadUrl: true, baseUrl: '/api/v2/alunos' }))
+        });
     } catch (error) {
         next(error);
     }
@@ -242,39 +169,20 @@ export const listarDocumentos = async (req, res, next) => {
 export const obterDocumento = async (req, res, next) => {
     try {
         const { alunoId, documentoId } = req.params;
-        
 
-        // Verifica se o aluno existe
-        const aluno = await Aluno.findByPk(alunoId);
-        if (!aluno) {
-            return res.status(404).json({ mensagem: 'Aluno não encontrado' });
-        }
-
-        const temPermissao = await verificarPermissao(req.usuario, alunoId);
+        const temPermissao = await documentoService.verificarPermissao(req.usuario, alunoId);
         if (!temPermissao) {
             return res.status(403).json({
                 mensagem: 'Você não tem permissão para acessar este documento'
             });
         }
-        // --- FIM DA CORREÇÃO ---
 
-        const documento = await Documento.findOne({
-            where: {
-                id: documentoId,
-                alunoId
-            }
-        });
-
-        if (!documento) {
-            return res.status(404).json({ mensagem: 'Documento não encontrado' });
+        const result = await documentoService.obter(alunoId, documentoId);
+        if (result.error) {
+            return res.status(result.status).json({ mensagem: result.message });
         }
 
-        if (!fs.existsSync(documento.caminhoArquivo)) {
-            return res.status(404).json({ mensagem: 'Arquivo não encontrado no servidor' });
-        }
-
-        res.download(documento.caminhoArquivo, documento.nome);
-
+        res.download(result.documento.caminhoArquivo, result.documento.nome);
     } catch (error) {
         next(error);
     }
@@ -336,58 +244,26 @@ export const atualizarDocumento = async (req, res, next) => {
     try {
         const { alunoId, documentoId } = req.params;
         const { nome, descricao } = req.body;
-        const usuarioId = req.usuario.id;
 
-        // Verifica se o aluno existe
-        const aluno = await Aluno.findByPk(alunoId);
-        if (!aluno) {
-            return res.status(404).json({ mensagem: 'Aluno não encontrado' });
-        }
-
-        // Verifica se o usuário tem permissão (admin ou o próprio aluno)
-        const temPermissao = await verificarPermissao(req.usuario, alunoId);
+        const temPermissao = await documentoService.verificarPermissao(req.usuario, alunoId);
         if (!temPermissao) {
             return res.status(403).json({
                 mensagem: 'Você não tem permissão para acessar este documento'
             });
         }
 
-        // Busca o documento
-        const documento = await Documento.findOne({
-            where: {
-                id: documentoId,
-                alunoId
-            }
+        const result = await documentoService.atualizar({
+            alunoId,
+            documentoId,
+            nome,
+            descricao
         });
 
-        if (!documento) {
-            return res.status(404).json({ mensagem: 'Documento não encontrado' });
+        if (result.error) {
+            return res.status(result.status).json({ mensagem: result.message });
         }
 
-        // Atualiza os campos fornecidos
-        const camposAtualizados = {};
-        if (nome !== undefined) camposAtualizados.nome = nome;
-        if (descricao !== undefined) camposAtualizados.descricao = descricao;
-
-        // Se não houver campos para atualizar, retorna o documento sem alterações
-        if (Object.keys(camposAtualizados).length === 0) {
-            return res.status(200).json(documento);
-        }
-
-        // Atualiza o documento
-        const [updated] = await Documento.update(camposAtualizados, {
-            where: { id: documentoId },
-            returning: true,
-            plain: true
-        });
-
-        // Busca o documento atualizado
-        const documentoAtualizado = await Documento.findByPk(documentoId, {
-            attributes: { exclude: ['caminhoArquivo'] }
-        });
-
-        return ok(res, DocumentoDTO.from(documentoAtualizado, { makeDownloadUrl: true, baseUrl: '/api/v2/alunos' }));
-
+        return ok(res, DocumentoDTO.from(result.documento, { makeDownloadUrl: true, baseUrl: '/api/v2/alunos' }));
     } catch (error) {
         next(error);
     }
@@ -428,45 +304,20 @@ export const atualizarDocumento = async (req, res, next) => {
 export const excluirDocumento = async (req, res, next) => {
     try {
         const { alunoId, documentoId } = req.params;
-        const usuarioId = req.usuario.id;
 
-        // Verifica se o aluno existe
-        const aluno = await Aluno.findByPk(alunoId);
-        if (!aluno) {
-            return res.status(404).json({ mensagem: 'Aluno não encontrado' });
-        }
-
-        // Verifica se o usuário tem permissão (admin ou o próprio aluno)
-        const temPermissao = await verificarPermissao(req.usuario, alunoId);
+        const temPermissao = await documentoService.verificarPermissao(req.usuario, alunoId);
         if (!temPermissao) {
             return res.status(403).json({
                 mensagem: 'Você não tem permissão para acessar este documento'
             });
         }
 
-        // Busca o documento
-        const documento = await Documento.findOne({
-            where: {
-                id: documentoId,
-                alunoId
-            }
-        });
-
-        if (!documento) {
-            return res.status(404).json({ mensagem: 'Documento não encontrado' });
+        const result = await documentoService.excluir(alunoId, documentoId);
+        if (result.error) {
+            return res.status(result.status).json({ mensagem: result.message });
         }
 
-        // Remove o arquivo físico
-        if (fs.existsSync(documento.caminhoArquivo)) {
-            fs.unlinkSync(documento.caminhoArquivo);
-        }
-
-        // Remove o registro do banco de dados
-        await documento.destroy();
-
-        // Resposta sem conteúdo (204 No Content)
         res.status(204).end();
-
     } catch (error) {
         next(error);
     }
@@ -511,53 +362,26 @@ export const excluirDocumento = async (req, res, next) => {
  */
 export const downloadDocumento = async (req, res, next) => {
     try {
-        // Pega os parâmetros da URL. É bom convertê-los para inteiros para garantir.
-        const alunoId = parseInt(req.params.alunoId, 10);
-        const documentoId = parseInt(req.params.documentoId, 10);
+        const { alunoId, documentoId } = req.params;
 
-        // 1. Verifica a permissão PRIMEIRO. Se o usuário não tem acesso,
-        // não precisamos nem consultar o banco de dados para o documento.
-        const temPermissao = await verificarPermissao(req.usuario, alunoId);
+        const temPermissao = await documentoService.verificarPermissao(req.usuario, alunoId);
         if (!temPermissao) {
             return res.status(403).json({
                 mensagem: 'Você não tem permissão para acessar documentos deste aluno.'
             });
         }
 
-        // 2. Busca o documento, garantindo que ele pertence ao aluno correto.
-        // Isso impede que alguém tente baixar o documento de um aluno usando a URL de outro.
-        const documento = await Documento.findOne({
-            where: { 
-                id: documentoId,
-                alunoId: alunoId 
-            }
-        });
-
-        // Se o documento não existe OU não pertence a este aluno, retorna 404.
-        if (!documento) {
-            return res.status(404).json({ mensagem: 'Documento não encontrado para este aluno.' });
+        const result = await documentoService.obter(alunoId, documentoId);
+        if (result.error) {
+            return res.status(result.status).json({ mensagem: result.message });
         }
 
-        // 3. Verifica se o arquivo físico ainda existe no servidor.
-        if (!fs.existsSync(documento.caminhoArquivo)) {
-            // Este é um erro do lado do servidor (inconsistência de dados), então um log é útil.
-            console.error(`Erro: Arquivo não encontrado no caminho ${documento.caminhoArquivo} para o documento ID ${documento.id}`);
-            return res.status(404).json({ mensagem: 'Arquivo físico não encontrado no servidor.' });
-        }
-
-        // 4. Usa res.download() para lidar com o envio do arquivo.
-        // O Express cuida de definir os cabeçalhos Content-Type e Content-Disposition.
-        // O segundo argumento define o nome que o arquivo terá no navegador do usuário.
-        res.download(documento.caminhoArquivo, documento.nome, (err) => {
+        res.download(result.documento.caminhoArquivo, result.documento.nome, (err) => {
             if (err) {
-                // O Express já terá enviado uma resposta de erro, então só logamos o problema.
-                console.error(`Erro ao enviar o arquivo para download: ${documento.caminhoArquivo}`, err);
+                console.error(`Erro ao enviar o arquivo para download: ${result.documento.caminhoArquivo}`, err);
             }
         });
-
     } catch (error) {
-        // Se ocorrer qualquer outro erro (ex: falha na conexão com o banco),
-        // ele será capturado e enviado para o middleware de erro.
         next(error);
     }
 };
