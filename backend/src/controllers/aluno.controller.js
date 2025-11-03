@@ -23,7 +23,7 @@ import { ok } from '../utils/response.js';
  *           type: integer
  *           minimum: 1
  *           default: 1
- *         description: NÃºmero da pÃ¡gina para paginaÃ§Ã£o
+ *         description: Númeroda páginapara paginação
  *       - in: query
  *         name: limit
  *         schema:
@@ -31,7 +31,7 @@ import { ok } from '../utils/response.js';
  *           minimum: 1
  *           maximum: 100
  *           default: 10
- *         description: NÃºmero de itens por pÃ¡gina
+ *         description: Númerode itens por pÃ¡gina
  *       - in: query
  *         name: search
  *         schema:
@@ -41,7 +41,7 @@ import { ok } from '../utils/response.js';
  *         name: responsavelId
  *         schema:
  *           type: integer
- *         description: ID do responsÃ¡vel para filtrar alunos associados a ele.
+ *         description: ID do responsável para filtrar alunos associados a ele.
  *     responses:
  *       200:
  *         description: Lista de alunos
@@ -59,7 +59,7 @@ import { ok } from '../utils/response.js';
  *                   description: Total de alunos encontrados
  *                 page:
  *                   type: integer
- *                   description: PÃ¡gina atual
+ *                   description: páginaatual
  *                 totalPages:
  *                   type: integer
  *                   description: Total de pÃ¡ginas
@@ -106,7 +106,7 @@ export const listarAlunos = async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/Aluno'
  *       404:
- *         description: Aluno nÃ£o encontrado
+ *         description: Aluno Nãoencontrado
  */
 export const obterAlunoPorId = async (req, res, next) => {
   try {
@@ -163,7 +163,7 @@ export const obterAlunoPorId = async (req, res, next) => {
  *       400:
  *         description: Dados invÃ¡lidos
  *       404:
- *         description: ResponsÃ¡vel(is) nÃ£o encontrado(s)
+ *         description: responsável(is) Nãoencontrado(s)
  */
 export const criarAluno = async (req, res, next) => {
   try {
@@ -224,7 +224,7 @@ export const criarAluno = async (req, res, next) => {
  *       400:
  *         description: Dados invÃ¡lidos
  *       404:
- *         description: Aluno ou responsÃ¡vel(is) nÃ£o encontrado(s)
+ *         description: Aluno ou responsável(is) Nãoencontrado(s)
  */
 export const atualizarAluno = async (req, res, next) => {
   try {
@@ -261,7 +261,7 @@ export const atualizarAluno = async (req, res, next) => {
  *       204:
  *         description: Aluno removido com sucesso
  *       404:
- *         description: Aluno nÃ£o encontrado
+ *         description: Aluno Nãoencontrado
  */
 export const excluirAluno = async (req, res, next) => {
   try {

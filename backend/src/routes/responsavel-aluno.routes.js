@@ -13,7 +13,7 @@ import { autenticar } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-// Rota para vincular responsÃ¡vel a aluno
+// Rota para vincular responsável a aluno
 router.post(
   '/',
   autenticar,
@@ -21,7 +21,7 @@ router.post(
   vincularResponsavel
 );
 
-// Rota para desvincular responsÃ¡vel de aluno
+// Rota para desvincular responsável de aluno
 router.delete(
   '/usuario/:idUsuario/aluno/:idAluno',
   autenticar,
