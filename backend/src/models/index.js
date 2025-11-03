@@ -32,8 +32,9 @@ Object.values(models).forEach(model => {
 // Sync all models with the database
 const syncModels = async () => {
   try {
-    await sequelize.sync({ alter: true });
-    console.log('Modelos sincronizados com sucesso!');
+    // Avoid altering enums/types automatically at startup. Use migrations for schema changes.
+    await sequelize.sync({ alter: false });
+    console.log('Modelos sincronizados (sem alter) com sucesso!');
   } catch (error) {
     console.error('Erro ao sincronizar modelos:', error);
   }
