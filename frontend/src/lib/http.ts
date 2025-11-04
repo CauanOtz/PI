@@ -21,7 +21,8 @@ http.interceptors.response.use(
   (err) => {
     if (err.response?.status === 401) {
       tokenStorage.clear();
-      // opcional: redirecionar para login
+      userStorage.clear();
+      window.location.href = "/login";
     }
     return Promise.reject(err);
   }

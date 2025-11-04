@@ -105,17 +105,32 @@ export const NotificationsAdmin = (): JSX.Element => {
     try {
       const payload: any = { titulo, mensagem, tipo };
       if (dataExpiracao) payload.dataExpiracao = dataExpiracao;
-      const created = await http.post('/notificacoes', payload).then(r => r.data);
-      const id = created?.notificacao?.id ?? created?.id ?? created?.data?.id;
+      const response = await http.post('/notificacoes', payload);
+      console.log('Resposta completa da criação:', response);
+      const created = response.data;
+      console.log('Dados da resposta:', created);
+      
+      // Tentar todas as possíveis estruturas de resposta
+      const id = created?.dados?.id || 
+                created?.dados?.notificacao?.id || 
+                created?.id ||
+                created?.notificacao?.id;
+
+      console.log('ID encontrado:', id);
+
       if (!id) {
-        toast.success('Notificação criada, mas não foi possível obter o ID para envio');
+        console.error('Estrutura da resposta:', created);
+        toast.error('Não foi possível obter o ID da notificação criada');
         return;
       }
+
       if (selected.length > 0) {
-        // Delegamos a validação de CPF ao backend;aqui apenas formatamos.
+        // Para o envio, precisamos mandar apenas { usuarios: [cpfs] }
         const formattedCpfs = selected.map(s => formatCPF(s));
         try {
-          const sendRes = await notificacaoService.enviar(String(id), formattedCpfs);
+          const sendRes = await http.post(`/notificacoes/${id}/enviar`, {
+            usuarios: formattedCpfs
+          }).then(r => r.data);
           const successMessage = sendRes?.mensagem ?? created?.mensagem ?? 'Notificação enviada com sucesso';
           // Info extra: quantos novos vínculos vs existentes
           if (sendRes?.novasAssociacoes !== undefined) {
@@ -158,8 +173,14 @@ export const NotificationsAdmin = (): JSX.Element => {
     setListLoading(true);
     try {
       const limit = 100;
-      const list = await notificacaoService.list(1, limit);
-      setAllNotifications(Array.isArray(list) ? list : []);
+      const response = await notificacaoService.list(1, limit);
+      
+      // A resposta deve conter { notificacoes: [], paginacao: {} }
+      const notifications = response?.notificacoes || [];
+      
+      console.log('Notificações carregadas:', notifications);
+      
+      setAllNotifications(notifications);
       setShowAll(true);
     } catch (err: any) {
       console.error('Falha ao carregar notificações:', err);

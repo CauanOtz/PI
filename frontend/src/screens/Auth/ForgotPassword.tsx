@@ -32,7 +32,7 @@ export const ForgotPassword = () => {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
             <Avatar className="w-[65px] h-[65px]">
-              <AvatarImage src="/ellipse-6.png" alt="Logo da escola" />
+              <AvatarImage src="/logoAng.png" alt="Logo da escola" />
               <AvatarFallback>ES</AvatarFallback>
             </Avatar>
           </div>

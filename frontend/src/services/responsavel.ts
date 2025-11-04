@@ -1,13 +1,10 @@
 import { http } from "../lib/http";
+import { ResponseSuccess } from "./users";
+import { BackendAluno } from "./students";
 
 export async function getAlunosDoResponsavel(responsavelId: number) {
-  const res = await http.get(`/responsaveis/${responsavelId}/alunos`);
-  const payload = res.data;
-
-  if (Array.isArray(payload)) return payload;
-  if (payload?.dados?.alunos) return payload.dados.alunos;
-  if (payload?.alunos) return payload.alunos;
-  return payload;
+  const res = await http.get<ResponseSuccess<{ alunos: BackendAluno[] }>>(`/responsaveis/${responsavelId}/alunos`);
+  return res.data.dados.alunos;
 }
 
 export default { getAlunosDoResponsavel };
