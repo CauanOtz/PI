@@ -15,8 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
-import { CreateReportModal } from "../../components/modals/report/CreateReportModal";
-import { EditReportModal } from "../../components/modals/report/EditReportModal";
+import { CreateReportModal, EditReportModal, ViewReportModal } from "../../components/modals/report";
 import { DeleteConfirmationModal } from "../../components/modals/shared/DeleteConfirmationModal";
 import { toast } from "sonner";
 import { documentService } from "../../services/documentService";
@@ -45,6 +44,7 @@ export const Files = (): JSX.Element => {
   const [isCreateModalOpen, setIsCreateModalOpen] = React.useState(false);
   const [reportToEdit, setReportToEdit] = React.useState<Report | null>(null);
   const [reportToDelete, setReportToDelete] = React.useState<Report | null>(null);
+  const [reportToView, setReportToView] = React.useState<Report | null>(null);
   const [reports, setReports] = React.useState<Report[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [currentAlunoId, setCurrentAlunoId] = React.useState<string>(""); // usuario seleciona o aluno para gerenciar documentos
@@ -222,14 +222,14 @@ export const Files = (): JSX.Element => {
     <div className="bg-gray-50 flex flex-row justify-center w-full min-h-screen mt-16">
       <div className="bg-gray-50 overflow-hidden w-full max-w-[1440px] relative">
         <SidebarSection />
-        <div className="flex flex-col p-4 sm:p-6 lg:p-8 lg:ml-[283px]">
+  <div className="flex flex-col p-3 sm:p-4 md:p-6 lg:p-8 lg:ml-[283px]">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
             <div>
               <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Relatórios</h1>
               <p className="text-gray-600 mt-1">Gerencie seus documentos e relatórios</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="relative flex items-center" ref={studentContainerRef}>
+              <div className="relative flex items-center w-full sm:w-auto" ref={studentContainerRef}>
                 <Input
                   id="alunoIdInput"
                   placeholder="Pesquisar aluno..."
@@ -237,7 +237,7 @@ export const Files = (): JSX.Element => {
                   readOnly={!!selectedStudent}
                   onFocus={() => !selectedStudent && setIsStudentSuggestionsOpen(true)}
                   onChange={(e) => setStudentSearchQuery(e.target.value)}
-                  className="w-52 pr-8" 
+                  className="w-full sm:w-52 pr-8"
                   autoComplete="off"
                 />
                 {selectedStudent && (
@@ -279,7 +279,7 @@ export const Files = (): JSX.Element => {
                 )}
               </div>
               <Button
-                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto text-sm flex items-center justify-center"
                 onClick={() => setIsCreateModalOpen(true)}
               >
                 <PlusIcon className="w-4 h-4 mr-2" />
@@ -288,20 +288,20 @@ export const Files = (): JSX.Element => {
             </div>
           </div>
 
-          <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
-            <div className="flex flex-col sm:flex-row gap-4">
+          <div className="bg-white p-3 sm:p-4 rounded-lg shadow-sm mb-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
               <div className="relative flex-1">
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <Input
                   type="text"
                   placeholder="Buscar relatórios..."
-                  className="pl-10 w-full"
+                  className="pl-10 w-full text-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <select
-                className="border rounded-md px-4 py-2 bg-white w-full sm:w-auto"
+                className="border rounded-md px-3 py-2 bg-white w-full sm:w-auto text-sm"
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
@@ -319,7 +319,7 @@ export const Files = (): JSX.Element => {
               </div>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
               {!selectedStudent ? (
                 <div className="col-span-full text-center py-16 text-gray-500 bg-gray-50 rounded-lg">
                   <div className="max-w-md mx-auto flex flex-col items-center">
@@ -336,22 +336,23 @@ export const Files = (): JSX.Element => {
                 filteredReports.map((report) => (
                   <div
                     key={report.id}
-                    className="bg-white p-4 rounded-xl border border-gray-200 hover:border-blue-500 hover:shadow-sm transition-all flex flex-col justify-between"
+                    className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200 hover:border-blue-500 hover:shadow-sm transition-all flex flex-col justify-between cursor-pointer"
+                    onClick={() => setReportToView(report)}
                   >
                     <div>
                       <div className="flex items-start justify-between">
                         <div className="flex items-center gap-3">
-                          <div className="p-2 bg-blue-50 rounded-lg">
-                            <FileTextIcon className="w-5 h-5 text-blue-600" />
+                          <div className="p-2 bg-blue-50 rounded-md">
+                            <FileTextIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
                           </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-800 leading-tight truncate">{report.name}</h3>
+                          <div className="min-w-0">
+                            <h3 className="font-semibold text-gray-800 leading-tight truncate max-w-[12rem] sm:max-w-[18rem]">{report.name}</h3>
                             <p className="text-xs text-gray-500">{report.category}</p>
                           </div>
                         </div>
                         <DropdownMenu.Root>
                           <DropdownMenu.Trigger asChild>
-                            <button className="text-gray-400 hover:text-gray-600 p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button onClick={(e) => e.stopPropagation()} className="text-gray-400 hover:text-gray-600 p-1 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                               <MoreVerticalIcon className="w-5 h-5" />
                             </button>
                           </DropdownMenu.Trigger>
@@ -362,7 +363,7 @@ export const Files = (): JSX.Element => {
                             >
                               <DropdownMenu.Item 
                                 className="flex items-center px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 cursor-pointer focus:bg-gray-50 focus:outline-none"
-                                onClick={() => handleEdit(report)}
+                                onClick={(e) => { e.stopPropagation(); handleEdit(report); }}
                               >
                                 <Pencil className="w-4 h-4 mr-2" />
                                 Editar
@@ -370,7 +371,7 @@ export const Files = (): JSX.Element => {
                               <DropdownMenu.Separator className="h-px bg-gray-100 my-1" />
                               <DropdownMenu.Item 
                                 className="flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 cursor-pointer focus:bg-red-50 focus:outline-none"
-                                onClick={() => handleDelete(report)}
+                                onClick={(e) => { e.stopPropagation(); handleDelete(report); }}
                               >
                                 <Trash2 className="w-4 h-4 mr-2" />
                                 Excluir
@@ -379,21 +380,21 @@ export const Files = (): JSX.Element => {
                           </DropdownMenu.Portal>
                         </DropdownMenu.Root>
                       </div>
-                      <div className="mt-3 flex items-center space-x-2 text-xs text-gray-500">
+                      <div className="mt-2 sm:mt-3 flex items-center space-x-2 text-xs text-gray-500">
                         <span>{report.type}</span>
                         <span>•</span>
                         <span>{report.size}</span>
                       </div>
                     </div>
-                    <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-gray-100">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-3 pt-3 border-t border-gray-100">
                       <span className="text-xs text-gray-500">
                         {report.date ? new Date(report.date).toLocaleDateString() : ""}
                       </span>
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 px-2"
-                        onClick={() => handleDownload(report)}
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 h-8 px-2 w-full sm:w-auto mt-2 sm:mt-0"
+                        onClick={(e) => { e.stopPropagation(); handleDownload(report); }}
                       >
                         <DownloadIcon className="w-4 h-4 mr-1.5" />
                         Download
@@ -417,6 +418,14 @@ export const Files = (): JSX.Element => {
         onClose={() => setReportToEdit(null)}
         onSubmit={handleEditSubmit}
         report={reportToEdit as any}
+      />
+      <ViewReportModal
+        isOpen={!!reportToView}
+        onClose={() => setReportToView(null)}
+        report={reportToView}
+        onDownload={async (r) => {
+          await handleDownload(r);
+        }}
       />
       <DeleteConfirmationModal
         isOpen={!!reportToDelete}

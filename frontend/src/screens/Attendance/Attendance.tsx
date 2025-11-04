@@ -59,14 +59,15 @@ export const Attendance = (): JSX.Element => {
 
   const loadAulas = async () => {
     try {
-      const res = await http.get("/aulas"); // ajuste URL se necessário
-      const data = res.data;
-      setAulas(Array.isArray(data) ? data : (data && data.aulas) ? data.aulas : []);
-      if (Array.isArray(data) && data.length > 0 && !selectedAulaId) {
-        setSelectedAulaId(data[0].id);
+      const res = await http.get<{ sucesso: boolean; dados: { aulas: Aula[] } }>("/aulas");
+      const aulas = res.data.dados.aulas;
+      setAulas(aulas);
+      if (aulas.length > 0 && !selectedAulaId) {
+        setSelectedAulaId(aulas[0].id);
       }
     } catch (err) {
       console.warn("Não foi possível carregar aulas:", err);
+      toast.error("Não foi possível carregar aulas");
     }
   };
 

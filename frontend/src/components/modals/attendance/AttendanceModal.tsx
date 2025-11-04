@@ -4,6 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { Button } from "../../ui/button";
 import { toast } from "sonner";
 import { presencaService } from "../../../services/presencaService";
+import { Aula } from "../../../services/class";
 
 interface Presenca {
   id: number;

@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SidebarSection } from '../../components/layout/SidebarSection';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { PlusIcon, SearchIcon, PencilIcon, TrashIcon } from 'lucide-react';
 import { DeleteConfirmationModal } from '../../components/modals/shared/DeleteConfirmationModal';
-import { listAulas, createAula, updateAula, deleteAula } from '../../services/class';
+import { listAulas, createAula, updateAula, deleteAula, Aula } from '../../services/class';
 import CreateAulaModal from '../../components/modals/aulas/CreateClassModal';
 import EditAulaModal from '../../components/modals/aulas/EditClassmodal';
 import { toast } from 'sonner';
 
 export const Class: React.FC = () => {
-  const [aulas, setAulas] = useState<any[]>([]);
+  const [aulas, setAulas] = useState<Aula[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);

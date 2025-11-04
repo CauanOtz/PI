@@ -105,17 +105,32 @@ export const NotificationsAdmin = (): JSX.Element => {
     try {
       const payload: any = { titulo, mensagem, tipo };
       if (dataExpiracao) payload.dataExpiracao = dataExpiracao;
-      const created = await http.post('/notificacoes', payload).then(r => r.data);
-      const id = created?.notificacao?.id ?? created?.id ?? created?.data?.id;
+      const response = await http.post('/notificacoes', payload);
+      console.log('Resposta completa da criação:', response);
+      const created = response.data;
+      console.log('Dados da resposta:', created);
+      
+      // Tentar todas as possíveis estruturas de resposta
+      const id = created?.dados?.id || 
+                created?.dados?.notificacao?.id || 
+                created?.id ||
+                created?.notificacao?.id;
+
+      console.log('ID encontrado:', id);
+
       if (!id) {
-        toast.success('Notificação criada, mas não foi possível obter o ID para envio');
+        console.error('Estrutura da resposta:', created);
+        toast.error('Não foi possível obter o ID da notificação criada');
         return;
       }
+
       if (selected.length > 0) {
-        // Delegamos a validação de CPF ao backend;aqui apenas formatamos.
+        // Para o envio, precisamos mandar apenas { usuarios: [cpfs] }
         const formattedCpfs = selected.map(s => formatCPF(s));
         try {
-          const sendRes = await notificacaoService.enviar(String(id), formattedCpfs);
+          const sendRes = await http.post(`/notificacoes/${id}/enviar`, {
+            usuarios: formattedCpfs
+          }).then(r => r.data);
           const successMessage = sendRes?.mensagem ?? created?.mensagem ?? 'Notificação enviada com sucesso';
           // Info extra: quantos novos vínculos vs existentes
           if (sendRes?.novasAssociacoes !== undefined) {
@@ -158,8 +173,14 @@ export const NotificationsAdmin = (): JSX.Element => {
     setListLoading(true);
     try {
       const limit = 100;
-      const list = await notificacaoService.list(1, limit);
-      setAllNotifications(Array.isArray(list) ? list : []);
+      const response = await notificacaoService.list(1, limit);
+      
+      // A resposta deve conter { notificacoes: [], paginacao: {} }
+      const notifications = response?.notificacoes || [];
+      
+      console.log('Notificações carregadas:', notifications);
+      
+      setAllNotifications(notifications);
       setShowAll(true);
     } catch (err: any) {
       console.error('Falha ao carregar notificações:', err);
@@ -242,7 +263,7 @@ export const NotificationsAdmin = (): JSX.Element => {
     <div className="bg-gray-50 flex flex-row justify-center w-full min-h-screen mt-16">
       <div className="bg-gray-50 overflow-hidden w-full max-w-[1440px] relative">
         <SidebarSection />
-        <main className="pl-[320px] p-8">
+        <main className="p-4 sm:p-6 lg:p-8 lg:ml-[283px]">
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <h1 className="text-2xl font-semibold">Enviar Notificação (Admin)</h1>
             <button
@@ -254,8 +275,8 @@ export const NotificationsAdmin = (): JSX.Element => {
             </button>
           </div>
           <div className="mb-10">
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <div className="xl:col-span-2 space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2 space-y-6">
                 <NotificationEditor
                   values={editorValues}
                   tipos={tipos}
@@ -346,23 +367,27 @@ export const NotificationsAdmin = (): JSX.Element => {
               ) : allNotifications.length === 0 ? (
                 <div className="text-sm text-gray-500">Nenhuma notificação encontrada.</div>
               ) : (
-                <NotificationsTable
-                  items={allNotifications}
-                  editingId={editingId}
-                  savingEdit={savingEdit}
-                  deletingId={deletingId}
-                  editFields={{ titulo: editTitulo, mensagem: editMensagem, tipo: editTipo, dataExp: editDataExp }}
-                  onChangeEdit={patch => {
-                    if (patch.titulo !== undefined) setEditTitulo(patch.titulo);
-                    if (patch.mensagem !== undefined) setEditMensagem(patch.mensagem);
-                    if (patch.tipo !== undefined) setEditTipo(patch.tipo as any);
-                    if (patch.dataExp !== undefined) setEditDataExp(patch.dataExp);
-                  }}
-                  onOpenEdit={openEdit as any}
-                  onCancelEdit={cancelEdit}
-                  onSaveEdit={saveEdit}
-                  onDelete={openDeleteModal as any}
-                />
+                <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-x-auto">
+                  <div className="min-w-[780px]">
+                    <NotificationsTable
+                      items={allNotifications}
+                      editingId={editingId}
+                      savingEdit={savingEdit}
+                      deletingId={deletingId}
+                      editFields={{ titulo: editTitulo, mensagem: editMensagem, tipo: editTipo, dataExp: editDataExp }}
+                      onChangeEdit={patch => {
+                        if (patch.titulo !== undefined) setEditTitulo(patch.titulo);
+                        if (patch.mensagem !== undefined) setEditMensagem(patch.mensagem);
+                        if (patch.tipo !== undefined) setEditTipo(patch.tipo as any);
+                        if (patch.dataExp !== undefined) setEditDataExp(patch.dataExp);
+                      }}
+                      onOpenEdit={openEdit as any}
+                      onCancelEdit={cancelEdit}
+                      onSaveEdit={saveEdit}
+                      onDelete={openDeleteModal as any}
+                    />
+                  </div>
+                </div>
               )}
             </section>
           )}

@@ -55,11 +55,11 @@ export const SidebarSection = (): JSX.Element | null => {
       label: "Usuários",
       path: "/users",
     },
-    {
-      icon: <CalendarIcon className="w-4 h-4 text-green-400" />,
-      label: "Calendário",
-      path: "/calendar",
-    },
+    // {
+    //   icon: <CalendarIcon className="w-4 h-4 text-green-400" />,
+    //   label: "Calendário",
+    //   path: "/calendar",
+    // },
     {
       icon: <FileTextIcon className="w-4 h-4 text-pink-400" />,
       label: "Relatório",
@@ -127,7 +127,7 @@ export const SidebarSection = (): JSX.Element | null => {
         <nav className="h-screen flex flex-col p-6">
           <div className="flex justify-center">
             <Avatar className="w-[65px] h-[65px]">
-              <AvatarImage src="/ellipse-6.png" alt="Logo da escola" />
+              <AvatarImage src="/logoAng.png" alt="Logo da escola" />
               <AvatarFallback>ES</AvatarFallback>
             </Avatar>
           </div>

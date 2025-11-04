@@ -45,7 +45,7 @@ export const Login = () => {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
             <Avatar className="w-[65px] h-[65px]">
-              <AvatarImage src="/ellipse-6.png" alt="Logo da escola" />
+              <AvatarImage src="/logoAng.png" alt="Logo da escola" />
               <AvatarFallback>ES</AvatarFallback>
             </Avatar>
           </div>
@@ -80,16 +80,6 @@ export const Login = () => {
             )}
           </div>
 
-          <div className="flex items-center justify-between mt-4">
-            <label className="flex items-center">
-              <input type="checkbox" className="rounded border-gray-300 text-blue-500 focus:ring-blue-500" />
-              <span className="ml-2 text-sm text-gray-600">Lembrar-me</span>
-            </label>
-            <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-800 font-semibold">
-              Esqueceu a senha?
-            </Link>
-          </div>
-
           <Button 
             type="submit" 
             disabled={isSubmitting}
@@ -100,14 +90,6 @@ export const Login = () => {
           </Button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Não tem uma conta?{" "}
-            <Link to="/register" className="text-blue-600 hover:text-blue-800 font-semibold">
-              Registre-se
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   );

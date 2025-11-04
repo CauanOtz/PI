@@ -1,3 +1,4 @@
+﻿import { requireAdmin } from '../middlewares/authorization.middleware.js';
 // src/routes/responsavel-aluno.routes.js
 import { Router } from 'express';
 import { 
@@ -29,3 +30,4 @@ router.delete(
 );
 
 export default router;
+

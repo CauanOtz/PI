@@ -4,10 +4,13 @@ import Presenca from '../models/Presenca.model.js';
 import Aluno from '../models/Aluno.model.js';
 import Aula from '../models/Aula.model.js';
 import { sequelize } from '../config/database.js';
+import { PresencaDTO } from '../dto/index.js';
+import { ok, created } from '../utils/response.js';
+import PresencaService from '../services/presenca.service.js';
 
 // Funções auxiliares para respostas padronizadas
 const sendError = (res, status, message) => {
-  return res.status(status).json({ message });
+  return res.status(status).json({ erros: [{ mensagem: message }] });
 };
 
 const sendSuccess = (res, status, data) => {
@@ -121,27 +124,27 @@ export const registrarPresenca = async (req, res, next) => {
 
     console.log("Normalized inputs:", { idAlunoRaw: idAluno, idAulaRaw: idAula, idAlunoNum, idAulaNum, dataFormatada, status, observacao, types: { typeofIdAluno: typeof idAluno, typeofIdAula: typeof idAula } });
 
-    const where = { idAluno: idAlunoNum, idAula: idAulaNum, data_registro: dataFormatada };
-    const existing = await Presenca.findAll({ where });
-    console.log("Presenca.findAll result count:", existing.length, existing.map(e => ({ id: e.id, idAluno: e.idAluno, idAula: e.idAula, data_registro: e.data_registro, createdAt: e.createdAt })));
-
-    // then do atomic create
-    const result = await sequelize.transaction(async (t) => {
-      const [presenca, created] = await Presenca.findOrCreate({
-        where,
-        defaults: { status, observacao },
-        transaction: t
-      });
-      return { presenca, created };
-    });
-
+    const result = await PresencaService.registrarPresenca({ idAluno: idAlunoNum, idAula: idAulaNum, status, observacao, data_registro: dataFormatada });
+    // Se o serviço indicou que aluno ou aula não existem, devolve 404 amigável
+    if (result && result.notFound) {
+      return handleNotFound(result.notFound, res);
+    }
     if (!result.created) {
       return sendError(res, 409, 'Já existe um registro de presença para este aluno nesta data');
     }
-    return sendSuccess(res, 201, result.presenca);
+    return created(res, PresencaDTO.from(result.presenca));
   } catch (createErr) {
     if (createErr && createErr.name === "SequelizeUniqueConstraintError") {
       return sendError(res, 409, "Já existe um registro de presença para este aluno nesta data");
+    }
+    // Tratar erro de FK (caso algo ainda tente inserir sem verificação)
+    if (createErr && createErr.name === 'SequelizeForeignKeyConstraintError') {
+      // tenta inferir qual entidade faltou a partir do constraint
+      const constraint = createErr.constraint || '';
+      if (/id_aluno/i.test(constraint)) return handleNotFound('Aluno', res);
+      if (/id_aula/i.test(constraint)) return handleNotFound('Aula', res);
+      // fallback genérico
+      return sendError(res, 404, 'Aluno ou Aula não encontrado(a)');
     }
     throw createErr;
   }
@@ -215,16 +218,8 @@ export const listarPresencas = async (req, res, next) => {
       if (dataFim) whereClause.data_registro[Op.lte] = dataFim;
     }
     
-    const presencas = await Presenca.findAll({
-      where: whereClause,
-      include: [
-        { model: Aluno, as: 'aluno', attributes: ['id', 'nome'] },
-        { model: Aula, as: 'aula', attributes: ['id', 'titulo'] }
-      ],
-      order: [['data_registro', 'DESC']]
-    });
-    
-    return sendSuccess(res, 200, presencas);
+    const presencas = await PresencaService.listAll({ idAluno, idAula, dataInicio, dataFim, status });
+    { const lista = PresencaDTO.list(presencas); return ok(res, { presencas: lista }); }
   } catch (error) {
     next(error);
   }
@@ -232,7 +227,7 @@ export const listarPresencas = async (req, res, next) => {
 
 /**
  * @openapi
- * /aulas/{idAula}/presencas:
+ * /presencas/aulas/{idAula}:
  *   get:
  *     summary: Lista as presenças de uma aula específica
  *     tags: [Presenças]
@@ -272,37 +267,10 @@ export const listarPresencasPorAula = async (req, res, next) => {
     const { idAula } = req.params;
     const { data } = req.query;
     
-    // Verifica se a aula existe
-    const aula = await Aula.findByPk(idAula);
-    if (!aula) return handleNotFound('Aula', res);
-    
-    const whereClause = { idAula };
-    
-    // Filtro por data se fornecido
-    if (data) {
-      whereClause.data_registro = formatDate(data);
-    }
-    
-    const presencas = await Presenca.findAll({
-      where: whereClause,
-      include: [
-        { 
-          model: Aluno, 
-          as: 'aluno', 
-          attributes: ['id', 'nome'] 
-        }
-      ],
-      order: [[ 'aluno', 'nome', 'ASC' ]]
-    });
-    
-    return sendSuccess(res, 200, {
-      aula: {
-        id: aula.id,
-        titulo: aula.titulo,
-        data: aula.data
-      },
-      presencas
-    });
+    const result = await PresencaService.listByAula(idAula, { data });
+    if (!result) return handleNotFound('Aula', res);
+    const { aula, presencas } = result;
+    { const lista = PresencaDTO.list(presencas); return ok(res, { aula: { id: aula.id, titulo: aula.titulo, data: aula.data }, presencas: lista }); }
   } catch (error) {
     next(error);
   }
@@ -310,7 +278,7 @@ export const listarPresencasPorAula = async (req, res, next) => {
 
 /**
  * @openapi
- * /alunos/{idAluno}/presencas:
+ * /presencas/alunos/{idAluno}:
  *   get:
  *     summary: Lista o histórico de presença de um aluno
  *     tags: [Presenças]
@@ -356,39 +324,10 @@ export const listarHistoricoAluno = async (req, res, next) => {
     const { idAluno } = req.params;
     const { dataInicio, dataFim } = req.query;
     
-    // Verifica se o aluno existe
-    const aluno = await Aluno.findByPk(idAluno);
-    if (!aluno) return handleNotFound('Aluno', res);
-    
-    const whereClause = { idAluno };
-    
-    // Filtro por data
-    if (dataInicio || dataFim) {
-      whereClause.data_registro = {};
-      if (dataInicio) whereClause.data_registro[Op.gte] = formatDate(dataInicio);
-      if (dataFim) whereClause.data_registro[Op.lte] = formatDate(dataFim);
-    }
-    
-    const presencas = await Presenca.findAll({
-      where: whereClause,
-      include: [
-        { 
-          model: Aula, 
-          as: 'aula', 
-          attributes: ['id', 'titulo', 'data'] 
-        }
-      ],
-      order: [['data_registro', 'DESC']]
-    });
-    
-    return sendSuccess(res, 200, {
-      aluno: {
-        id: aluno.id,
-        nome: aluno.nome,
-        matricula: aluno.id // Substituído por ID, já que matrícula não existe
-      },
-      historico: presencas
-    });
+    const result = await PresencaService.listByAluno(idAluno, { dataInicio: formatDate(dataInicio), dataFim: formatDate(dataFim) });
+    if (!result) return handleNotFound('Aluno', res);
+    const { aluno, presencas } = result;
+    { const hist = PresencaDTO.list(presencas); return ok(res, { aluno: { id: aluno.id, nome: aluno.nome, matricula: aluno.id }, historico: hist }); }
   } catch (error) {
     next(error);
   }
@@ -427,18 +366,9 @@ export const obterPresenca = async (req, res, next) => {
   try {
     const { id } = req.params;
     
-    const presenca = await Presenca.findByPk(id, {
-      include: [
-        { model: Aluno, as: 'aluno', attributes: ['id', 'nome'] },
-        { model: Aula, as: 'aula', attributes: ['id', 'titulo', 'data'] }
-      ]
-    });
-    
+    const presenca = await PresencaService.getById(id);
     if (!presenca) return handleNotFound('Registro de presença', res);
-    
-    return sendSuccess(res, 200, presenca);
-    
-    res.json(presenca);
+    return ok(res, PresencaDTO.from(presenca));
   } catch (error) {
     next(error);
   }
@@ -499,29 +429,10 @@ export const atualizarPresenca = async (req, res, next) => {
     const { id } = req.params;
     const { status, data_registro, observacao } = req.body;
     
-    // Verifica se o registro de presença existe
-    const presenca = await Presenca.findByPk(id, {
-      include: [
-        { model: Aluno, as: 'aluno', attributes: ['id', 'nome'] },
-        { model: Aula, as: 'aula', attributes: ['id', 'titulo', 'data'] }
-      ]
-    });
-    
-    if (!presenca) return handleNotFound('Registro de presença', res);
-    
-    // Atualiza os campos fornecidos
-    const camposAtualizados = {};
-    if (status) camposAtualizados.status = status;
-    if (data_registro) camposAtualizados.data_registro = formatDate(data_registro);
-    if (observacao !== undefined) camposAtualizados.observacao = observacao;
-    
-    // Atualiza apenas os campos que foram fornecidos
-    await presenca.update(camposAtualizados);
-    
-    // Recarrega o registro para garantir que temos os dados mais recentes
-    const presencaAtualizada = await presenca.reload();
-    
-    return sendSuccess(res, 200, presencaAtualizada);
+    const result = await PresencaService.update(id, { status, data_registro: data_registro ? formatDate(data_registro) : undefined, observacao });
+    if (result === null) return handleNotFound('Registro de presença', res);
+    if (result && result.conflict) return res.status(409).json({ mensagem: 'Já existe presença para este aluno nesta aula e data' });
+    return ok(res, PresencaDTO.from(result));
   } catch (error) {
     next(error);
   }
@@ -601,65 +512,25 @@ export const registrarPresencasBulk = async (req, res, next) => {
     const itemsRaw = Array.isArray(req.body) ? req.body : [];
     if (itemsRaw.length === 0) return sendError(res, 400, "Nenhum item fornecido");
 
-    // Normaliza e valida itens, cria chave composta para deduplicar
+    // Normaliza e valida itens, creates normalized array
     const allowedStatus = new Set(['presente', 'falta', 'atraso', 'falta_justificada']);
-    const dedupeMap = new Map(); // key => normalized item
-
+    const dedupeMap = new Map();
     for (const it of itemsRaw) {
       const idAluno = Number(it.idAluno);
       const idAula = Number(it.idAula);
       const data_registro = formatDate(it.data_registro);
       const status = String(it.status ?? '').trim();
-
-      if (!idAluno || !idAula) {
-        // Ignora entradas inválidas (ou poderia retornar 400)
-        console.warn('registrarPresencasBulk: item ignorado por id inválido', it);
-        continue;
-      }
-      if (!allowedStatus.has(status)) {
-        console.warn('registrarPresencasBulk: status inválido, usando "presente" por padrão', status, it);
-      }
-
-      const normalized = {
-        idAluno,
-        idAula,
-        status: allowedStatus.has(status) ? status : 'presente',
-        data_registro,
-        observacao: it.observacao ?? null
-      };
-
-      const key = `${idAluno}|${idAula}|${data_registro}`;
-      // mantêm o último item para a mesma chave (pode trocar para first se preferir)
-      dedupeMap.set(key, normalized);
+      if (!idAluno || !idAula) continue;
+      const normalized = { idAluno, idAula, status: allowedStatus.has(status) ? status : 'presente', data_registro, observacao: it.observacao ?? null };
+      dedupeMap.set(`${idAluno}|${idAula}|${data_registro}`, normalized);
     }
-
     const items = Array.from(dedupeMap.values());
     if (items.length === 0) return sendError(res, 400, "Nenhum item válido para inserir");
 
-    const results = [];
-    await sequelize.transaction(async (t) => {
-      // Use upsert para inserir ou atualizar conforme a constraint única composta
-      // Faz sequencialmente para evitar conflitos com múltiplas operações concorrentes
-      for (const it of items) {
-        // upsert usa a constraint única para decidir insert vs update
-        await Presenca.upsert({
-          idAluno: it.idAluno,
-          idAula: it.idAula,
-          status: it.status,
-          data_registro: it.data_registro,
-          observacao: it.observacao
-        }, { transaction: t });
-
-        // Recupera o registro atual para retornar no resultado
-        const pres = await Presenca.findOne({
-          where: { idAluno: it.idAluno, idAula: it.idAula, data_registro: it.data_registro },
-          transaction: t
-        });
-        results.push({ presenca: pres ? pres.get({ plain: true }) : null });
-      }
-    });
-
-    return sendSuccess(res, 200, { sucesso: true, resultados: results });
+    const results = await PresencaService.bulkRegister(items);
+    // map presenca instances to DTOs
+    const mapped = results.map((r) => ({ presenca: r.presenca ? PresencaDTO.from(r.presenca) : null }));
+    return ok(res, { resultados: mapped });
   } catch (err) {
     console.error('registrarPresencasBulk error:', err);
     if (err && err.name === 'SequelizeUniqueConstraintError') {
@@ -668,3 +539,9 @@ export const registrarPresencasBulk = async (req, res, next) => {
     next(err);
   }
 };
+
+
+
+
+
+

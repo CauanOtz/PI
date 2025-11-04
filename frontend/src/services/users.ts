@@ -1,5 +1,14 @@
 import { http } from "../lib/http";
 
+export interface Paginacao {
+  total: number;
+  paginaAtual: number;
+  totalPaginas: number;
+  itensPorPagina: number;
+  temProximaPagina: boolean;
+  temPaginaAnterior: boolean;
+}
+
 export interface BackendUsuario {
   id: number;
   nome: string;
@@ -9,6 +18,11 @@ export interface BackendUsuario {
   cpf?: string; 
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface ResponseSuccess<T> {
+  sucesso: true;
+  dados: T;
 }
 
 export interface CreateUserPayload {
@@ -33,25 +47,31 @@ export interface EditUserPayload {
 // PUT /usuarios/:cpf
 // DELETE /usuarios/:cpf
 export const usuariosService = {
-  list(params?: { page?: number; limit?: number; search?: string; role?: string }) {
-    return http
-      .get<{ usuarios?: BackendUsuario[]; total?: number; page?: number; totalPages?: number }>("/usuarios", { params })
-      .then(r => r.data);
+  async list(params?: { page?: number; limit?: number; search?: string; role?: string }) {
+    const res = await http.get<ResponseSuccess<{
+      usuarios: BackendUsuario[];
+      paginacao: Paginacao;
+    }>>("/usuarios", { params });
+    return res.data.dados;
   },
 
-  getByCPF(cpf: string) {
-    return http.get<{ usuario?: BackendUsuario }>(`/usuarios/${encodeURIComponent(cpf)}`).then(r => r.data);
+  async getByCPF(cpf: string) {
+    const res = await http.get<ResponseSuccess<BackendUsuario>>(`/usuarios/${encodeURIComponent(cpf)}`);
+    return res.data.dados;
   },
 
-  create(payload: { nome: string; email?: string; telefone?: string; cpf: string; senha: string; role?: string }) {
-    return http.post("/usuarios/registrar", payload).then(r => r.data);
+  async create(payload: { nome: string; email?: string; telefone?: string; cpf: string; senha: string; role?: string }) {
+    const res = await http.post<ResponseSuccess<BackendUsuario>>("/usuarios/registrar", payload);
+    return res.data.dados;
   },
 
-  updateByCPF(cpf: string, payload: Partial<BackendUsuario & { role?: string }>) {
-    return http.put(`/usuarios/${encodeURIComponent(cpf)}`, payload).then(r => r.data);
+  async updateByCPF(cpf: string, payload: Partial<BackendUsuario & { role?: string }>) {
+    const res = await http.put<ResponseSuccess<BackendUsuario>>(`/usuarios/${encodeURIComponent(cpf)}`, payload);
+    return res.data.dados;
   },
 
-  removeByCPF(cpf: string) {
-    return http.delete(`/usuarios/${encodeURIComponent(cpf)}`).then(r => r.data);
+  async removeByCPF(cpf: string) {
+    const res = await http.delete<ResponseSuccess<{ mensagem: string }>>(`/usuarios/${encodeURIComponent(cpf)}`);
+    return res.data.dados;
   }
 };

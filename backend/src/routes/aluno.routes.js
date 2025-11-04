@@ -52,7 +52,7 @@ const router = Router();
  *           type: string
  *         description: Termo de busca para filtrar alunos por nome
  *       - in: query
- *         name: responsavel_id
+ *         name: responsavelId
  *         schema:
  *           type: integer
  *         description: ID do responsável para filtrar alunos
@@ -178,8 +178,10 @@ router.post('/', autenticar, validateCreateAluno, alunoController.criarAluno);
  *               contato:
  *                 type: string
  *                 example: "(11) 98765-1234"
- *               responsavel_id:
- *                 type: integer
+ *               responsaveisIds:
+ *                 type: array
+ *                 items:
+ *                   type: integer
  *                 example: [7]
  *     responses:
  *       200:

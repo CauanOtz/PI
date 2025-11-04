@@ -4,13 +4,15 @@ import { PencilIcon, TrashIcon, CheckIcon, XIcon } from 'lucide-react';
 
 export interface NotificationRow {
   id: number;
-  titulo?: string;
-  title?: string;
-  mensagem?: string;
-  tipo?: string;
-  type?: string;
+  titulo: string;
+  mensagem: string;
+  tipo: string;
   dataExpiracao?: string | null;
-  createdAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  // Campos opcionais para compatibilidade
+  title?: string;
+  type?: string;
   criadoEm?: string;
   dataEnvio?: string;
   destinatarios?: any[];
@@ -59,13 +61,11 @@ export function NotificationsTable({
         </thead>
         <tbody>
           {items.map((notif) => {
-            const createdAt = notif.criadoEm || notif.createdAt || notif.dataEnvio;
-            const destinatarios =
-              notif.destinatarios?.length ??
-              notif.usuarios?.length ??
-              notif.UsuarioNotificacoes?.length ??
-              notif.usuarioNotificacoes?.length ??
-              0;
+            const createdAt = notif.createdAt || notif.criadoEm || notif.dataEnvio;
+            const destinatarios = Array.isArray(notif.UsuarioNotificacoes) ? notif.UsuarioNotificacoes.length : 
+              Array.isArray(notif.usuarioNotificacoes) ? notif.usuarioNotificacoes.length :
+              Array.isArray(notif.destinatarios) ? notif.destinatarios.length : 
+              Array.isArray(notif.usuarios) ? notif.usuarios.length : 0;
             const expirou = notif.dataExpiracao && new Date(notif.dataExpiracao).getTime() < Date.now();
             const isEditing = editingId === notif.id;
             return (

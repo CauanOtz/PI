@@ -1,11 +1,7 @@
-// src/controllers/aluno.controller.js
-import Aluno from '../models/Aluno.model.js';
-import { sequelize } from '../config/database.js';
-import Usuario from '../models/Usuario.model.js'; // Modelo de Usuário para os Responsáveis
-import { Op } from 'sequelize';
-import ResponsavelAluno from '../models/ResponsavelAluno.model.js'; // Modelo de associação para Many-to-Many
-import Documento from '../models/Documento.model.js'; // Modelo de documento para inclusão na exclusão
-import fs from 'fs'; // Importando o módulo fs para manipulação de arquivos
+﻿// src/controllers/aluno.controller.js
+import { AlunoDTO, PaginationDTO } from '../dto/index.js';
+import AlunoService from '../services/aluno.service.js';
+import { ok } from '../utils/response.js';
 
 /**
  * @openapi
@@ -27,7 +23,7 @@ import fs from 'fs'; // Importando o módulo fs para manipulação de arquivos
  *           type: integer
  *           minimum: 1
  *           default: 1
- *         description: Número da página para paginação
+ *         description: Númeroda páginapara paginação
  *       - in: query
  *         name: limit
  *         schema:
@@ -35,14 +31,14 @@ import fs from 'fs'; // Importando o módulo fs para manipulação de arquivos
  *           minimum: 1
  *           maximum: 100
  *           default: 10
- *         description: Número de itens por página
+ *         description: Númerode itens por pÃ¡gina
  *       - in: query
  *         name: search
  *         schema:
  *           type: string
  *         description: Termo de busca para filtrar alunos por nome
  *       - in: query
- *         name: responsaveisIds
+ *         name: responsavelId
  *         schema:
  *           type: integer
  *         description: ID do responsável para filtrar alunos associados a ele.
@@ -63,71 +59,28 @@ import fs from 'fs'; // Importando o módulo fs para manipulação de arquivos
  *                   description: Total de alunos encontrados
  *                 page:
  *                   type: integer
- *                   description: Página atual
+ *                   description: páginaatual
  *                 totalPages:
  *                   type: integer
- *                   description: Total de páginas
+ *                   description: Total de pÃ¡ginas
  */
 export const listarAlunos = async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 10));
-    const offset = (page - 1) * limit;
 
-    const whereClause = {};
-    const includeClause = [
-      {
-        model: Usuario,
-        as: 'responsaveis', // Usamos 'responsaveis' porque é a alias da associação Many-to-Many
-        attributes: ['id', 'nome', 'email', 'telefone'],
-        through: { attributes: [] } // Não queremos os campos da tabela de junção na resposta do aluno
-      }
-    ];
-
-    if (req.query.search && typeof req.query.search === 'string') {
-      const search = req.query.search.trim().toLowerCase();
-      //o SQLite não suporta o ILIKE -'_'-
-      whereClause[Op.and] = sequelize.where(
-        sequelize.fn('LOWER', sequelize.col('Aluno.nome')),
-        { [Op.like]: `%${search}%` }
-      );
-    }
-
-    // Filtrar alunos por ID de responsável (Many-to-Many)
-    if (req.query.responsavelId) {
-      const responsavelId = parseInt(req.query.responsavelId);
-      if (!isNaN(responsavelId)) {
-        // Ajustamos o include para filtrar pela associação
-        includeClause[0].where = { id: responsavelId };
-      }
-    }
-
-    const { count, rows: alunos } = await Aluno.findAndCountAll({
-      where: whereClause,
-      include: includeClause,
-      limit: limit,
-      offset: offset,
-      order: [['nome', 'ASC']]
+    const { count, rows: alunos, page: svcPage, limit: svcLimit } = await AlunoService.listAll({
+      page,
+      limit,
+      search: req.query.search,
+      responsavelId: req.query.responsavelId,
     });
 
-    const totalPages = Math.ceil(count / limit);
-
-    res.status(200).json({
-      sucesso: true,
-      dados: {
-        alunos: alunos,
-        paginacao: {
-          total: count,
-          paginaAtual: page,
-          totalPaginas: totalPages,
-          itensPorPagina: limit,
-          temProximaPagina: page < totalPages,
-          temPaginaAnterior: page > 1
-        }
-      }
-    });
+    const totalPages = Math.ceil(count / svcLimit);
+    const alunosDTO = AlunoDTO.list(alunos, { includeResponsaveis: true });
+    const paginacao = new PaginationDTO({ total: count, paginaAtual: svcPage, totalPaginas: totalPages, itensPorPagina: svcLimit });
+    return ok(res, { alunos: alunosDTO, paginacao });
   } catch (error) {
-    console.error('Erro ao listar alunos:', error);
     next(error);
   }
 };
@@ -136,7 +89,7 @@ export const listarAlunos = async (req, res, next) => {
  * @openapi
  * /alunos/{id}:
  *   get:
- *     summary: Obtém um aluno pelo ID
+ *     summary: ObtÃ©m um aluno pelo ID
  *     tags: [Alunos]
  *     parameters:
  *       - in: path
@@ -153,43 +106,14 @@ export const listarAlunos = async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/Aluno'
  *       404:
- *         description: Aluno não encontrado
+ *         description: Aluno Nãoencontrado
  */
 export const obterAlunoPorId = async (req, res, next) => {
   try {
-    const alunoId = parseInt(req.params.id);
-
-    if (isNaN(alunoId)) {
-      return res.status(400).json({
-        mensagem: 'ID do aluno inválido',
-        detalhes: 'O ID deve ser um número inteiro válido'
-      });
-    }
-
-    const aluno = await Aluno.findByPk(alunoId, {
-      include: [
-        {
-          model: Usuario,
-          as: 'responsaveis',
-          attributes: ['id', 'nome', 'email', 'telefone'],
-          through: { attributes: [] } // Não queremos os campos da tabela de junção na resposta do aluno
-        }
-      ]
-    });
-
-    if (!aluno) {
-      return res.status(404).json({
-        mensagem: 'Aluno não encontrado',
-        detalhes: `Nenhum aluno encontrado com o ID ${alunoId}`
-      });
-    }
-
-    res.status(200).json({
-      sucesso: true,
-      dados: aluno
-    });
+    const aluno = await AlunoService.getById(req.params.id);
+    const dto = AlunoDTO.from(aluno, { includeResponsaveis: true });
+    return ok(res, { aluno: dto });
   } catch (error) {
-    console.error('Erro ao buscar aluno por ID:', error);
     next(error);
   }
 };
@@ -227,7 +151,7 @@ export const obterAlunoPorId = async (req, res, next) => {
  *                 type: array
  *                 items:
  *                   type: integer
- *                 description: IDs dos responsáveis pelo aluno.
+ *                 description: IDs dos responsÃ¡veis pelo aluno.
  *                 example: [1, 2]
  *     responses:
  *       201:
@@ -237,105 +161,17 @@ export const obterAlunoPorId = async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/Aluno'
  *       400:
- *         description: Dados inválidos
+ *         description: Dados invÃ¡lidos
  *       404:
- *         description: Responsável(is) não encontrado(s)
+ *         description: responsável(is) Nãoencontrado(s)
  */
 export const criarAluno = async (req, res, next) => {
-  const transaction = await sequelize.transaction();
-
   try {
     const { nome, idade, endereco, contato, responsaveisIds } = req.body;
-
-    // Validação básica do array de responsáveis
-    if (!responsaveisIds || !Array.isArray(responsaveisIds) || responsaveisIds.length === 0) {
-      await transaction.rollback();
-      return res.status(400).json({
-        sucesso: false,
-        mensagem: 'É necessário fornecer pelo menos um ID de responsável.',
-      });
-    }
-
-    // Verifica se todos os responsáveis existem
-    const responsaveisExistentes = await Usuario.findAll({
-      where: {
-        id: responsaveisIds,
-        // Opcional: garantir que o usuário tem a role 'responsavel'
-        // role: 'responsavel' 
-      },
-      transaction,
-    });
-
-    // Se o número de responsáveis encontrados não bate com o número de IDs fornecidos, algum ID é inválido
-    if (responsaveisExistentes.length !== responsaveisIds.length) {
-      await transaction.rollback();
-      const foundIds = responsaveisExistentes.map(r => r.id);
-      const missingIds = responsaveisIds.filter(id => !foundIds.includes(id));
-      return res.status(404).json({
-        sucesso: false,
-        mensagem: 'Um ou mais responsáveis não foram encontrados.',
-        detalhes: `IDs de responsáveis não encontrados: ${missingIds.join(', ')}`
-      });
-    }
-
-    // Cria o aluno dentro da transação
-    const novoAluno = await Aluno.create({
-      nome,
-      idade,
-      endereco,
-      contato,
-    }, { transaction });
-
-    // Cria as associações na tabela de junção
-    if (responsaveisExistentes && responsaveisExistentes.length > 0) {
-      // Usando o método addResponsaveis que é criado automaticamente pelo Sequelize
-      // para a associação belongsToMany
-      await novoAluno.addResponsaveis(responsaveisExistentes, { transaction });
-      
-      // Log para depuração
-      console.log(`Associações criadas para o aluno ID ${novoAluno.id} com os responsáveis:`, 
-        responsaveisExistentes.map(r => r.id).join(', '));
-    }
-
-    // Finaliza a transação com sucesso
-    await transaction.commit();
-
-    // Recarrega o aluno com os dados dos responsáveis associados para a resposta final
-    const alunoComResponsaveis = await Aluno.findByPk(novoAluno.id, {
-      include: [
-        {
-          model: Usuario,
-          as: 'responsaveis',
-          attributes: ['id', 'nome', 'email', 'telefone'],
-          through: { attributes: [] } // Oculta os campos da tabela de junção
-        }
-      ]
-    });
-
-    res.status(201).json({
-      sucesso: true,
-      mensagem: 'Aluno criado e vinculado com sucesso!',
-      dados: alunoComResponsaveis
-    });
-
+    const novoAluno = await AlunoService.create({ nome, idade, endereco, contato, responsaveisIds });
+    res.status(201);
+    res.json({ sucesso: true, dados: novoAluno });
   } catch (error) {
-    // Se qualquer coisa der errado, desfaz todas as operações
-    await transaction.rollback();
-    console.error('Erro detalhado ao criar aluno:', error);
-
-    if (error.name === 'SequelizeValidationError') {
-      const erros = error.errors.map(err => ({
-        campo: err.path,
-        mensagem: err.message
-      }));
-      return res.status(400).json({ 
-        sucesso: false,
-        mensagem: 'Erro de validação',
-        erros 
-      });
-    }
-
-    // Envia um erro genérico para o cliente
     next(error);
   }
 };
@@ -368,7 +204,7 @@ export const criarAluno = async (req, res, next) => {
  *                 example: 11
  *               endereco:
  *                 type: string
- *                 example: "Rua das Flores, 123 - Centro, São Paulo"
+ *                 example: "Rua das Flores, 123 - Centro, SÃ£o Paulo"
  *               contato:
  *                 type: string
  *                 example: "(11) 98765-1234"
@@ -376,7 +212,7 @@ export const criarAluno = async (req, res, next) => {
  *                 type: array
  *                 items:
  *                   type: integer
- *                 description: IDs dos responsáveis pelo aluno para atualizar.
+ *                 description: IDs dos responsÃ¡veis pelo aluno para atualizar.
  *                 example: [2, 3]
  *     responses:
  *       200:
@@ -386,101 +222,24 @@ export const criarAluno = async (req, res, next) => {
  *             schema:
  *               $ref: '#/components/schemas/Aluno'
  *       400:
- *         description: Dados inválidos
+ *         description: Dados invÃ¡lidos
  *       404:
- *         description: Aluno ou responsável(is) não encontrado(s)
+ *         description: Aluno ou responsável(is) Nãoencontrado(s)
  */
 export const atualizarAluno = async (req, res, next) => {
-  const transaction = await sequelize.transaction();
   try {
-    const alunoId = parseInt(req.params.id);
+    const alunoId = req.params.id;
     const { nome, idade, endereco, contato, responsaveisIds } = req.body;
-
-    if (isNaN(alunoId)) {
-      await transaction.rollback();
-      return res.status(400).json({
-        mensagem: 'ID do aluno inválido',
-        detalhes: 'O ID deve ser um número inteiro válido'
-      });
+    const alunoAtualizado = await AlunoService.update(alunoId, { nome, idade, endereco, contato, responsaveisIds });
+    
+    if (!alunoAtualizado) {
+      res.status(404);
+      return res.json({ sucesso: false, mensagem: 'Aluno não encontrado' });
     }
 
-    const aluno = await Aluno.findByPk(alunoId, { transaction });
-
-    if (!aluno) {
-      await transaction.rollback();
-      return res.status(404).json({ mensagem: 'Aluno não encontrado' });
-    }
-
-    // Atualiza os campos básicos do aluno
-    const camposParaAtualizar = {};
-    if (nome !== undefined) camposParaAtualizar.nome = nome;
-    if (idade !== undefined) camposParaAtualizar.idade = idade;
-    if (endereco !== undefined) camposParaAtualizar.endereco = endereco;
-    if (contato !== undefined) camposParaAtualizar.contato = contato;
-
-    await aluno.update(camposParaAtualizar, { transaction });
-
-    // Se houver IDs de responsáveis para atualizar
-    if (responsaveisIds !== undefined) {
-      if (!Array.isArray(responsaveisIds)) {
-        await transaction.rollback();
-        return res.status(400).json({
-          sucesso: false,
-          mensagem: 'A lista de responsáveis deve ser um array de IDs.',
-        });
-      }
-
-      if (responsaveisIds.length > 0) {
-        const responsaveisExistentes = await Usuario.findAll({
-          where: {
-            id: responsaveisIds,
-          },
-          transaction,
-        });
-
-        if (responsaveisExistentes.length !== responsaveisIds.length) {
-          await transaction.rollback();
-          const foundIds = responsaveisExistentes.map(r => r.id);
-          const missingIds = responsaveisIds.filter(id => !foundIds.includes(id));
-          return res.status(404).json({
-            sucesso: false,
-            mensagem: 'Um ou mais responsáveis para atualização não encontrados',
-            detalhes: `IDs de responsáveis não encontrados: ${missingIds.join(', ')}`
-          });
-        }
-        // Usa setResponsaveis para substituir todas as associações existentes
-        await aluno.setResponsaveis(responsaveisExistentes, { transaction });
-      } else {
-        // Se o array estiver vazio, remove todos os responsáveis
-        await aluno.setResponsaveis([], { transaction });
-      }
-    }
-
-    await transaction.commit();
-
-    // Recarrega o aluno com os dados atualizados e os responsáveis
-    const alunoAtualizado = await Aluno.findByPk(aluno.id, {
-      include: [
-        {
-          model: Usuario,
-          as: 'responsaveis',
-          attributes: ['id', 'nome', 'email', 'telefone'],
-          through: { attributes: [] }
-        }
-      ]
-    });
-
-    res.status(200).json(alunoAtualizado);
+    res.status(200);
+    res.json({ sucesso: true, dados: alunoAtualizado });
   } catch (error) {
-    await transaction.rollback();
-    if (error.name === 'SequelizeValidationError') {
-      const erros = error.errors.map(err => ({
-        campo: err.path,
-        mensagem: err.message
-      }));
-      return res.status(400).json({ erros });
-    }
-    console.error('Erro ao atualizar aluno:', error);
     next(error);
   }
 };
@@ -502,66 +261,37 @@ export const atualizarAluno = async (req, res, next) => {
  *       204:
  *         description: Aluno removido com sucesso
  *       404:
- *         description: Aluno não encontrado
+ *         description: Aluno Nãoencontrado
  */
 export const excluirAluno = async (req, res, next) => {
-  const transaction = await sequelize.transaction();
-  
   try {
-    const alunoId = parseInt(req.params.id);
-
-    if (isNaN(alunoId)) {
-      await transaction.rollback();
-      return res.status(400).json({
-        sucesso: false,
-        mensagem: 'ID do aluno inválido'
-      });
+    const alunoId = req.params.id;
+    const result = await AlunoService.remove(alunoId);
+    
+    if (result === null) {
+      res.status(404);
+      return res.json({ sucesso: false, mensagem: 'Aluno não encontrado' });
     }
 
-    const aluno = await Aluno.findByPk(alunoId, { transaction });
-    
-    if (!aluno) {
-      await transaction.rollback();
-      return res.status(404).json({
-        sucesso: false,
-        mensagem: 'Aluno não encontrado'
-      });
-    }
-
-    // removo o vinculo com documentos 
-    await Documento.destroy({ where: { alunoId }, transaction });
-
-    //removo as presenças associadas a ele
-    if (sequelize.models.Presenca) {
-      await sequelize.models.Presenca.destroy({ where: { idAluno: alunoId }, transaction });
-    } else {
-      await sequelize.query('DELETE FROM presencas WHERE id_aluno = ?', { replacements: [alunoId], transaction });
-    }
-
-    //removo os vinculos na tabela que junta os responsaveis dos alunos
-    await ResponsavelAluno.destroy({ where: { id_aluno: alunoId }, transaction });
-
-    // agora removo o aluno
-    await aluno.destroy({ transaction });
-    
-     // Se chegou até aqui, tudo deu certo
-    await transaction.commit();
-    
-    // 204 sem mensagem nenhuma msm
-    return res.status(204).end();
+    res.status(204);
+    res.end();
   } catch (error) {
-    await transaction.rollback();
-    console.error('Erro ao excluir aluno:', error);
-
-    if (error.name === 'SequelizeForeignKeyConstraintError') {
-      return res.status(400).json({
-        sucesso: false,
-        mensagem: 'Não foi possível excluir o aluno.',
-        detalhes: 'Este aluno ainda possui registros dependentes (como presenças) que não puderam ser removidos.',
-        erro: error.message
-      });
-    }
-
     next(error);
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
