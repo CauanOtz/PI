@@ -75,51 +75,42 @@ const router = Router();
  *         description: Dados inválidos
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
- */
-router.post('/', autenticar, requireAdmin,
-  validateCriarNotificacao,
-  criarNotificacao
-);
-
-/**
- * @openapi
- * /notificacoes:
-      200:
-        description: Lista de notificações
-        content:
-          application/json:
-            schema:
-              allOf:
-                - $ref: '#/components/schemas/SuccessNotificacoes'
-                - type: object
-                  properties:
-                    total:
-                      type: integer
-                      example: 15
-                    totalPages:
-                      type: integer
-                      example: 2
-                    currentPage:
-                      type: integer
-                      example: 1
-                    hasNext:
-                      type: boolean
-                      example: true
-                    hasPrevious:
-                      type: boolean
-                      example: false
+ *   get:
+ *     summary: Lista de notificações
+ *     tags: [Notificações]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
  *         name: tipo
  *         schema:
  *           type: string
  *           enum: [info, alerta, urgente, sistema]
  *         description: Filtrar por tipo de notificação
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *         description: Número da página para paginação
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 100
+ *           default: 10
+ *         description: Número de itens por página
  *     responses:
  *       200:
  *         description: Lista de notificações
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/SuccessNotificacoes'
+ *               allOf:
+ *                 - $ref: '#/components/schemas/SuccessNotificacoes'
+ *                 - type: object
  *                   properties:
  *                     total:
  *                       type: integer
@@ -141,6 +132,11 @@ router.post('/', autenticar, requireAdmin,
  *       403:
  *         $ref: '#/components/responses/ForbiddenError'
  */
+router.post('/', autenticar, requireAdmin,
+  validateCriarNotificacao,
+  criarNotificacao
+);
+
 router.get(
   '/',
   autenticar,

@@ -6,7 +6,7 @@ const mockResponsavelAlunoService = {
 };
 
 jest.unstable_mockModule('../../src/services/responsavel-aluno.service.js', () => ({
-  default: mockResponsavelAlunoService
+  default: jest.fn().mockImplementation(() => mockResponsavelAlunoService)
 }));
 
 const { vincularResponsavel, desvincularResponsavel } = await import('../../src/controllers/responsavel-aluno.controller.js');
