@@ -99,3 +99,43 @@ Esta seção documenta as melhorias aplicadas recentemente ao código para aumen
 4. Integrar i18n real (ex: i18next) reaproveitando `messages.ts`.
 5. Validar respostas críticas com `zod` (schema runtime).
 6. Adicionar seeds de dados para ambiente local/homologação.
+
+---
+
+## 🎨 Documentação de Design Patterns
+
+Este projeto utiliza **mais de 35 design patterns** diferentes, demonstrando uma arquitetura robusta e profissional.
+
+### 📚 Documentação Completa Disponível
+
+- **[DOCUMENTACAO_DESIGN_PATTERNS.md](./DOCUMENTACAO_DESIGN_PATTERNS.md)** - Índice principal (comece por aqui!)
+- **[DESIGN_PATTERNS_RESUMO.md](./DESIGN_PATTERNS_RESUMO.md)** - Resumo executivo (~10 min de leitura)
+- **[DESIGN_PATTERNS.md](./DESIGN_PATTERNS.md)** - Documentação completa com exemplos de código
+- **[ARCHITECTURE_DIAGRAM.md](./ARCHITECTURE_DIAGRAM.md)** - Diagramas visuais da arquitetura
+
+### 🏆 Padrões Principais Implementados
+
+#### Backend (Node.js/Express)
+- **MVC** - Arquitetura Model-View-Controller
+- **Active Record** - Sequelize ORM
+- **Middleware Chain** - Pipeline de requisições
+- **Strategy** - Seleção dinâmica de banco de dados
+- **Repository** - Abstração de acesso a dados
+- **Singleton** - Conexão única ao banco
+
+#### Frontend (React/TypeScript)
+- **Provider Pattern** - Context API para autenticação
+- **Custom Hooks** - useAsync, useAuth
+- **Service Layer** - Abstração de chamadas à API
+- **Interceptor** - Autenticação automática HTTP
+- **Container/Presentational** - Separação de lógica e UI
+- **Module Pattern** - Barrel exports
+
+### 💡 Benefícios da Arquitetura
+- ✅ **Manutenível** - Código organizado e consistente
+- ✅ **Escalável** - Fácil adicionar novos recursos
+- ✅ **Testável** - Componentes isolados
+- ✅ **Seguro** - Múltiplas camadas de validação
+- ✅ **Documentado** - Swagger/OpenAPI + TypeScript
+
+Para mais detalhes, consulte a **[documentação completa](./DOCUMENTACAO_DESIGN_PATTERNS.md)**.
