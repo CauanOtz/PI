@@ -31,25 +31,30 @@ import UsuarioService from '../services/usuario.service.js';
  *             properties:
  *               nome:
  *                 type: string
- *                 example: "João da Silva"
+ *                 minLength: 3
+ *                 example: "Maria Oliveira"
+ *                 description: "Nome completo do usuário"
  *               email:
  *                 type: string
  *                 format: email
- *                 example: "joao@escola.com"
+ *                 example: "maria.oliveira@email.com"
+ *                 description: "E-mail que será usado para login"
  *               senha:
  *                 type: string
  *                 format: password
- *                 example: "senha123"
+ *                 minLength: 6
+ *                 example: "Senha@123"
+ *                 description: "Senha com no mínimo 6 caracteres"
  *               cpf:
  *                 type: string
- *                 example: "856.871.180-47"
+ *                 pattern: "^\\d{3}\\.\\d{3}\\.\\d{3}-\\d{2}$"
+ *                 example: "123.456.789-10"
+ *                 description: "CPF no formato XXX.XXX.XXX-XX"
  *               telefone:
  *                 type: string
- *                 example: "(11) 99999-9999"
- *               role:
- *                 type: string
- *                 enum: [admin, responsavel]
- *                 default: "responsavel"
+ *                 pattern: "^\\(\\d{2}\\) \\d{4,5}-\\d{4}$"
+ *                 example: "(11) 98765-4321"
+ *                 description: "Telefone com DDD no formato (XX) XXXXX-XXXX ou (XX) XXXX-XXXX"
  *     responses:
  *       201:
  *         description: Usuário registrado com sucesso.
@@ -92,13 +97,12 @@ import UsuarioService from '../services/usuario.service.js';
  */
 export const registrarUsuario = async (req, res, next) => {
   try {
-    const requesterRole = req.usuario && req.usuario.role ? req.usuario.role : null;
     const payload = req.body;
-    const result = await UsuarioService.create(payload, requesterRole);
-    if (result.forbidden) return res.status(403).json({ message: 'Apenas administradores podem criar usuários com role "admin".' });
-    if (result.invalidCpf) return res.status(400).json({ message: 'CPF inválido.' });
-    if (result.invalidPhone) return res.status(400).json({ message: 'Telefone inválido. Informe 10 ou 11 dígitos.' });
-    if (result.conflict) return res.status(409).json({ message: 'E-mail ou CPF já está em uso.' });
+    const result = await UsuarioService.create(payload);
+    if (result.forbidden) return res.status(403).json({ mensagem: 'Apenas administradores podem criar usuários com role "admin".' });
+    if (result.invalidCpf) return res.status(400).json({ mensagem: 'CPF inválido. Use o formato XXX.XXX.XXX-XX' });
+    if (result.invalidPhone) return res.status(400).json({ mensagem: 'Telefone inválido. Use o formato (XX) XXXXX-XXXX ou (XX) XXXX-XXXX' });
+    if (result.conflict) return res.status(409).json({ mensagem: 'Este e-mail ou CPF já está cadastrado no sistema.' });
     return created(res, { usuario: UsuarioDTO.from(result.usuario), token: result.token });
   } catch (error) {
     next(error);

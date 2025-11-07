@@ -36,7 +36,7 @@ export const Dashboard = (): JSX.Element => {
 
   const stats = [
     {
-      title: "Total de Alunos",
+      title: "Total de Assistidos",
       value: totalAlunos !== null ? String(totalAlunos) : "...",
       change: 0,
       icon: <UsersIcon className="w-4 h-4 text-blue-500" />,
@@ -65,18 +65,11 @@ export const Dashboard = (): JSX.Element => {
       bgColor: "bg-pink-50/70",
     },
     {
-      title: "Alunos & Turmas",
-      description: "Gerenciar estudantes e classes",
+      title: "Assistidos",
+      description: "Gerenciar assistidos",
       icon: <UsersIcon className="w-6 h-6 text-purple-500" />,
       path: "/students",
       bgColor: "bg-purple-50/70",
-    },
-    {
-      title: "Calendário",
-      description: "Ver agenda acadêmica",
-      icon: <CalendarIcon className="w-6 h-6 text-blue-500" />,
-      path: "/calendar",
-      bgColor: "bg-blue-50/70",
     },
   ];
 
@@ -302,7 +295,7 @@ export const Dashboard = (): JSX.Element => {
                 <h2 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2"><BarChart3Icon className="w-4 h-4 text-blue-600" /> Resumo do Sistema</h2>
                 <ul className="space-y-3 text-sm">
                   <li className="flex items-center justify-between">
-                    <span className="text-gray-600">Alunos cadastrados</span>
+                    <span className="text-gray-600">Assistidos Cadastrados</span>
                     <span className="font-semibold text-gray-900">{totalAlunos ?? '...'}</span>
                   </li>
                   <li className="flex items-center justify-between">

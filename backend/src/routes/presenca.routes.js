@@ -8,7 +8,7 @@ import {
   obterPresenca, 
   atualizarPresenca,
   listarPresencasPorAula,
-  listarHistoricoAluno,
+  listarHistoricoAssistido,
   registrarPresencasBulk
 } from '../controllers/presenca.controller.js';
 import Presenca from '../models/Presenca.model.js';
@@ -18,7 +18,7 @@ import {
   validateObterPresenca, 
   validateAtualizarPresenca,
   validatePresencasPorAula,
-  validateHistoricoAluno
+  validateHistoricoAssistido
 } from '../middlewares/validators/presenca.validator.js';
 import { autenticar } from '../middlewares/auth.middleware.js';
 
@@ -34,9 +34,9 @@ const router = Router();
  *         id:
  *           type: integer
  *           description: ID da Presença
- *         idAluno:
+ *         idAssistido:
  *           type: integer
- *           description: ID do aluno
+ *           description: ID do assistido
  *         idAula:
  *           type: integer
  *           description: ID da aula
@@ -50,7 +50,7 @@ const router = Router();
  *           description: Data do registro da Presença
  *         observacao:
  *           type: string
- *           description: ObservaÃ§Ãµes sobre a Presença
+ *           description: Observações sobre a Presença
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -59,22 +59,22 @@ const router = Router();
  *           type: string
  *           format: date-time
  *           description: Data da Ãºltima atualizaÃ§Ã£o do registro
- *         aluno:
- *           $ref: '#/components/schemas/Aluno'
+ *         assistido:
+ *           $ref: '#/components/schemas/Assistido'
  *         aula:
  *           $ref: '#/components/schemas/Aula'
- *       example:
+       example:
  *         id: 1
- *         idAluno: 1
+ *         idAssistido: 1
  *         idAula: 1
  *         status: "presente"
  *         data_registro: "2024-07-30"
  *         observacao: "Chegou atrasado 15 minutos"
  *         createdAt: "2024-07-30T14:30:00.000Z"
  *         updatedAt: "2024-07-30T14:30:00.000Z"
- *         aluno:
+ *         assistido:
  *           id: 1
- *           nome: "JoÃ£o Silva"
+ *           nome: "João Silva"
  *         aula:
  *           id: 1
  *           titulo: "Aula de MatemÃ¡tica"
@@ -85,7 +85,7 @@ const router = Router();
  * @openapi
  * tags:
  *   name: Presenças
- *   description: Gerenciamento de Presenças dos alunos nas aulas
+ *   description: Gerenciamento de Presenças dos assistidos nas aulas
  */
 
 /**
@@ -103,13 +103,13 @@ const router = Router();
  *           schema:
  *             type: object
  *             required:
- *               - idAluno
+ *               - idAssistido
  *               - idAula
  *               - status
  *             properties:
- *               idAluno:
+ *               idAssistido:
  *                 type: integer
- *                 description: ID do aluno
+ *                 description: ID do assistido
  *                 example: 1
  *               idAula:
  *                 type: integer
@@ -139,11 +139,11 @@ const router = Router();
  *       400:
  *         description: Dados invÃ¡lidos
  *       401:
- *         description: Nãoautorizado
+ *         description: Não autorizado
  *       404:
- *         description: Aluno ou Aula Nãoencontrado
+ *         description: Assistido ou Aula não encontrado
  *       409:
- *         description: JÃ¡ existe um registro de Presença para este aluno nesta data
+ *         description: Já existe um registro de Presença para este assistido nesta data
  */
 router.post('/', 
   autenticar, 
@@ -161,10 +161,10 @@ router.post('/',
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: idAluno
+ *         name: idAssistido
  *         schema:
  *           type: integer
- *         description: Filtrar por ID do aluno
+ *         description: Filtrar por ID do assistido
  *       - in: query
  *         name: idAula
  *         schema:
@@ -196,9 +196,9 @@ router.post('/',
  *             schema:
  *               $ref: '#/components/schemas/SuccessPresencas'
  *       400:
- *         description: ParÃ¢metros de filtro invÃ¡lidos
+ *         description: Parâmetros de filtro inválidos
  *       401:
- *         description: Nãoautorizado
+ *         description: Não autorizado
  */
 router.get('/', 
   autenticar, 
@@ -212,22 +212,10 @@ router.get('/aulas/:idAula',
   listarPresencasPorAula
 );
 
-router.get('/alunos/:idAluno', 
+router.get('/assistidos/:idAssistido', 
   autenticar, 
-  validateHistoricoAluno,
-  listarHistoricoAluno
-);
-
-router.get('/aulas/:idAula', 
-  autenticar, 
-  validatePresencasPorAula,
-  listarPresencasPorAula
-);
-
-router.get('/alunos/:idAluno', 
-  autenticar, 
-  validateHistoricoAluno,
-  listarHistoricoAluno
+  validateHistoricoAssistido,
+  listarHistoricoAssistido
 );
 
 /**
@@ -268,19 +256,19 @@ router.get('/alunos/:idAluno',
 
 /**
  * @openapi
- * /presencas/alunos/{idAluno}:
+ * /presencas/assistidos/{idAssistido}:
  *   get:
- *     summary: Lista o histÃ³rico de Presença de um aluno
+ *     summary: Lista o histórico de Presença de um assistido
  *     tags: [Presenças]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: idAluno
+ *         name: idAssistido
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID do aluno
+ *         description: ID do assistido
  *       - in: query
  *         name: dataInicio
  *         schema:
@@ -295,17 +283,17 @@ router.get('/alunos/:idAluno',
  *         description: Data de fim para filtro (YYYY-MM-DD)
  *     responses:
  *       200:
- *         description: HistÃ³rico de Presenças do aluno
+ *         description: Histórico de Presenças do assistido
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/SuccessPresencas'
  *       400:
- *         description: ID do aluno invÃ¡lido
+ *         description: ID do assistido inválido
  *       401:
- *         description: Nãoautorizado
+ *         description: Não autorizado
  *       404:
- *         description: Aluno Nãoencontrado
+ *         description: Assistido não encontrado
  */
 
 /**
@@ -387,9 +375,9 @@ router.get('/:id', validateIdParam('id'),
  *             schema:
  *               $ref: '#/components/schemas/SuccessPresenca'
  *       400:
- *         description: Dados invÃ¡lidos
+ *         description: Dados inválidos
  *       401:
- *         description: Nãoautorizado
+ *         description: Não autorizado
  *       404:
  *         description: Registro de Presença Nãoencontrado
  */
@@ -451,7 +439,7 @@ router.delete('/:id', validateIdParam('id'),
  * @openapi
  * /presencas/bulk:
  *   post:
- *     summary: Registra mÃºltiplas Presenças em uma Ãºnica requisiÃ§Ã£o
+ *     summary: Registra múltiplas presenças em uma única requisição
  *     tags: [Presenças]
  *     security:
  *       - bearerAuth: []
@@ -467,13 +455,13 @@ router.delete('/:id', validateIdParam('id'),
  *                 items:
  *                   type: object
  *                   required:
- *                     - idAluno
+ *                     - idAssistido
  *                     - idAula
  *                     - status
  *                   properties:
- *                     idAluno:
+ *                     idAssistido:
  *                       type: integer
- *                       description: ID do aluno
+ *                       description: ID do assistido
  *                       example: 1
  *                     idAula:
  *                       type: integer
@@ -482,16 +470,16 @@ router.delete('/:id', validateIdParam('id'),
  *                     status:
  *                       type: string
  *                       enum: [presente, falta, atraso, falta_justificada]
- *                       description: Status da Presença
+ *                       description: Status da presença
  *                       example: "presente"
  *                     data_registro:
  *                       type: string
  *                       format: date
- *                       description: Data do registro (opcional, padrÃ£o Ã© a data atual)
+ *                       description: Data do registro (opcional, padrão é a data atual)
  *                       example: "2024-07-30"
  *                     observacao:
  *                       type: string
- *                       description: ObservaÃ§Ãµes sobre a Presença (opcional)
+ *                       description: Observações sobre a presença (opcional)
  *                       example: "Chegou atrasado 15 minutos"
  *     responses:
  *       201:
@@ -499,13 +487,20 @@ router.delete('/:id', validateIdParam('id'),
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/SuccessPresencas'
+ *               type: object
+ *               properties:
+ *                 sucesso:
+ *                   type: boolean
+ *                 resultados:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Presenca'
  *       400:
- *         description: Dados invÃ¡lidos
+ *         description: Dados inválidos
  *       401:
- *         description: Nãoautorizado
+ *         description: Não autorizado
  *       404:
- *         description: Aluno ou Aula Nãoencontrado
+ *         description: Assistido ou Aula não encontrado
  *       409:
  *         description: Conflito ao registrar Presenças
  */

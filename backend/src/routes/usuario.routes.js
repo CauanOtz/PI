@@ -7,8 +7,8 @@ import { autenticar } from '../middlewares/auth.middleware.js';
 
 const router = Router();
 
-// Rota para registro de usuÃ¡rio
-router.post('/registrar', autenticar, requireAdmin, validateRegistroUsuario, usuarioController.registrarUsuario);
+// Rota para registro de usuário
+router.post('/registrar', validateRegistroUsuario, usuarioController.registrarUsuario);
 
 // Rota para login
 router.post('/login', validateLogin, usuarioController.login);

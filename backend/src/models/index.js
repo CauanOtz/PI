@@ -2,10 +2,10 @@
 import { sequelize } from '../config/database.js';
 
 // Import all models
-import Aluno from './Aluno.model.js';
+import Assistido from './Assistido.model.js';
 import Usuario from './Usuario.model.js';
 import Documento from './Documento.model.js';
-import ResponsavelAluno from './ResponsavelAluno.model.js';
+import ResponsavelAssistido from './ResponsavelAssistido.model.js';
 import Notificacao from './Notificacao.model.js';
 import Presenca from './Presenca.model.js';
 import Aula from './Aula.model.js';
@@ -13,10 +13,10 @@ import UsuarioNotificacao from './UsuarioNotificacao.model.js';
 
 // Initialize models
 const models = {
-  Aluno,
+  Assistido,
   Usuario,
   Documento,
-  ResponsavelAluno,
+  ResponsavelAssistido,
   Notificacao,
   Presenca,
   Aula,
@@ -43,10 +43,10 @@ const syncModels = async () => {
 export {
   sequelize,
   syncModels,
-  Aluno,
+  Assistido,
   Usuario,
   Documento,
-  ResponsavelAluno,
+  ResponsavelAssistido,
   Notificacao,
   Presenca,
   Aula,

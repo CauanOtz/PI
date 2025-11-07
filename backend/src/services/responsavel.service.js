@@ -1,17 +1,17 @@
 // src/services/responsavel.service.js
-import Aluno from '../models/Aluno.model.js';
+import Assistido from '../models/Assistido.model.js';
 import Usuario from '../models/Usuario.model.js';
 
 class ResponsavelService {
   /**
-   * Lista os alunos associados a um responsável específico
+   * Lista os assistidos associados a um responsável específico
    * @param {number} responsavelId - ID do responsável
    * @param {Object} pagination - Opções de paginação
    * @param {number} pagination.page - Número da página
    * @param {number} pagination.limit - Itens por página
-   * @returns {Promise<Object>} Objeto com alunos e informações de paginação
+   * @returns {Promise<Object>} Objeto com assistidos e informações de paginação
    */
-  async listarAlunos(responsavelId, { page = 1, limit = 10 } = {}) {
+  async listarAssistidos(responsavelId, { page = 1, limit = 10 } = {}) {
     const responsavel = await Usuario.findByPk(responsavelId);
     if (!responsavel) {
       return { notFound: true };
@@ -22,7 +22,7 @@ class ResponsavelService {
     limit = Math.min(100, Math.max(1, limit));
     const offset = (page - 1) * limit;
 
-    const { count, rows: alunos } = await Aluno.findAndCountAll({
+    const { count, rows: assistidos } = await Assistido.findAndCountAll({
       include: [
         {
           model: Usuario,
@@ -39,7 +39,7 @@ class ResponsavelService {
     });
 
     return {
-      alunos,
+      assistidos,
       pagination: {
         total: count,
         page,

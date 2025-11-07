@@ -1,7 +1,7 @@
 // src/models/Presenca.model.js
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
-import Aluno from './Aluno.model.js';
+import Assistido from './Assistido.model.js';
 import Aula from './Aula.model.js';
 
 /**
@@ -11,7 +11,7 @@ import Aula from './Aula.model.js';
  *     Presenca:
  *       type: object
  *       required:
- *         - idAluno
+ *         - idAssistido
  *         - idAula
  *         - status
  *         - data_registro
@@ -20,9 +20,9 @@ import Aula from './Aula.model.js';
  *           type: integer
  *           description: ID auto-gerado do registro de presença.
  *           example: 1
- *         idAluno:
+ *         idAssistido:
  *           type: integer
- *           description: ID do aluno relacionado.
+ *           description: ID do assistido relacionado.
  *           example: 1
  *         idAula:
  *           type: integer
@@ -59,12 +59,12 @@ const Presenca = sequelize.define('Presenca', {
     autoIncrement: true,
     primaryKey: true
   },
-  idAluno: {
+  idAssistido: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    field: 'id_aluno',
+    field: 'id_assistido',
     references: {
-      model: 'alunos',
+      model: 'assistidos',
       key: 'id'
     },
     onUpdate: 'CASCADE',
@@ -104,17 +104,17 @@ const Presenca = sequelize.define('Presenca', {
   indexes: [
     {
       unique: true,
-      fields: ['id_aluno', 'id_aula', 'data_registro'],
-      name: 'unique_presenca_aluno_aula_data'
+      fields: ['id_assistido', 'id_aula', 'data_registro'],
+      name: 'unique_presenca_assistido_aula_data'
     }
   ]
 });
 
 // Associações
 Presenca.associate = (models) => {
-  Presenca.belongsTo(models.Aluno, {
-    foreignKey: 'idAluno',
-    as: 'aluno',
+  Presenca.belongsTo(models.Assistido, {
+    foreignKey: 'idAssistido',
+    as: 'assistido',
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE' 
   });

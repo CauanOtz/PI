@@ -8,9 +8,9 @@ const router = Router();
 
 /**
  * @openapi
- * /responsaveis/{responsavelId}/alunos:
+ * /responsaveis/{responsavelId}/assistidos:
  *   get:
- *     summary: Lista todos os alunos associados a um responsável
+ *     summary: Lista todos os assistidos associados a um responsável
  *     tags: [Responsáveis]
  *     security:
  *       - bearerAuth: []
@@ -38,7 +38,7 @@ const router = Router();
  *         description: Número de itens por página
  *     responses:
  *       200:
- *         description: Lista de alunos do responsável retornada com sucesso.
+ *         description: Lista de assistidos do responsável retornada com sucesso.
  *       400:
  *         description: ID do responsável inválido.
  *       401:
@@ -47,10 +47,10 @@ const router = Router();
  *         description: Responsável não encontrado.
  */
 router.get(
-  '/:responsavelId/alunos', 
+  '/:responsavelId/assistidos', 
   autenticar, 
   validateResponsavelId, 
-  responsavelController.listarAlunosPorResponsavel
+  responsavelController.listarAssistidosPorResponsavel
 );
 
 // Outras rotas relacionadas a responsáveis podem vir aqui.

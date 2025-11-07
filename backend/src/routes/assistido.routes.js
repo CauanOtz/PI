@@ -1,12 +1,12 @@
-// src/routes/aluno.routes.js
+// src/routes/assistido.routes.js
 import { Router } from 'express';
-import * as alunoController from '../controllers/aluno.controller.js';
+import * as assistidoController from '../controllers/assistido.controller.js';
 import { 
-  validateCreateAluno, 
-  validateUpdateAluno, 
-  validateAlunoId,
-  validateListarAlunos,
-} from '../middlewares/validators/aluno.validator.js';
+  validateCreateAssistido, 
+  validateUpdateAssistido, 
+  validateAssistidoId,
+  validateListarAssistidos,
+} from '../middlewares/validators/assistido.validator.js';
 import { validateAdicionarDocumento, validateListarDocumentos, validateObterDocumento, validateAtualizarDocumento, validateExcluirDocumento, validateDownloadDocumento } from '../middlewares/validators/documento.validator.js';
 import { adicionarDocumento, listarDocumentos, obterDocumento, atualizarDocumento, excluirDocumento, downloadDocumento } from '../controllers/documento.controller.js';
 import upload from '../middlewares/upload.middleware.js';
@@ -18,16 +18,16 @@ const router = Router();
 /**
  * @openapi
  * tags:
- *   name: Alunos
- *   description: Gerenciamento de alunos
+ *   name: Assistidos
+ *   description: Gerenciamento de assistidos
  */
 
 /**
  * @openapi
- * /alunos:
+ * /assistidos:
  *   get:
- *     summary: Lista todos os alunos
- *     tags: [Alunos]
+ *     summary: Lista todos os assistidos
+ *     tags: [Assistidos]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -50,27 +50,27 @@ const router = Router();
  *         name: search
  *         schema:
  *           type: string
- *         description: Termo de busca para filtrar alunos por nome
+ *         description: Termo de busca para filtrar assistidos por nome
  *       - in: query
  *         name: responsavelId
  *         schema:
  *           type: integer
- *         description: ID do responsável para filtrar alunos
+ *         description: ID do responsável para filtrar assistidos
  *     responses:
  *       200:
- *         description: Lista de alunos
+ *         description: Lista de assistidos
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 alunos:
+ *                 assistidos:
  *                   type: array
  *                   items:
- *                     $ref: '#/components/schemas/Aluno'
+ *                     $ref: '#/components/schemas/Assistido'
  *                 total:
  *                   type: integer
- *                   description: Total de alunos encontrados
+ *                   description: Total de assistidos encontrados
  *                 page:
  *                   type: integer
  *                   description: Página atual
@@ -80,15 +80,14 @@ const router = Router();
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  */
-router.get('/', autenticar, validateListarAlunos, alunoController.listarAlunos);
-
+router.get('/', autenticar, validateListarAssistidos, assistidoController.listarAssistidos);
 
 /**
  * @openapi
- * /alunos/{id}:
+ * /assistidos/{id}:
  *   get:
- *     summary: Obtém um aluno pelo ID
- *     tags: [Alunos]
+ *     summary: Obtém um assistido pelo ID
+ *     tags: [Assistidos]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -97,29 +96,29 @@ router.get('/', autenticar, validateListarAlunos, alunoController.listarAlunos);
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID do aluno a ser obtido
+ *         description: ID do assistido a ser obtido
  *     responses:
  *       200:
- *         description: Aluno encontrado com sucesso
+ *         description: Assistido encontrado com sucesso
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Aluno'
+ *               $ref: '#/components/schemas/Assistido'
  *       400:
  *         description: ID inválido
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       404:
- *         description: Aluno não encontrado
+ *         description: Assistido não encontrado
  */
-router.get('/:id', autenticar, validateAlunoId, alunoController.obterAlunoPorId);
+router.get('/:id', autenticar, validateAssistidoId, assistidoController.obterAssistidoPorId);
 
 /**
  * @openapi
- * /alunos:
+ * /assistidos:
  *   post:
- *     summary: Cria um novo aluno
- *     tags: [Alunos]
+ *     summary: Cria um novo assistido
+ *     tags: [Assistidos]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -127,14 +126,14 @@ router.get('/:id', autenticar, validateAlunoId, alunoController.obterAlunoPorId)
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/NovoAluno'
+ *             $ref: '#/components/schemas/NovoAssistido'
  *     responses:
  *       201:
- *         description: Aluno criado com sucesso
+ *         description: Assistido criado com sucesso
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Aluno'
+ *               $ref: '#/components/schemas/Assistido'
  *       400:
  *         description: Dados inválidos
  *       401:
@@ -142,14 +141,14 @@ router.get('/:id', autenticar, validateAlunoId, alunoController.obterAlunoPorId)
  *       404:
  *         description: Responsável não encontrado
  */
-router.post('/', autenticar, validateCreateAluno, alunoController.criarAluno);
+router.post('/', autenticar, validateCreateAssistido, assistidoController.criarAssistido);
 
 /**
  * @openapi
- * /alunos/{id}:
+ * /assistidos/{id}:
  *   put:
- *     summary: Atualiza um aluno existente
- *     tags: [Alunos]
+ *     summary: Atualiza um assistido existente
+ *     tags: [Assistidos]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -158,7 +157,7 @@ router.post('/', autenticar, validateCreateAluno, alunoController.criarAluno);
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID do aluno a ser atualizado
+ *         description: ID do assistido a ser atualizado
  *     requestBody:
  *       required: true
  *       content:
@@ -178,33 +177,28 @@ router.post('/', autenticar, validateCreateAluno, alunoController.criarAluno);
  *               contato:
  *                 type: string
  *                 example: "(11) 98765-1234"
- *               responsaveisIds:
- *                 type: array
- *                 items:
- *                   type: integer
- *                 example: [7]
  *     responses:
  *       200:
- *         description: Aluno atualizado com sucesso
+ *         description: Assistido atualizado com sucesso
  *         content:
  *           application/json:
  *             schema:
- *               $ref: '#/components/schemas/Aluno'
+ *               $ref: '#/components/schemas/Assistido'
  *       400:
  *         description: Dados inválidos
  *       401:
  *         $ref: '#/components/responses/UnauthorizedError'
  *       404:
- *         description: Aluno ou responsável não encontrado
+ *         description: Assistido ou responsável não encontrado
  */
-router.put('/:id', autenticar, validateAlunoId, validateUpdateAluno, alunoController.atualizarAluno);
+router.put('/:id', autenticar, validateAssistidoId, validateUpdateAssistido, assistidoController.atualizarAssistido);
 
 /**
  * @openapi
- * /alunos/{id}:
+ * /assistidos/{id}:
  *   delete:
- *     summary: Remove um aluno
- *     tags: [Alunos]
+ *     summary: Remove um assistido
+ *     tags: [Assistidos]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -213,10 +207,10 @@ router.put('/:id', autenticar, validateAlunoId, validateUpdateAluno, alunoContro
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID do aluno a ser removido
+ *         description: ID do assistido a ser removido
  *     responses:
  *       204:
- *         description: Aluno removido com sucesso
+ *         description: Assistido removido com sucesso
  *       400:
  *         description: ID inválido
  *       401:
@@ -224,61 +218,55 @@ router.put('/:id', autenticar, validateAlunoId, validateUpdateAluno, alunoContro
  *       403:
  *         $ref: '#/components/responses/ForbiddenError'
  *       404:
- *         description: Aluno não encontrado
+ *         description: Assistido não encontrado
  */
-router.delete('/:id', autenticar, validateAlunoId, alunoController.excluirAluno);
+router.delete('/:id', autenticar, validateAssistidoId, assistidoController.excluirAssistido);
 
+// Rotas de documentos
 router.post(
-  '/:alunoId/documentos',
+  '/:assistidoId/documentos',
   autenticar,
   upload.single('documento'),
   validateAdicionarDocumento,
   adicionarDocumento
 );
 
-// Rota para listar documentos de um aluno
 router.get(
-  '/:alunoId/documentos',
+  '/:assistidoId/documentos',
   autenticar,
   validateListarDocumentos,
   listarDocumentos
 );
 
-// Rota para obter um documento específico
 router.get(
-  '/:alunoId/documentos/:documentoId',
+  '/:assistidoId/documentos/:documentoId',
   autenticar,
   validateObterDocumento,
   obterDocumento
 );
 
-
-// Rota para atualizar um documento
 router.put(
-  '/:alunoId/documentos/:documentoId',
+  '/:assistidoId/documentos/:documentoId',
   autenticar,
   validateAtualizarDocumento,
   atualizarDocumento
 );
 
-
-// Rota para excluir um documento
 router.delete(
-  '/:alunoId/documentos/:documentoId',
+  '/:assistidoId/documentos/:documentoId',
   autenticar,
   validateExcluirDocumento,
   excluirDocumento
 );
 
-// Rota para download de documento
 router.get(
-  '/:alunoId/documentos/:documentoId/download',
+  '/:assistidoId/documentos/:documentoId/download',
   autenticar,
   validateDownloadDocumento,
   downloadDocumento
 );
 
-// Rota de depuração para verificar os registros em responsaveis_alunos
+// Rota de depuração
 router.get('/debug/vinculos', autenticar, async (req, res) => {
   try {
     const { id } = req.usuario;
@@ -288,9 +276,9 @@ router.get('/debug/vinculos', autenticar, async (req, res) => {
       return res.status(403).json({ mensagem: 'Apenas administradores podem acessar esta rota' });
     }
     
-    // Consulta todos os registros da tabela responsaveis_alunos
+    // Consulta todos os registros da tabela responsaveis_assistidos
     const vinculos = await sequelize.query(
-      'SELECT * FROM responsaveis_alunos',
+      'SELECT * FROM responsaveis_assistidos',
       { type: sequelize.QueryTypes.SELECT }
     );
     
@@ -300,9 +288,9 @@ router.get('/debug/vinculos', autenticar, async (req, res) => {
       { type: sequelize.QueryTypes.SELECT }
     );
     
-    // Consulta os alunos
-    const alunos = await sequelize.query(
-      'SELECT id, nome FROM alunos',
+    // Consulta os assistidos
+    const assistidos = await sequelize.query(
+      'SELECT id, nome FROM assistidos',
       { type: sequelize.QueryTypes.SELECT }
     );
     
@@ -310,7 +298,7 @@ router.get('/debug/vinculos', autenticar, async (req, res) => {
     const resultado = vinculos.map(vinculo => ({
       ...vinculo,
       usuario: usuarios.find(u => u.id === vinculo.id_usuario),
-      aluno: alunos.find(a => a.id === vinculo.id_aluno)
+      assistido: assistidos.find(a => a.id === vinculo.id_assistido)
     }));
     
     res.status(200).json({

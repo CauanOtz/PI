@@ -116,18 +116,18 @@ const Usuario = sequelize.define('Usuario', {
 Usuario.associate = (models) => {
 
 
-  // Association with Aluno (many-to-many through ResponsavelAluno)
-  Usuario.belongsToMany(models.Aluno, {
-    through: models.ResponsavelAluno,
+  // Association with Assistido (many-to-many through ResponsavelAssistido)
+  Usuario.belongsToMany(models.Assistido, {
+    through: models.ResponsavelAssistido,
     foreignKey: 'id_usuario',
-    otherKey: 'id_aluno',
-    as: 'alunos',
+    otherKey: 'id_assistido',
+    as: 'assistidos',
   });
 
   // If you need to access the join table directly
-  Usuario.hasMany(models.ResponsavelAluno, {
+  Usuario.hasMany(models.ResponsavelAssistido, {
     foreignKey: 'id_usuario',
-    as: 'responsavelAlunos'
+    as: 'responsavelAssistidos'
   });
 
   // Association with Documento

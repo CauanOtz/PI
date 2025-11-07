@@ -1,14 +1,14 @@
 // src/controllers/responsavel.controller.js
-import { AlunoDTO, PaginationDTO } from '../dto/index.js';
+import { AssistidoDTO, PaginationDTO } from '../dto/index.js';
 import { ok } from '../utils/response.js';
 import ResponsavelService from '../services/responsavel.service.js';
 
 /**
  * @openapi
- * /responsaveis/{responsavelId}/alunos:
+ * /responsaveis/{responsavelId}/assistidos:
  *   get:
- *     summary: Lista os alunos associados a um responsável específico
- *     tags: [Alunos]
+ *     summary: Lista os assistidos associados a um responsável específico
+ *     tags: [Assistidos]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -37,7 +37,7 @@ import ResponsavelService from '../services/responsavel.service.js';
  *         description: 'Número máximo de itens por página.'
  *     responses:
  *       200:
- *         description: Lista de alunos retornada com sucesso
+ *         description: Lista de assistidos retornada com sucesso
  *         content:
  *           application/json:
  *             schema:
@@ -49,10 +49,10 @@ import ResponsavelService from '../services/responsavel.service.js';
  *                 dados:
  *                   type: object
  *                   properties:
- *                     alunos:
+     *                     assistidos:
  *                       type: array
  *                       items:
- *                         $ref: '#/components/schemas/Aluno'
+ *                         $ref: '#/components/schemas/Assistido'
  *                     paginacao:
  *                       type: object
  *                       properties:
@@ -84,13 +84,13 @@ import ResponsavelService from '../services/responsavel.service.js';
  *       500:
  *         description: Erro interno do servidor
  */
-export const listarAlunosPorResponsavel = async (req, res, next) => {
+export const listarAssistidosPorResponsavel = async (req, res, next) => {
   try {
     const responsavelId = parseInt(req.params.responsavelId);
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
 
-    const result = await ResponsavelService.listarAlunos(responsavelId, { page, limit });
+    const result = await ResponsavelService.listarAssistidos(responsavelId, { page, limit });
     
     if (result.notFound) {
       return res.status(404).json({
@@ -99,7 +99,7 @@ export const listarAlunosPorResponsavel = async (req, res, next) => {
       });
     }
 
-    const alunosDTO = AlunoDTO.list(result.alunos, { includeResponsaveis: false });
+    const assistidosDTO = AssistidoDTO.list(result.assistidos, { includeResponsaveis: false });
     const paginacao = new PaginationDTO({
       total: result.pagination.total,
       paginaAtual: result.pagination.page,
@@ -107,9 +107,9 @@ export const listarAlunosPorResponsavel = async (req, res, next) => {
       itensPorPagina: result.pagination.limit,
     });
 
-    return ok(res, { alunos: alunosDTO, paginacao });
+    return ok(res, { assistidos: assistidosDTO, paginacao });
   } catch (error) {
-    console.error('Erro ao listar alunos por responsável:', error);
+    console.error('Erro ao listar assistidos por responsável:', error);
     next(error);
   }
 };

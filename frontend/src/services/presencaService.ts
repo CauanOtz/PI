@@ -1,9 +1,10 @@
 import { http } from "../lib/http";
 import { ResponseSuccess, Paginacao } from "./users";
+import { AssistidoPresenca } from "../types/assistido";
 
 export interface Presenca {
   id: number;
-  idAluno: number;
+  idAssistido: number;
   idAula: number;
   status: "presente" | "falta" | "atraso" | "falta_justificada";
   data_registro: string;
@@ -21,13 +22,7 @@ export const presencaService = {
     return res.data.dados;
   },
 
-  async create(payload: {
-    idAluno: number | string;
-    idAula: number | string;
-    status: "presente" | "falta" | "atraso" | "falta_justificada";
-    data_registro?: string;
-    observacao?: string;
-  }) {
+  async create(payload: AssistidoPresenca) {
     const res = await http.post<ResponseSuccess<Presenca>>("/presencas", payload);
     return res.data.dados;
   },
@@ -55,24 +50,18 @@ export const presencaService = {
     return res.data.dados;
   },
 
-  async listByAluno(idAluno: number | string, params?: any) {
+  async listByAssistido(idAssistido: number | string, params?: any) {
     const res = await http.get<ResponseSuccess<{
       presencas: Presenca[];
-      aluno: {
+      assistido: {
         id: number;
         nome: string;
       };
-    }>>(`/presencas/alunos/${idAluno}`, { params });
+    }>>(`/presencas/assistidos/${idAssistido}`, { params });
     return res.data.dados;
   },
 
-  async bulkCreate(items: Array<{
-    idAluno: number | string;
-    idAula: number | string;
-    status: "presente" | "falta" | "atraso" | "falta_justificada";
-    data_registro?: string;
-    observacao?: string;
-  }>) {
+  async bulkCreate(items: AssistidoPresenca[]) {
     const res = await http.post<ResponseSuccess<Presenca[]>>("/presencas/bulk", items);
     return res.data.dados;
   },

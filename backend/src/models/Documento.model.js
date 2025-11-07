@@ -24,11 +24,11 @@ const Documento = sequelize.define('Documento', {
     type: DataTypes.ENUM('RG', 'CPF', 'CERTIDAO_NASCIMENTO', 'COMPROVANTE_ENDERECO', 'OUTRO'),
     allowNull: false
   },
-  alunoId: {
+  assistidoId: {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'alunos',
+      model: 'assistidos',
       key: 'id'
     },
     onDelete: 'CASCADE',
@@ -63,10 +63,10 @@ const Documento = sequelize.define('Documento', {
 });
 
 Documento.associate = (models) => {
-  // Association with Aluno
-  Documento.belongsTo(models.Aluno, {
-    foreignKey: 'alunoId',
-    as: 'aluno',
+  // Association with Assistido
+  Documento.belongsTo(models.Assistido, {
+    foreignKey: 'assistidoId',
+    as: 'assistido',
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
   });

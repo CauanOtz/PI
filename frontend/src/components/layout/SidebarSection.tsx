@@ -42,12 +42,12 @@ export const SidebarSection = (): JSX.Element | null => {
     },
     {
       icon: <SparklesIcon className="w-4 h-4 text-indigo-400" />,
-      label: "Aulas",
+      label: "Atividades",
       path: "/class",
     },
     {
       icon: <GraduationCapIcon className="w-4 h-4 text-purple-400" />,
-      label: "Alunos/Turmas",
+      label: "Assistidos",
       path: "/students",
     },
     {

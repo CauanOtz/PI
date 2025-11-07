@@ -83,7 +83,7 @@ const setupSwagger = (app) => {
               descricao: { type: 'string', nullable: true },
               tipo: { type: 'string', enum: ['RG','CPF','CERTIDAO_NASCIMENTO','COMPROVANTE_ENDERECO','OUTRO'] },
               tamanho: { type: 'integer', nullable: true },
-              alunoId: { type: 'integer' },
+              assistidoId: { type: 'integer' },
               usuarioId: { type: 'integer' },
               dataUpload: { type: 'string', format: 'date-time' },
               downloadUrl: { type: 'string' },
@@ -105,7 +105,7 @@ const setupSwagger = (app) => {
             type: 'object',
             properties: {
               id: { type: 'integer' },
-              idAluno: { type: 'integer' },
+              idAssistido: { type: 'integer' },
               idAula: { type: 'integer' },
               status: { type: 'string', enum: ['presente','falta','atraso','falta_justificada'] },
               dataRegistro: { type: 'string', format: 'date' },
@@ -123,6 +123,41 @@ const setupSwagger = (app) => {
               criadoPor: { type: 'string' },
               createdAt: { type: 'string', format: 'date-time' },
               updatedAt: { type: 'string', format: 'date-time' },
+            },
+          },
+          Assistido: {
+            type: 'object',
+            example: {
+              "id": 1,
+              "nome": "Maria Silva Oliveira Santos",
+              "dataNascimento": "2015-07-22",
+              "sexo": "Feminino",
+              "cartaoSus": "163704163610004",
+              "rg": "12.345.678-9",
+              "endereco": "Rua das Flores, 123",
+              "bairro": "Centro",
+              "cep": "12345-678",
+              "cidade": "São Paulo",
+              "contato": "(11) 98765-4321",
+              "pai": "João Oliveira Santos",
+              "mae": "Ana Silva Oliveira",
+              "updatedAt": "2025-07-22T12:00:00Z"
+            },
+            properties: {
+              id: { type: 'integer' },
+              nome: { type: 'string', maxLength: 100, minLength: 3 },
+              dataNascimento: { type: 'string', format: 'date' },
+              sexo: { type: 'string', enum: ['Feminino', 'Masculino'] },
+              cartaoSus: { type: 'string', maxLength: 20, nullable: true },
+              rg: { type: 'string', maxLength: 20, nullable: true },
+              endereco: { type: 'string', maxLength: 255, nullable: true },
+              bairro: { type: 'string', maxLength: 100, nullable: true },
+              cep: { type: 'string', maxLength: 9, nullable: true },
+              cidade: { type: 'string', maxLength: 100, nullable: true },
+              contato: { type: 'string', maxLength: 20, nullable: true },
+              pai: { type: 'string', maxLength: 100, nullable: true },
+              mae: { type: 'string', maxLength: 100, nullable: true },
+              updatedAt: { type: 'string', format: 'date-time' }
             },
           },
           // Envelopes padrao
@@ -218,6 +253,31 @@ const setupSwagger = (app) => {
                 type: 'object',
                 properties: {
                   notificacoes: { type: 'array', items: { $ref: '#/components/schemas/NotificacaoDTO' } },
+                  paginacao: { $ref: '#/components/schemas/PaginationDTO' },
+                },
+              },
+            },
+          },
+          SuccessAssistido: {
+            type: 'object',
+            properties: {
+              sucesso: { type: 'boolean', example: true },
+              dados: {
+                type: 'object',
+                properties: {
+                  assistido: { $ref: '#/components/schemas/Assistido' }
+                }
+              },
+            },
+          },
+          SuccessAssistidos: {
+            type: 'object',
+            properties: {
+              sucesso: { type: 'boolean', example: true },
+              dados: {
+                type: 'object',
+                properties: {
+                  assistidos: { type: 'array', items: { $ref: '#/components/schemas/Assistido' } },
                   paginacao: { $ref: '#/components/schemas/PaginationDTO' },
                 },
               },

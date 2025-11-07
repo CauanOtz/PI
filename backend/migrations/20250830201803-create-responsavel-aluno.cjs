@@ -1,7 +1,8 @@
 'use strict';
 
 /** @type {import('sequelize-cli').Migration} */
-export async function up(queryInterface, Sequelize) {
+module.exports = {
+  async up(queryInterface, Sequelize) {
   // Cria a tabela de junção
   await queryInterface.createTable('responsaveis_alunos', {
     id: {
@@ -48,10 +49,11 @@ export async function up(queryInterface, Sequelize) {
     type: 'unique',
     name: 'unique_responsavel_aluno'
   });
-}
-export async function down(queryInterface, Sequelize) {
-  // Remove a restrição de chave estrangeira primeiro
-  await queryInterface.removeConstraint('responsaveis_alunos', 'unique_responsavel_aluno');
-  // Depois remove a tabela
-  await queryInterface.dropTable('responsaveis_alunos');
-}
+  },
+  async down(queryInterface, Sequelize) {
+    // Remove a restrição de chave estrangeira primeiro
+    await queryInterface.removeConstraint('responsaveis_alunos', 'unique_responsavel_aluno');
+    // Depois remove a tabela
+    await queryInterface.dropTable('responsaveis_alunos');
+  }
+};

@@ -4,14 +4,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/ca
 import { Avatar, AvatarFallback, AvatarImage } from "../../components/ui/avatar";
 import { BarChart2, CheckCircle2, XCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthProvider";
-import { getAlunosDoResponsavel } from "../../services/responsavel";
+import { getAssistidosDoResponsavel } from "../../services/responsavel";
 
 export const GuardianDashboard = () => {
   const { user } = useAuth();
-  const [alunos, setAlunos] = useState<any[] | null>(null);
+  const [assistidos, setAssistidos] = useState<any[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedAluno, setSelectedAluno] = useState<any | null>(null);
+  const [selectedAssistido, setSelectedAssistido] = useState<any | null>(null);
   const [attendanceLoading, setAttendanceLoading] = useState(false);
   const [attendance, setAttendance] = useState<Record<number, { total: number; presente: number; falta: number; atraso: number; falta_justificada: number; lista: any[] }>>({});
   const [showAllPresencas, setShowAllPresencas] = useState(false);
@@ -19,20 +19,20 @@ export const GuardianDashboard = () => {
   useEffect(() => {
     const fetch = async () => {
       if (!user) {
-        setAlunos([]);
+        setAssistidos([]);
         setLoading(false);
         return;
       }
       setLoading(true);
       setError(null);
       try {
-        const data = await getAlunosDoResponsavel(user.id);
-        const arr = Array.isArray(data) ? data : (data?.alunos ?? []);
-        setAlunos(arr);
+        const data = await getAssistidosDoResponsavel(user.id);
+        const arr = Array.isArray(data) ? data : (data?.assistidos ?? []);
+        setAssistidos(arr);
       } catch (err: any) {
-        console.error("Failed to load alunos for responsavel", err);
+        console.error("Failed to load assistidos for responsavel", err);
         setError(err?.response?.data?.mensagem ?? "Erro ao carregar dados");
-        setAlunos([]);
+        setAssistidos([]);
       } finally {
         setLoading(false);
       }
@@ -41,16 +41,16 @@ export const GuardianDashboard = () => {
   }, [user]);
 
   useEffect(() => {
-    if (alunos && alunos.length > 0 && !selectedAluno) {
-      setSelectedAluno(alunos[0]);
+    if (assistidos && assistidos.length > 0 && !selectedAssistido) {
+      setSelectedAssistido(assistidos[0]);
     }
-  }, [alunos, selectedAluno]);
+  }, [assistidos, selectedAssistido]);
 
   useEffect(() => {
-    const loadAttendance = async (alunoId: number) => {
+    const loadAttendance = async (assistidoId: number) => {
       setAttendanceLoading(true);
       try {
-        const data = await (await import('../../services/presencaService')).presencaService.listByAluno(alunoId, { limit: 50 });
+        const data = await (await import('../../services/presencaService')).presencaService.listByAssistido(assistidoId, { limit: 50 });
         // Suportes de formatos possíveis:
         // 1) Array direto
         // 2) { presencas: [...] }
@@ -91,21 +91,21 @@ export const GuardianDashboard = () => {
           }
         }
 
-        setAttendance(prev => ({ ...prev, [alunoId]: { ...stats, lista: arr } }));
+        setAttendance(prev => ({ ...prev, [assistidoId]: { ...stats, lista: arr } }));
       } catch (err) {
-        console.error('Erro ao carregar presenças do aluno', err);
-  setAttendance(prev => ({ ...prev, [alunoId]: { total: 0, presente: 0, falta: 0, atraso: 0, falta_justificada: 0, lista: [] } }));
+        console.error('Erro ao carregar presenças do assistido', err);
+  setAttendance(prev => ({ ...prev, [assistidoId]: { total: 0, presente: 0, falta: 0, atraso: 0, falta_justificada: 0, lista: [] } }));
       } finally {
         setAttendanceLoading(false);
       }
     };
-    if (selectedAluno?.id) {
+    if (selectedAssistido?.id) {
       // só carrega se ainda não tiver
-      if (!attendance[selectedAluno.id]) {
-        void loadAttendance(selectedAluno.id);
+      if (!attendance[selectedAssistido.id]) {
+        void loadAttendance(selectedAssistido.id);
       }
     }
-  }, [selectedAluno, attendance]);
+  }, [selectedAssistido, attendance]);
 
   if (loading) {
     return (
@@ -114,7 +114,7 @@ export const GuardianDashboard = () => {
         <main className="flex-1 p-4 sm:p-6 lg:p-8 lg:ml-[283px] mt-16 flex items-center justify-center">
           <Card className="w-full max-w-xl">
             <CardHeader>
-              <CardTitle>Carregando informações do aluno</CardTitle>
+              <CardTitle>Carregando informações do assistido</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col items-center gap-4 py-8">
               <div className="w-12 h-12 rounded-full border-4 border-t-4 border-slate-200 border-t-blue-500 animate-spin" />
@@ -144,19 +144,19 @@ export const GuardianDashboard = () => {
     );
   }
 
-    if (!alunos || alunos.length === 0) {
+    if (!assistidos || assistidos.length === 0) {
     return (
       <div className="p-6">
         <SidebarSection />
         <main className="flex-1 p-4 sm:p-6 lg:p-8 lg:ml-[283px] mt-16">
-          <h2 className="text-xl font-semibold">Nenhum aluno vinculado</h2>
-          <p className="text-slate-600">Você ainda não possui alunos vinculados a este responsável.</p>
+          <h2 className="text-xl font-semibold">Nenhum assistido vinculado</h2>
+          <p className="text-slate-600">Você ainda não possui assistidos vinculados a este responsável.</p>
         </main>
       </div>
     );
   }
 
-  const student = selectedAluno ?? alunos[0];
+  const assistido = selectedAssistido ?? assistidos[0];
 
   return (
     <div className="bg-slate-50 flex min-h-screen">
@@ -164,16 +164,16 @@ export const GuardianDashboard = () => {
       <main className="flex-1 p-4 sm:p-6 lg:p-8 lg:ml-[283px] mt-16">
         <header className="mb-8">
           <h1 className="text-3xl font-bold text-slate-800">Portal do Responsável</h1>
-          <p className="text-slate-500 mt-1">Acompanhe a vida escolar de {student.nome}.</p>
+          <p className="text-slate-500 mt-1">Acompanhe a vida escolar de {assistido.nome}.</p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-3">
-            {alunos.map((a) => (
+            {assistidos.map((a) => (
               <button
                 key={a.id}
-                onClick={() => setSelectedAluno(a)}
-                className={`w-full text-left p-3 rounded-md border bg-white hover:bg-slate-50 transition-colors flex items-center gap-3 ${student?.id === a.id ? 'ring-2 ring-blue-300' : ''}`}>
+                onClick={() => setSelectedAssistido(a)}
+                className={`w-full text-left p-3 rounded-md border bg-white hover:bg-slate-50 transition-colors flex items-center gap-3 ${assistido?.id === a.id ? 'ring-2 ring-blue-300' : ''}`}>
                 <Avatar className="w-12 h-12">
                   <AvatarImage src={a.avatarUrl ?? ''} alt={a.nome} />
                   <AvatarFallback className="bg-blue-500 text-white">{a.nome ? String(a.nome).charAt(0) : '?'}</AvatarFallback>
@@ -190,18 +190,18 @@ export const GuardianDashboard = () => {
             <Card className="shadow-md">
               <CardHeader className="flex items-center gap-4">
                 <Avatar className="w-16 h-16">
-                  <AvatarImage src={student.avatarUrl ?? ''} alt={student.nome} />
-                  <AvatarFallback className="bg-blue-500 text-white">{student.nome ? String(student.nome).charAt(0) : '?'}</AvatarFallback>
+                  <AvatarImage src={assistido.avatarUrl ?? ''} alt={assistido.nome} />
+                  <AvatarFallback className="bg-blue-500 text-white">{assistido.nome ? String(assistido.nome).charAt(0) : '?'}</AvatarFallback>
                 </Avatar>
                 <div>
-                  <CardTitle className="text-slate-800">{student.nome}</CardTitle>
+                  <CardTitle className="text-slate-800">{assistido.nome}</CardTitle>
                   <p className="text-xs text-slate-500">Resumo de presenças</p>
                 </div>
               </CardHeader>
               <CardContent className="p-6">
                 <div className="grid grid-cols-2 sm:grid-cols-2 gap-4 mb-6">
                   {(() => {
-                    const a = attendance[student.id];
+                    const a = attendance[assistido.id];
                     const total = a?.total || 0;
                     const pct = (v: number) => total ? Math.round((v / total) * 100) : 0;
                     const items = [
@@ -217,11 +217,11 @@ export const GuardianDashboard = () => {
                     ));
                   })()}
                 </div>
-                <h3 className="font-semibold text-slate-700 mb-2">Informações do Aluno</h3>
+                <h3 className="font-semibold text-slate-700 mb-2">Informações do Assistido</h3>
                 <div className="space-y-2 text-sm text-slate-600">
-                  <div className="flex justify-between"><span>Nome:</span> <span className="font-medium">{student.nome ?? '-'}</span></div>
-                  <div className="flex justify-between"><span>Idade:</span> <span className="font-medium">{student.idade ?? '-'}</span></div>
-                  <div className="flex justify-between"><span>Contato:</span> <span className="font-medium">{student.contato ?? '-'}</span></div>
+                  <div className="flex justify-between"><span>Nome:</span> <span className="font-medium">{assistido.nome ?? '-'}</span></div>
+                  <div className="flex justify-between"><span>Idade:</span> <span className="font-medium">{assistido.idade ?? '-'}</span></div>
+                  <div className="flex justify-between"><span>Contato:</span> <span className="font-medium">{assistido.contato ?? '-'}</span></div>
                 </div>
               </CardContent>
             </Card>
@@ -230,9 +230,9 @@ export const GuardianDashboard = () => {
               <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <CardTitle className="flex items-center gap-2 text-slate-800"><BarChart2 className="w-5 h-5 text-blue-500"/> Registros de Presença</CardTitle>
                 <div className="flex items-center gap-2 text-xs text-slate-500">
-                  {attendance[student.id] && (
+                  {attendance[assistido.id] && (
                     <>
-                      <span>Total: <strong className="text-slate-700">{attendance[student.id].total}</strong></span>
+                      <span>Total: <strong className="text-slate-700">{attendance[assistido.id].total}</strong></span>
                       <span className="hidden sm:inline">|</span>
                       <button
                         type="button"
@@ -244,13 +244,13 @@ export const GuardianDashboard = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                {attendanceLoading && !attendance[student.id] && (
+                {attendanceLoading && !attendance[assistido.id] && (
                   <p className="text-sm text-slate-500">Carregando presenças...</p>
                 )}
-                {!attendanceLoading && attendance[student.id] && attendance[student.id].lista.length === 0 && (
+                {!attendanceLoading && attendance[assistido.id] && attendance[assistido.id].lista.length === 0 && (
                   <p className="text-sm text-slate-500">Nenhum registro de presença.</p>
                 )}
-                {attendance[student.id] && attendance[student.id].lista.length > 0 && (
+                {attendance[assistido.id] && attendance[assistido.id].lista.length > 0 && (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
@@ -262,7 +262,7 @@ export const GuardianDashboard = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {(showAllPresencas ? attendance[student.id].lista : attendance[student.id].lista.slice(0, 8)).map((p: any, idx: number) => {
+                        {(showAllPresencas ? attendance[assistido.id].lista : attendance[assistido.id].lista.slice(0, 8)).map((p: any, idx: number) => {
                           const status = p.status || p.presenca || p.situacao;
                           const dateStr = p.data_registro || p.dataRegistro || p.data || p.createdAt;
                           const d = dateStr ? new Date(dateStr) : null;

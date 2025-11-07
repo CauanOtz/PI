@@ -1,19 +1,19 @@
 // src/services/documento.service.js
 import Documento from '../models/Documento.model.js';
-import Aluno from '../models/Aluno.model.js';
-import ResponsavelAluno from '../models/ResponsavelAluno.model.js';
+import Assistido from '../models/Assistido.model.js';
+import ResponsavelAssistido from '../models/ResponsavelAssistido.model.js';
 import fs from 'fs';
 
 class DocumentoService {
     /**
-     * Verifica se um usuário tem permissão para acessar os documentos de um aluno
+     * Verifica se um usuário tem permissão para acessar os documentos de um assistido
      * @param {Object} usuario - Usuário autenticado
-     * @param {number} alunoId - ID do aluno
+     * @param {number} assistidoId - ID do assistido
      * @returns {Promise<boolean>} - true se tem permissão, false caso contrário
      */
-    async verificarPermissao(usuario, alunoId) {
+    async verificarPermissao(usuario, assistidoId) {
         try {
-            if (!usuario?.id || isNaN(parseInt(alunoId, 10))) {
+            if (!usuario?.id || isNaN(parseInt(assistidoId, 10))) {
                 return false;
             }
 
@@ -21,10 +21,10 @@ class DocumentoService {
                 return true;
             }
 
-            const vinculo = await ResponsavelAluno.findOne({
+            const vinculo = await ResponsavelAssistido.findOne({
                 where: {
                     id_usuario: usuario.id,
-                    id_aluno: parseInt(alunoId, 10)
+                    id_assistido: parseInt(assistidoId, 10)
                 }
             });
 
@@ -36,27 +36,27 @@ class DocumentoService {
     }
 
     /**
-     * Adiciona um novo documento para um aluno
+     * Adiciona um novo documento para um assistido
      * @param {Object} params - Parâmetros para criação do documento
-     * @param {number} params.alunoId - ID do aluno
+     * @param {number} params.assistidoId - ID do assistido
      * @param {Object} params.arquivo - Arquivo enviado (multer)
      * @param {string} params.descricao - Descrição do documento
      * @param {string} params.tipo - Tipo do documento
      * @param {number} params.usuarioId - ID do usuário que está fazendo o upload
      * @returns {Promise<Object>} - Resultado da operação
      */
-    async adicionar({ alunoId, arquivo, descricao, tipo, usuarioId }) {
+    async adicionar({ assistidoId, arquivo, descricao, tipo, usuarioId }) {
         if (!arquivo) {
             return { error: true, status: 400, message: 'Nenhum arquivo foi enviado' };
         }
 
-        const aluno = await Aluno.findByPk(alunoId);
-        if (!aluno) {
+        const assistido = await Assistido.findByPk(assistidoId);
+        if (!assistido) {
             // Remove o arquivo enviado em caso de erro
             if (arquivo.path && fs.existsSync(arquivo.path)) {
                 fs.unlinkSync(arquivo.path);
             }
-            return { error: true, status: 404, message: 'Aluno não encontrado' };
+            return { error: true, status: 404, message: 'Assistido não encontrado' };
         }
 
         const TIPOS_PERMITIDOS = ['RG', 'CPF', 'CERTIDAO_NASCIMENTO', 'COMPROVANTE_ENDERECO', 'OUTRO'];
@@ -69,7 +69,7 @@ class DocumentoService {
                 caminhoArquivo: arquivo.path,
                 tipo: tipoFinal,
                 tamanho: arquivo.size,
-                alunoId: parseInt(alunoId, 10),
+                assistidoId: parseInt(assistidoId, 10),
                 usuarioId
             });
 
@@ -84,20 +84,20 @@ class DocumentoService {
     }
 
     /**
-     * Lista todos os documentos de um aluno
-     * @param {number} alunoId - ID do aluno
+     * Lista todos os documentos de um assistido
+     * @param {number} assistidoId - ID do assistido
      * @returns {Promise<Object>} - Lista de documentos ou erro
      */
-    async listar(alunoId) {
-        const aluno = await Aluno.findByPk(alunoId);
-        if (!aluno) {
-            return { error: true, status: 404, message: 'Aluno não encontrado' };
+    async listar(assistidoId) {
+        const assistido = await Assistido.findByPk(assistidoId);
+        if (!assistido) {
+            return { error: true, status: 404, message: 'Assistido não encontrado' };
         }
 
         const documentos = await Documento.findAll({
-            where: { alunoId },
+            where: { assistidoId },
             attributes: {
-                exclude: ['alunoId', 'usuarioId', 'caminhoArquivo']
+                exclude: ['assistidoId', 'usuarioId', 'caminhoArquivo']
             },
             order: [['dataUpload', 'DESC']]
         });
@@ -107,20 +107,20 @@ class DocumentoService {
 
     /**
      * Obtém um documento específico
-     * @param {number} alunoId - ID do aluno
+     * @param {number} assistidoId - ID do assistido
      * @param {number} documentoId - ID do documento
      * @returns {Promise<Object>} - Documento encontrado ou erro
      */
-    async obter(alunoId, documentoId) {
-        const aluno = await Aluno.findByPk(alunoId);
-        if (!aluno) {
-            return { error: true, status: 404, message: 'Aluno não encontrado' };
+    async obter(assistidoId, documentoId) {
+        const assistido = await Assistido.findByPk(assistidoId);
+        if (!assistido) {
+            return { error: true, status: 404, message: 'Assistido não encontrado' };
         }
 
         const documento = await Documento.findOne({
             where: {
                 id: documentoId,
-                alunoId
+                assistidoId
             }
         });
 
@@ -138,22 +138,22 @@ class DocumentoService {
     /**
      * Atualiza as informações de um documento
      * @param {Object} params - Parâmetros para atualização
-     * @param {number} params.alunoId - ID do aluno
+     * @param {number} params.assistidoId - ID do assistido
      * @param {number} params.documentoId - ID do documento
      * @param {string} params.nome - Novo nome do documento
      * @param {string} params.descricao - Nova descrição do documento
      * @returns {Promise<Object>} - Documento atualizado ou erro
      */
-    async atualizar({ alunoId, documentoId, nome, descricao }) {
-        const aluno = await Aluno.findByPk(alunoId);
-        if (!aluno) {
-            return { error: true, status: 404, message: 'Aluno não encontrado' };
+    async atualizar({ assistidoId, documentoId, nome, descricao }) {
+        const assistido = await Assistido.findByPk(assistidoId);
+        if (!assistido) {
+            return { error: true, status: 404, message: 'Assistido não encontrado' };
         }
 
         const documento = await Documento.findOne({
             where: {
                 id: documentoId,
-                alunoId
+                assistidoId
             }
         });
 
@@ -182,20 +182,20 @@ class DocumentoService {
 
     /**
      * Exclui um documento
-     * @param {number} alunoId - ID do aluno
+     * @param {number} assistidoId - ID do assistido
      * @param {number} documentoId - ID do documento
      * @returns {Promise<Object>} - Resultado da operação
      */
-    async excluir(alunoId, documentoId) {
-        const aluno = await Aluno.findByPk(alunoId);
-        if (!aluno) {
-            return { error: true, status: 404, message: 'Aluno não encontrado' };
+    async excluir(assistidoId, documentoId) {
+        const assistido = await Assistido.findByPk(assistidoId);
+        if (!assistido) {
+            return { error: true, status: 404, message: 'Assistido não encontrado' };
         }
 
         const documento = await Documento.findOne({
             where: {
                 id: documentoId,
-                alunoId
+                assistidoId
             }
         });
 

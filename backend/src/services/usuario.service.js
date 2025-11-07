@@ -5,11 +5,22 @@ import { signToken } from '../utils/jwt.js';
 
 export default class UsuarioService {
   static async create({ nome, email, senha, telefone, cpf, role = 'responsavel' }, requesterRole = null) {
-    // role protection: only admin can create admin users
+    // Verifica se existem usuários no sistema
+    const usuariosExistentes = await Usuario.count();
     const allowedRoles = ['admin', 'responsavel'];
-    role = (typeof role === 'string' && allowedRoles.includes(role)) ? role : 'responsavel';
-    if (role === 'admin' && requesterRole !== 'admin') {
-      return { forbidden: true };
+    
+    // Se não existem usuários, permite criar um admin
+    if (usuariosExistentes === 0) {
+      role = (typeof role === 'string' && allowedRoles.includes(role)) ? role : 'admin';
+    } else if (!requesterRole) {
+      // Se já existem usuários e não há requesterRole, força para responsavel
+      role = 'responsavel';
+    } else {
+      // Se há requesterRole, valida se pode criar admin
+      role = (typeof role === 'string' && allowedRoles.includes(role)) ? role : 'responsavel';
+      if (role === 'admin' && requesterRole !== 'admin') {
+        return { forbidden: true };
+      }
     }
 
     // cpf normalization and validation

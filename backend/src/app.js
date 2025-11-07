@@ -9,8 +9,8 @@ import setupSwagger from './config/swagger.js'; // Importe a configuração do S
 // import mainRoutes from './routes/index.js'; // Descomente quando tiver rotas
 import aulaRoutes from './routes/aula.routes.js'; // Importe suas rotas de aula
 import usuarioRoutes from './routes/usuario.routes.js'; // Importe suas rotas de usuário
-import alunoRoutes from './routes/aluno.routes.js'; // Importe as rotas de aluno
-import responsavelAlunoRoutes from './routes/responsavel-aluno.routes.js'; // Importe as rotas de responsavel-aluno
+import assistidoRoutes from './routes/assistido.routes.js'; // Importe as rotas de assistido
+import responsavelAssistidoRoutes from './routes/responsavel-assistido.routes.js'; // Importe as rotas de responsavel-assistido
 import presencaRoutes from './routes/presenca.routes.js'; // Importe as rotas de presença
 import responsavelRoutes from './routes/responsavel.routes.js'; // Importe as rotas de responsavel
 import notificacaoRoutes from './routes/notificacao.routes.js'; // Importe as rotas de notificações
@@ -43,14 +43,14 @@ app.get('/', (req, res) => {
 // Use suas rotas com um prefixo
 app.use('/api/v2/aulas', aulaRoutes); // Rotas de aula sob /api/v2/aulas
 app.use('/api/v2/usuarios', usuarioRoutes); // Rotas de usuário sob /api/v2/usuarios
-app.use('/api/v2/alunos', alunoRoutes); // Rotas de aluno sob /api/v2/alunos
-app.use('/api/v2/responsaveis-alunos', responsavelAlunoRoutes); // Rotas de responsavel-aluno sob /api/v2/responsaveis-alunos
+app.use('/api/v2/assistidos', assistidoRoutes); // Rotas de assistido sob /api/v2/assistidos
+app.use('/api/v2/responsaveis-assistidos', responsavelAssistidoRoutes); // Rotas de responsavel-assistido sob /api/v2/responsaveis-assistidos
 app.use('/api/v2/presencas', presencaRoutes); // Rotas de presença sob /api/v2/presencas
 app.use('/api/v2/responsaveis', responsavelRoutes); // Rotas de responsavel sob /api/v2/responsaveis
 app.use('/api/v2/notificacoes', notificacaoRoutes); // Rotas de notificações sob /api/v2/notificacoes
 
 app.use((req, res, next) => {
-  const err = new Error('Rota n�o encontrada.');
+  const err = new Error('Rota n�o encontrada.');
   err.status = 404;
   next(err);
 });

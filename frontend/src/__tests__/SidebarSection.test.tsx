@@ -36,8 +36,8 @@ describe('SidebarSection (admin)', () => {
     const labels = [
       'Dashboard',
       'Presença',
-      'Aulas',
-      'Alunos/Turmas',
+      'Atividades',
+      'Assistidos',
       'Usuários',
       'Calendário',
       'Relatório',
@@ -80,7 +80,7 @@ describe('SidebarSection (guardian)', () => {
     ['Painel do Aluno', 'Notificações', 'Configurações'].forEach(label => {
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
     });
-    ['Dashboard','Presença','Aulas','Alunos/Turmas','Usuários','Calendário','Relatório'].forEach(label => {
+    ['Dashboard','Presença','Atividades','Assistidos','Usuários','Calendário','Relatório'].forEach(label => {
       expect(screen.queryByRole('button', { name: label })).toBeNull();
     });
   });

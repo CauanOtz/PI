@@ -7,19 +7,32 @@ export interface BackendResponsavel {
   telefone?: string;
 }
 
-export interface BackendAluno {
+export interface BackendAssistido {
   id: number;
   nome: string;
-  idade?: number;
+  dataNascimento: string;
+  sexo: 'Feminino' | 'Masculino';
+  cartaoSus?: string | null;
+  rg?: string | null;
   endereco?: string | null;
+  bairro?: string | null;
+  cep?: string | null;
+  cidade?: string | null;
   contato?: string | null;
+  contatoEmergencia?: string | null;
+  problemasSaude?: string | null;
+  medicamentosAlergias?: string | null;
+  observacoes?: string | null;
+  pai?: string | null;
+  mae?: string | null;
   created_at?: string;
   updated_at?: string;
   responsaveis?: BackendResponsavel[];
+  responsaveisIds?: number[];
 }
 
 export interface StudentsListResult {
-  alunos: BackendAluno[];
+  assistidos: BackendAssistido[];
   paginacao: {
     total: number;
     paginaAtual: number;
@@ -33,30 +46,30 @@ export interface StudentsListResult {
 export const studentsService = {
   list(params?: { page?: number; limit?: number; search?: string }) {
     return http
-      .get<{ sucesso: boolean; dados: StudentsListResult }>("/alunos", { params })
+      .get<{ sucesso: boolean; dados: StudentsListResult }>("/assistidos", { params })
       .then((r) => r.data.dados);
   },
 
   get(id: number) {
     return http
-      .get<{ sucesso: boolean; dados: BackendAluno }>(`/alunos/${id}`)
+      .get<{ sucesso: boolean; dados: BackendAssistido }>(`/assistidos/${id}`)
       .then((r) => r.data.dados);
   },
 
-  create(payload: Partial<BackendAluno>) {
+  create(payload: Partial<BackendAssistido>) {
     // envia dados conforme backend espera (nome, idade, endereco, contato, ...)
     return http
-      .post<{ sucesso: boolean; dados: BackendAluno }>("/alunos", payload)
+      .post<{ sucesso: boolean; dados: BackendAssistido }>("/assistidos", payload)
       .then((r) => r.data.dados);
   },
 
-  update(id: number, payload: Partial<BackendAluno>) {
+  update(id: number, payload: Partial<BackendAssistido>) {
     return http
-      .put<{ sucesso: boolean; dados: BackendAluno }>(`/alunos/${id}`, payload)
+      .put<{ sucesso: boolean; dados: BackendAssistido }>(`/assistidos/${id}`, payload)
       .then((r) => r.data.dados);
   },
 
   remove(id: number) {
-    return http.delete<{ sucesso: boolean }>(`/alunos/${id}`).then((r) => r.data);
+    return http.delete<{ sucesso: boolean }>(`/assistidos/${id}`).then((r) => r.data);
   },
 };

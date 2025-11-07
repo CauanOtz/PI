@@ -16,8 +16,8 @@ const validateRequest = (req, res, next) => {
 
 // Validação para registrar presença
 export const validateRegistrarPresenca = [
-  body('idAluno')
-    .isInt({ min: 1 }).withMessage('ID do aluno deve ser um número inteiro positivo.')
+  body('idAssistido')
+    .isInt({ min: 1 }).withMessage('ID do assistido deve ser um número inteiro positivo.')
     .toInt(),
   body('idAula')
     .isInt({ min: 1 }).withMessage('ID da aula deve ser um número inteiro positivo.')
@@ -38,9 +38,9 @@ export const validateRegistrarPresenca = [
 
 // Validação para listar presenças com filtros
 export const validateListarPresencas = [
-  query('idAluno')
+  query('idAssistido')
     .optional()
-    .isInt({ min: 1 }).withMessage('ID do aluno deve ser um número inteiro positivo.')
+    .isInt({ min: 1 }).withMessage('ID do assistido deve ser um número inteiro positivo.')
     .toInt(),
   query('idAula')
     .optional()
@@ -88,9 +88,9 @@ export const validateAtualizarPresenca = [
 ];
 
 // Validação para listar histórico de presença de um aluno
-export const validateHistoricoAluno = [
-  param('idAluno')
-    .isInt({ min: 1 }).withMessage('ID do aluno deve ser um número inteiro positivo.')
+export const validateHistoricoAssistido = [
+  param('idAssistido')
+    .isInt({ min: 1 }).withMessage('ID do assistido deve ser um número inteiro positivo.')
     .toInt(),
   query('dataInicio')
     .optional()
