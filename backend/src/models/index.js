@@ -9,6 +9,7 @@ import ResponsavelAssistido from './ResponsavelAssistido.model.js';
 import Notificacao from './Notificacao.model.js';
 import Presenca from './Presenca.model.js';
 import Aula from './Aula.model.js';
+import Atividade from './Atividade.model.js';
 import UsuarioNotificacao from './UsuarioNotificacao.model.js'; 
 
 // Initialize models
@@ -20,6 +21,7 @@ const models = {
   Notificacao,
   Presenca,
   Aula,
+  Atividade,
   UsuarioNotificacao,
 };
 
@@ -50,6 +52,7 @@ export {
   Notificacao,
   Presenca,
   Aula,
+  Atividade,
   UsuarioNotificacao,
 };
 

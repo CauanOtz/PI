@@ -59,7 +59,8 @@ export interface AssistidosResponse {
 
 export interface AssistidoPresenca {
   idAssistido: number | string;
-  idAula: number | string;
+  idAtividade: number | string;
+  idAula?: number | string; // Deprecated, use idAtividade
   status: 'presente' | 'falta' | 'atraso' | 'falta_justificada';
   data_registro?: string;
   observacao?: string;

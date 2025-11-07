@@ -129,25 +129,6 @@ export const obterAssistidoPorId = async (req, res, next) => {
  *               - nome
  *               - dataNascimento
  *               - sexo
- *             example:
- *               {
- *                 "nome": "Maria Silva Oliveira Santos",
- *                 "dataNascimento": "2015-07-22",
- *                 "sexo": "Feminino",
- *                 "cartaoSus": "163704163610004",
- *                 "rg": "12.345.678-9",
- *                 "endereco": "Rua das Flores, 123",
- *                 "bairro": "Centro",
- *                 "cep": "12345-678",
- *                 "cidade": "São Paulo",
- *                 "contato": "(11) 98765-4321",
- *                 "pai": "João Oliveira Santos",
- *                 "mae": "Ana Silva Oliveira"
- *               }
- *             required:
- *               - nome
- *               - dataNascimento
- *               - sexo
  *             properties:
  *               nome:
  *                 type: string
@@ -204,6 +185,19 @@ export const obterAssistidoPorId = async (req, res, next) => {
  *                 type: string
  *                 maxLength: 100
  *                 description: Nome completo da mãe (opcional)
+ *             example:
+ *               nome: "Maria Silva Oliveira Santos"
+ *               dataNascimento: "2015-07-22"
+ *               sexo: "Feminino"
+ *               cartaoSus: "163704163610004"
+ *               rg: "12.345.678-9"
+ *               endereco: "Rua das Flores, 123"
+ *               bairro: "Centro"
+ *               cep: "12345-678"
+ *               cidade: "São Paulo"
+ *               contato: "(11) 98765-4321"
+ *               pai: "João Oliveira Santos"
+ *               mae: "Ana Silva Oliveira"
  *     responses:
  *       201:
  *         description: Assistido criado com sucesso
