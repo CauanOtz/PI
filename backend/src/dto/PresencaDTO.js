@@ -3,8 +3,8 @@ export default class PresencaDTO {
   constructor(model) {
     if (!model) return;
     this.id = model.id;
-    this.idAluno = model.idAluno ?? model.alunoId ?? null;
-    this.idAula = model.idAula ?? model.aulaId ?? null;
+    this.idAssistido = model.idAssistido ?? model.id_assistido ?? null;
+    this.idAtividade = model.idAtividade ?? model.id_atividade ?? null;
     this.status = model.status;
     this.dataRegistro = model.dataRegistro ?? model.data_registro ?? model.createdAt ?? null;
     this.observacao = model.observacao ?? null;

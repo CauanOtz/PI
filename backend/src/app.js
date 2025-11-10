@@ -7,7 +7,8 @@ import morgan from 'morgan';
 import logger from './utils/logger.js';
 import setupSwagger from './config/swagger.js'; // Importe a configuração do Swagger
 // import mainRoutes from './routes/index.js'; // Descomente quando tiver rotas
-import aulaRoutes from './routes/aula.routes.js'; // Importe suas rotas de aula
+// DEPRECATED: aula routes removed, using atividade routes instead
+import atividadeRoutes from './routes/atividade.routes.js'; // Importe suas rotas de atividade
 import usuarioRoutes from './routes/usuario.routes.js'; // Importe suas rotas de usuário
 import assistidoRoutes from './routes/assistido.routes.js'; // Importe as rotas de assistido
 import responsavelAssistidoRoutes from './routes/responsavel-assistido.routes.js'; // Importe as rotas de responsavel-assistido
@@ -41,7 +42,8 @@ app.get('/', (req, res) => {
 // app.use('/api/v1', mainRoutes);
 
 // Use suas rotas com um prefixo
-app.use('/api/v2/aulas', aulaRoutes); // Rotas de aula sob /api/v2/aulas
+// app.use('/api/v2/aulas', aulaRoutes); // DEPRECATED: Use /atividades
+app.use('/api/v2/atividades', atividadeRoutes); // Rotas de atividade sob /api/v2/atividades
 app.use('/api/v2/usuarios', usuarioRoutes); // Rotas de usuário sob /api/v2/usuarios
 app.use('/api/v2/assistidos', assistidoRoutes); // Rotas de assistido sob /api/v2/assistidos
 app.use('/api/v2/responsaveis-assistidos', responsavelAssistidoRoutes); // Rotas de responsavel-assistido sob /api/v2/responsaveis-assistidos

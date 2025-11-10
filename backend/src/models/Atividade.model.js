@@ -1,13 +1,12 @@
-// src/models/Aula.model.js
+// src/models/Atividade.model.js
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
-import Usuario from './Usuario.model.js';
 
 /**
  * @openapi
  * components:
  *   schemas:
- *     Aula:
+ *     Atividade:
  *       type: object
  *       required:
  *         - titulo
@@ -16,28 +15,28 @@ import Usuario from './Usuario.model.js';
  *       properties:
  *         id:
  *           type: integer
- *           description: ID auto-gerado da aula.
+ *           description: ID auto-gerado da atividade.
  *           example: 1
  *         titulo:
  *           type: string
  *           maxLength: 100
- *           description: Título da aula.
+ *           description: Título da atividade.
  *           example: "Matemática Básica"
  *         data:
  *           type: string
  *           format: date
- *           description: Data da aula (YYYY-MM-DD).
+ *           description: Data da atividade (YYYY-MM-DD).
  *           example: "2024-09-02"
  *         horario:
  *           type: string
  *           format: time
- *           description: Horário da aula (HH:MM:SS).
+ *           description: Horário da atividade (HH:MM:SS).
  *           example: "14:30:00"
  *         descricao:
  *           type: string
  *           nullable: true
- *           description: Descrição opcional da aula.
- *           example: "Aula introdutória sobre conceitos básicos"
+ *           description: Descrição opcional da atividade.
+ *           example: "Atividade introdutória sobre conceitos básicos"
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -46,7 +45,7 @@ import Usuario from './Usuario.model.js';
  *           type: string
  *           format: date-time
  *           description: Data e hora da última atualização do registro.
- *     NovaAula:
+ *     NovaAtividade:
  *       type: object
  *       required:
  *         - titulo
@@ -56,56 +55,43 @@ import Usuario from './Usuario.model.js';
  *         titulo:
  *           type: string
  *           maxLength: 100
- *           description: Título da aula.
+ *           description: Título da atividade.
  *           example: "Matemática Básica"
  *         data:
  *           type: string
  *           format: date
- *           description: Data da aula (YYYY-MM-DD).
+ *           description: Data da atividade (YYYY-MM-DD).
  *           example: "2024-09-02"
  *         horario:
  *           type: string
  *           format: time
- *           description: Horário da aula (HH:MM:SS).
+ *           description: Horário da atividade (HH:MM:SS).
  *           example: "14:30:00"
  *         descricao:
  *           type: string
  *           nullable: true
- *           description: Descrição opcional da aula.
- *           example: "Aula introdutória sobre conceitos básicos"
+ *           description: Descrição opcional da atividade.
+ *           example: "Atividade introdutória sobre conceitos básicos"
  */
-const Aula = sequelize.define('Aula', {
-  // ... (definição do modelo como antes)
+const Atividade = sequelize.define('Atividade', {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
   titulo: { type: DataTypes.STRING(100), allowNull: false },
   data: { type: DataTypes.DATEONLY, allowNull: false },
   horario: { type: DataTypes.TIME, allowNull: false },
   descricao: { type: DataTypes.TEXT, allowNull: true },
 }, {
-  tableName: 'aulas',
+  tableName: 'atividades',
   timestamps: true,
 });
 
-Aula.associate = (models) => {
-  // Relacionamento com Usuario (Responsável)
-  Aula.belongsTo(models.Usuario, {
-    foreignKey: 'responsavel_id',
-    as: 'responsavel'
-  });
-
-  // Relacionamento com Usuario (Professor)
-  Aula.belongsTo(models.Usuario, {
-    foreignKey: 'professor_id',
-    as: 'professor'
-  });
-
+Atividade.associate = (models) => {
   // Relacionamento com Presenca
-  Aula.hasMany(models.Presenca, {
-    foreignKey: 'idAula',
+  Atividade.hasMany(models.Presenca, {
+    foreignKey: 'idAtividade',
     as: 'presencas',
     onDelete: 'CASCADE',
     onUpdate: 'CASCADE'
   });
 };
 
-export default Aula;
+export default Atividade;

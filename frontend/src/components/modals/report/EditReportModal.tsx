@@ -150,7 +150,7 @@ export const EditReportModal = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Editar Relatório</DialogTitle>
+          <DialogTitle>Editar Documento</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -221,12 +221,12 @@ export const EditReportModal = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">Nome do Relatório</Label>
+            <Label htmlFor="name">Nome do Documento</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Nome do relatório"
+              placeholder="Nome do documento"
               required
             />
           </div>

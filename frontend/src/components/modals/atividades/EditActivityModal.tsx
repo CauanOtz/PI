@@ -18,18 +18,28 @@ type Form = z.infer<typeof schema>;
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: Form) => Promise<void> | void;
+  atividade?: Partial<Form> & { id?: number } | null;
+  onSubmit: (id: number, data: Form) => Promise<void> | void;
 }
 
-export const CreateAulaModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) => {
+export const EditAtividadeModal: React.FC<Props> = ({ isOpen, onClose, atividade, onSubmit }) => {
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<Form>({ resolver: zodResolver(schema) });
 
   React.useEffect(() => {
+    if (isOpen && atividade) {
+      reset({
+        titulo: atividade.titulo ?? '',
+        data: atividade.data ?? '',
+        horario: atividade.horario ?? '',
+        descricao: atividade.descricao ?? '',
+      });
+    }
     if (!isOpen) reset();
-  }, [isOpen]);
+  }, [isOpen, atividade, reset]);
 
   const submit = async (data: Form) => {
-    await onSubmit(data);
+    if (!atividade?.id) return;
+    await onSubmit(atividade.id, data);
     onClose();
   };
 
@@ -37,7 +47,7 @@ export const CreateAulaModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) 
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-lg w-full">
         <DialogHeader>
-          <DialogTitle>Criar nova aula</DialogTitle>
+          <DialogTitle>Editar atividade</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(submit)} className="space-y-4 p-2">
@@ -62,13 +72,13 @@ export const CreateAulaModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) 
 
           <div>
             <label className="text-sm font-medium">Descrição (opcional)</label>
-            <textarea {...register('descricao')} placeholder="Descrição da aula" className="w-full rounded-md border border-gray-200 p-2 h-24" />
+            <textarea {...register('descricao')} placeholder="Descrição da atividade" className="w-full rounded-md border border-gray-200 p-2 h-24" />
           </div>
 
           <DialogFooter>
             <div className="flex items-center justify-end w-full gap-2">
               <Button variant="outline" onClick={onClose} type="button">Cancelar</Button>
-              <Button type="submit" disabled={isSubmitting}>Criar</Button>
+              <Button type="submit" disabled={isSubmitting}>Salvar</Button>
             </div>
           </DialogFooter>
         </form>
@@ -77,4 +87,4 @@ export const CreateAulaModal: React.FC<Props> = ({ isOpen, onClose, onSubmit }) 
   );
 };
 
-export default CreateAulaModal;
+export default EditAtividadeModal;

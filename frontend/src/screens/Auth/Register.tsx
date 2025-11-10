@@ -37,7 +37,7 @@ export const Register = () => {
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
             <Avatar className="w-[65px] h-[65px]">
-              <AvatarImage src="/logoAng.png" alt="Logo da escola" />
+              <AvatarImage src="/logoAng.png" alt="Logo da ANG" />
               <AvatarFallback>ES</AvatarFallback>
             </Avatar>
           </div>

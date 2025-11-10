@@ -4,7 +4,6 @@ import {
   FileTextIcon,
   UsersIcon,
   ClipboardCheckIcon,
-  CalendarIcon,
   BellIcon,
   BarChart3Icon,
   ShieldCheckIcon,
@@ -58,8 +57,8 @@ export const Dashboard = (): JSX.Element => {
       bgColor: "bg-yellow-50/70",
     },
     {
-      title: "Relatórios",
-      description: "Visualizar relatórios e documentos",
+      title: "Documentos",
+      description: "Gerenciar documentos dos assistidos",
       icon: <FileTextIcon className="w-6 h-6 text-pink-500" />,
       path: "/files",
       bgColor: "bg-pink-50/70",

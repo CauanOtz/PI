@@ -2,7 +2,7 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
 import Assistido from './Assistido.model.js';
-import Aula from './Aula.model.js';
+import Atividade from './Atividade.model.js';
 
 /**
  * @openapi
@@ -12,7 +12,7 @@ import Aula from './Aula.model.js';
  *       type: object
  *       required:
  *         - idAssistido
- *         - idAula
+ *         - idAtividade
  *         - status
  *         - data_registro
  *       properties:
@@ -24,9 +24,9 @@ import Aula from './Aula.model.js';
  *           type: integer
  *           description: ID do assistido relacionado.
  *           example: 1
- *         idAula:
+ *         idAtividade:
  *           type: integer
- *           description: ID da aula relacionada.
+ *           description: ID da atividade relacionada.
  *           example: 1
  *         status:
  *           type: string
@@ -70,12 +70,12 @@ const Presenca = sequelize.define('Presenca', {
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE'
   },
-  idAula: {
+  idAtividade: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    field: 'id_aula',
+    field: 'id_atividade',
     references: {
-      model: 'aulas',
+      model: 'atividades',
       key: 'id'
     },
     onUpdate: 'CASCADE',
@@ -104,8 +104,8 @@ const Presenca = sequelize.define('Presenca', {
   indexes: [
     {
       unique: true,
-      fields: ['id_assistido', 'id_aula', 'data_registro'],
-      name: 'unique_presenca_assistido_aula_data'
+      fields: ['id_assistido', 'id_atividade', 'data_registro'],
+      name: 'unique_presenca_assistido_atividade_data'
     }
   ]
 });
@@ -119,9 +119,9 @@ Presenca.associate = (models) => {
     onDelete: 'CASCADE' 
   });
   
-  Presenca.belongsTo(models.Aula, {
-    foreignKey: 'idAula',
-    as: 'aula',
+  Presenca.belongsTo(models.Atividade, {
+    foreignKey: 'idAtividade',
+    as: 'atividade',
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE' 
   });

@@ -136,17 +136,6 @@ Usuario.associate = (models) => {
     as: 'documentos'
   });
 
-  // Association with Aula
-  Usuario.hasMany(models.Aula, {
-    foreignKey: 'responsavel_id',
-    as: 'aulasResponsavel'
-  });
-
-  Usuario.hasMany(models.Aula, {
-    foreignKey: 'professor_id',
-    as: 'aulasProfessor'
-  });
-
   // Usuário pode ser o criador de várias notificações
   Usuario.hasMany(models.Notificacao, {
     foreignKey: 'criadoPor',

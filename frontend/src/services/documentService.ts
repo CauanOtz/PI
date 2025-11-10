@@ -4,7 +4,7 @@ import { ResponseSuccess } from "./users";
 
 export interface Documento {
   id: number;
-  idAluno: number;
+  idAssistido: number;
   nome: string;
   descricao?: string;
   tipo: string;
@@ -16,49 +16,48 @@ export interface Documento {
 /**
  * documentService - wrapper simples para endpoints do backend relacionados a documentos
  * Endpoints esperados:
- *  POST   /alunos/:alunoId/documentos          (multipart/form-data)  -> upload
- *  GET    /alunos/:alunoId/documentos          -> list
- *  GET    /alunos/:alunoId/documentos/:id/download -> download (blob)
- *  PUT    /alunos/:alunoId/documentos/:id      -> update metadata
- *  DELETE /alunos/:alunoId/documentos/:id      -> delete
+ *  POST   /assistidos/:assistidoId/documentos          (multipart/form-data)  -> upload
+ *  GET    /assistidos/:assistidoId/documentos          -> list
+ *  GET    /assistidos/:assistidoId/documentos/:id/download -> download (blob)
+ *  PUT    /assistidos/:assistidoId/documentos/:id      -> update metadata
+ *  DELETE /assistidos/:assistidoId/documentos/:id      -> delete
  */
 
-const buildBase = (alunoId: number | string) => `/alunos/${alunoId}/documentos`;
+const buildBase = (assistidoId: number | string) => `/assistidos/${assistidoId}/documentos`;
 
 export const documentService = {
-  async uploadDocument(alunoId: number | string, file: File, descricao?: string, extra: Record<string, any> = {}) {
+  async uploadDocument(assistidoId: number | string, file: File, extra: Record<string, any> = {}) {
     const fd = new FormData();
     fd.append("documento", file);
-    if (descricao) fd.append("descricao", descricao);
     Object.entries(extra).forEach(([k, v]) => {
       if (v !== undefined && v !== null) fd.append(k, String(v));
     });
 
-    const res = await http.post<ResponseSuccess<Documento>>(buildBase(alunoId), fd, {
+    const res = await http.post<ResponseSuccess<Documento>>(buildBase(assistidoId), fd, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return res.data.dados;
   },
 
-  async listDocuments(alunoId: number | string) {
-    const res = await http.get<ResponseSuccess<{ documentos: Documento[] }>>(buildBase(alunoId));
+  async listDocuments(assistidoId: number | string) {
+    const res = await http.get<ResponseSuccess<{ documentos: Documento[] }>>(buildBase(assistidoId));
     return res.data.dados.documentos;
   },
 
-  async downloadDocument(alunoId: number | string, documentoId: number | string) {
-    const url = `${buildBase(alunoId)}/${documentoId}/download`;
+  async downloadDocument(assistidoId: number | string, documentoId: number | string) {
+    const url = `${buildBase(assistidoId)}/${documentoId}/download`;
     const res = await http.get<Blob>(url, { responseType: "blob" });
     return res.data;
   },
 
-  async updateDocument(alunoId: number | string, documentoId: number | string, payload: Partial<Documento>) {
-    const url = `${buildBase(alunoId)}/${documentoId}`;
+  async updateDocument(assistidoId: number | string, documentoId: number | string, payload: Partial<Documento>) {
+    const url = `${buildBase(assistidoId)}/${documentoId}`;
     const res = await http.put<ResponseSuccess<Documento>>(url, payload);
     return res.data.dados;
   },
 
-  async deleteDocument(alunoId: number | string, documentoId: number | string) {
-    const url = `${buildBase(alunoId)}/${documentoId}`;
+  async deleteDocument(assistidoId: number | string, documentoId: number | string) {
+    const url = `${buildBase(assistidoId)}/${documentoId}`;
     await http.delete<ResponseSuccess<void>>(url);
     return;
   }

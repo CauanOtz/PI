@@ -20,7 +20,7 @@ describe('presencaService (error paths)', () => {
 
   it('create error', async () => {
     (http.post as any).mockRejectedValue(build('create failed'));
-    await expect(presencaService.create({ idAssistido: 1, idAula: 2, status: 'presente' })).rejects.toThrow('create failed');
+    await expect(presencaService.create({ idAssistido: 1, idAtividade: 2, status: 'presente' })).rejects.toThrow('create failed');
   });
 
   it('update error', async () => {
@@ -33,9 +33,9 @@ describe('presencaService (error paths)', () => {
     await expect(presencaService.delete(1)).rejects.toThrow('delete failed');
   });
 
-  it('listByAula error', async () => {
-    (http.get as any).mockRejectedValue(build('aula failed'));
-    await expect(presencaService.listByAula(1)).rejects.toThrow('aula failed');
+  it('listByAtividade error', async () => {
+    (http.get as any).mockRejectedValue(build('atividade failed'));
+    await expect(presencaService.listByAtividade(1)).rejects.toThrow('atividade failed');
   });
 
   it('listByAssistido error', async () => {
@@ -45,6 +45,6 @@ describe('presencaService (error paths)', () => {
 
   it('bulkCreate error', async () => {
     (http.post as any).mockRejectedValue(build('bulk failed'));
-    await expect(presencaService.bulkCreate([{ idAssistido: 1, idAula: 2, status: 'presente' }])).rejects.toThrow('bulk failed');
+    await expect(presencaService.bulkCreate([{ idAssistido: 1, idAtividade: 2, status: 'presente' }])).rejects.toThrow('bulk failed');
   });
 });

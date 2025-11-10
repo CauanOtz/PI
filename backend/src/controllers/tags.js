@@ -7,9 +7,9 @@
  *   - name: Notificações
  *     description: Gerenciamento das notificações do sistema
  *   - name: Presenças
- *     description: Gerenciamento de Presenças dos assistidos nas aulas
- *   - name: Aulas
- *     description: Gerenciamento de aulas
+ *     description: Gerenciamento de Presenças dos assistidos nas atividades
+ *   - name: Atividades
+ *     description: Gerenciamento de atividades
  *   - name: Usuários
  *     description: Gerenciamento de usuários
  *   - name: Documentos

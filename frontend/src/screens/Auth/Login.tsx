@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { LockIcon, MailIcon, LogInIcon } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "../../components/ui/avatar";
 import { useAuth } from "../../context/AuthProvider";
 import { toast } from "sonner"; 
 
@@ -44,10 +43,7 @@ export const Login = () => {
       <div className="bg-white rounded-lg shadow-md p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-6">
-            <Avatar className="w-[65px] h-[65px]">
-              <AvatarImage src="/logoAng.png" alt="Logo da escola" />
-              <AvatarFallback>ES</AvatarFallback>
-            </Avatar>
+            <img src="/logoAng.png" alt="Logo da ANG" className="w-[65px] h-[65px] object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Bem-vindo de volta!</h1>
           <p className="text-gray-600 mt-2">Entre com suas credenciais para acessar</p>
