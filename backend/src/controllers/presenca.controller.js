@@ -1,8 +1,8 @@
 // src/controllers/presenca.controller.js
 import { Op } from 'sequelize';
 import Presenca from '../models/Presenca.model.js';
-import Aluno from '../models/Aluno.model.js';
-import Aula from '../models/Aula.model.js';
+import Assistido from '../models/Assistido.model.js';
+import Atividade from '../models/Atividade.model.js';
 import { sequelize } from '../config/database.js';
 import { PresencaDTO } from '../dto/index.js';
 import { ok, created } from '../utils/response.js';
@@ -23,7 +23,6 @@ const handleNotFound = (entity, res) => {
 
 // Função para formatar a data para YYYY-MM-DD
 const formatDate = (date) => {
-  // aceita string "YYYY-MM-DD" sem conversão
   if (!date) {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -32,7 +31,6 @@ const formatDate = (date) => {
     return date;
   }
 
-  // se receber Date ou outra string, converte para data local (evita deslocamento UTC)
   const d = date instanceof Date ? date : new Date(date);
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -44,7 +42,7 @@ const formatDate = (date) => {
  * @openapi
  * tags:
  *   name: Presenças
- *   description: Gerenciamento de presenças dos alunos nas aulas
+ *   description: Gerenciamento de presenças dos assistidos nas atividades
  */
 
 /**
@@ -62,17 +60,17 @@ const formatDate = (date) => {
  *           schema:
  *             type: object
  *             required:
- *               - idAluno
- *               - idAula
+ *               - idAssistido
+ *               - idAtividade
  *               - status
  *             properties:
- *               idAluno:
+ *               idAssistido:
  *                 type: integer
- *                 description: ID do aluno
+ *                 description: ID do assistido
  *                 example: 1
- *               idAula:
+ *               idAtividade:
  *                 type: integer
- *                 description: ID da aula
+ *                 description: ID da atividade
  *                 example: 1
  *               status:
  *                 type: string
@@ -100,51 +98,58 @@ const formatDate = (date) => {
  *       401:
  *         description: Não autorizado
  *       404:
- *         description: Aluno ou Aula não encontrado
+ *         description: Assistido ou Atividade não encontrado
  *       409:
- *         description: Já existe um registro de presença para este aluno nesta data
+ *         description: Já existe um registro de presença para este assistido nesta data
  */
 export const registrarPresenca = async (req, res, next) => {
   try {
     console.log("RegistrarPresenca - body:", req.body);
-    const { idAluno, idAula, status, observacao, data_registro } = req.body;
+    const { idAssistido, idAtividade, status, observacao, data_registro } = req.body;
 
-    // coerção explícita e normalização da data para evitar mismatch (string vs number / timezone)
-    const idAlunoNum = Number(idAluno);
-    const idAulaNum = Number(idAula);
-    const dataFormatada = (function(d) {
-      if (!d) {
-        const now = new Date();
-        return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
-      }
-      if (typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
-      const dt = d instanceof Date ? d : new Date(d);
-      return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
-    })(data_registro);
+    // coerção explícita e normalização da data para evitar mismatch
+    const idAssistidoNum = Number(idAssistido);
+    const idAtividadeNum = Number(idAtividade);
+    const dataFormatada = formatDate(data_registro);
 
-    console.log("Normalized inputs:", { idAlunoRaw: idAluno, idAulaRaw: idAula, idAlunoNum, idAulaNum, dataFormatada, status, observacao, types: { typeofIdAluno: typeof idAluno, typeofIdAula: typeof idAula } });
+    console.log("Normalized inputs:", { 
+      idAssistidoRaw: idAssistido, 
+      idAtividadeRaw: idAtividade, 
+      idAssistidoNum, 
+      idAtividadeNum, 
+      dataFormatada, 
+      status, 
+      observacao, 
+      types: { 
+        typeofIdAssistido: typeof idAssistido, 
+        typeofIdAtividade: typeof idAtividade 
+      } 
+    });
 
-    const result = await PresencaService.registrarPresenca({ idAluno: idAlunoNum, idAula: idAulaNum, status, observacao, data_registro: dataFormatada });
-    // Se o serviço indicou que aluno ou aula não existem, devolve 404 amigável
+    const result = await PresencaService.registrarPresenca({ 
+      idAssistido: idAssistidoNum, 
+      idAtividade: idAtividadeNum, 
+      status, 
+      observacao, 
+      data_registro: dataFormatada 
+    });
+
     if (result && result.notFound) {
       return handleNotFound(result.notFound, res);
     }
     if (!result.created) {
-      return sendError(res, 409, 'Já existe um registro de presença para este aluno nesta data');
+      return sendError(res, 409, 'Já existe um registro de presença para este assistido nesta data');
     }
     return created(res, PresencaDTO.from(result.presenca));
   } catch (createErr) {
     if (createErr && createErr.name === "SequelizeUniqueConstraintError") {
-      return sendError(res, 409, "Já existe um registro de presença para este aluno nesta data");
+      return sendError(res, 409, "Já existe um registro de presença para este assistido nesta data");
     }
-    // Tratar erro de FK (caso algo ainda tente inserir sem verificação)
     if (createErr && createErr.name === 'SequelizeForeignKeyConstraintError') {
-      // tenta inferir qual entidade faltou a partir do constraint
       const constraint = createErr.constraint || '';
-      if (/id_aluno/i.test(constraint)) return handleNotFound('Aluno', res);
-      if (/id_aula/i.test(constraint)) return handleNotFound('Aula', res);
-      // fallback genérico
-      return sendError(res, 404, 'Aluno ou Aula não encontrado(a)');
+      if (/id_assistido/i.test(constraint)) return handleNotFound('Assistido', res);
+      if (/id_atividade/i.test(constraint)) return handleNotFound('Atividade', res);
+      return sendError(res, 404, 'Assistido ou Atividade não encontrado(a)');
     }
     throw createErr;
   }
@@ -160,15 +165,15 @@ export const registrarPresenca = async (req, res, next) => {
  *       - bearerAuth: []
  *     parameters:
  *       - in: query
- *         name: idAluno
+ *         name: idAssistido
  *         schema:
  *           type: integer
- *         description: Filtrar por ID do aluno
+ *         description: Filtrar por ID do assistido
  *       - in: query
- *         name: idAula
+ *         name: idAtividade
  *         schema:
  *           type: integer
- *         description: Filtrar por ID da aula
+ *         description: Filtrar por ID da atividade
  *       - in: query
  *         name: dataInicio
  *         schema:
@@ -203,22 +208,21 @@ export const registrarPresenca = async (req, res, next) => {
  */
 export const listarPresencas = async (req, res, next) => {
   try {
-    const { idAluno, idAula, dataInicio, dataFim, status } = req.query;
+    const { idAssistido, idAtividade, dataInicio, dataFim, status } = req.query;
     
     const whereClause = {};
     
-    if (idAluno) whereClause.idAluno = idAluno;
-    if (idAula) whereClause.idAula = idAula;
+    if (idAssistido) whereClause.idAssistido = idAssistido;
+    if (idAtividade) whereClause.idAtividade = idAtividade;
     if (status) whereClause.status = status;
     
-    // Filtro por data
     if (dataInicio || dataFim) {
       whereClause.data_registro = {};
       if (dataInicio) whereClause.data_registro[Op.gte] = dataInicio;
       if (dataFim) whereClause.data_registro[Op.lte] = dataFim;
     }
     
-    const presencas = await PresencaService.listAll({ idAluno, idAula, dataInicio, dataFim, status });
+    const presencas = await PresencaService.listAll({ idAssistido, idAtividade, dataInicio, dataFim, status });
     { const lista = PresencaDTO.list(presencas); return ok(res, { presencas: lista }); }
   } catch (error) {
     next(error);
@@ -227,19 +231,19 @@ export const listarPresencas = async (req, res, next) => {
 
 /**
  * @openapi
- * /presencas/aulas/{idAula}:
+ * /presencas/atividades/{idAtividade}:
  *   get:
- *     summary: Lista as presenças de uma aula específica
+ *     summary: Lista as presenças de uma atividade específica
  *     tags: [Presenças]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: idAula
+ *         name: idAtividade
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID da aula
+ *         description: ID da atividade
  *       - in: query
  *         name: data
  *         schema:
@@ -248,7 +252,7 @@ export const listarPresencas = async (req, res, next) => {
  *         description: Data específica para filtrar as presenças (opcional)
  *     responses:
  *       200:
- *         description: Lista de presenças da aula
+ *         description: Lista de presenças da atividade
  *         content:
  *           application/json:
  *             schema:
@@ -256,21 +260,21 @@ export const listarPresencas = async (req, res, next) => {
  *               items:
  *                 $ref: '#/components/schemas/Presenca'
  *       400:
- *         description: ID da aula inválido
+ *         description: ID da atividade inválido
  *       401:
  *         description: Não autorizado
  *       404:
- *         description: Aula não encontrada
+ *         description: Atividade não encontrada
  */
-export const listarPresencasPorAula = async (req, res, next) => {
+export const listarPresencasPorAtividade = async (req, res, next) => {
   try {
-    const { idAula } = req.params;
+    const { idAtividade } = req.params;
     const { data } = req.query;
     
-    const result = await PresencaService.listByAula(idAula, { data });
-    if (!result) return handleNotFound('Aula', res);
-    const { aula, presencas } = result;
-    { const lista = PresencaDTO.list(presencas); return ok(res, { aula: { id: aula.id, titulo: aula.titulo, data: aula.data }, presencas: lista }); }
+    const result = await PresencaService.listByAtividade(idAtividade, { data });
+    if (!result) return handleNotFound('Atividade', res);
+    const { atividade, presencas } = result;
+    { const lista = PresencaDTO.list(presencas); return ok(res, { atividade: { id: atividade.id, titulo: atividade.titulo, data: atividade.data }, presencas: lista }); }
   } catch (error) {
     next(error);
   }
@@ -278,19 +282,19 @@ export const listarPresencasPorAula = async (req, res, next) => {
 
 /**
  * @openapi
- * /presencas/alunos/{idAluno}:
+ * /presencas/assistidos/{idAssistido}:
  *   get:
- *     summary: Lista o histórico de presença de um aluno
+ *     summary: Lista o histórico de presença de um assistido
  *     tags: [Presenças]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: idAluno
+ *         name: idAssistido
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID do aluno
+ *         description: ID do assistido
  *       - in: query
  *         name: dataInicio
  *         schema:
@@ -305,7 +309,7 @@ export const listarPresencasPorAula = async (req, res, next) => {
  *         description: Data de fim para filtro (YYYY-MM-DD)
  *     responses:
  *       200:
- *         description: Histórico de presenças do aluno
+ *         description: Histórico de presenças do assistido
  *         content:
  *           application/json:
  *             schema:
@@ -313,21 +317,21 @@ export const listarPresencasPorAula = async (req, res, next) => {
  *               items:
  *                 $ref: '#/components/schemas/Presenca'
  *       400:
- *         description: ID do aluno inválido
+ *         description: ID do assistido inválido
  *       401:
  *         description: Não autorizado
  *       404:
- *         description: Aluno não encontrado
+ *         description: Assistido não encontrado
  */
-export const listarHistoricoAluno = async (req, res, next) => {
+export const listarHistoricoAssistido = async (req, res, next) => {
   try {
-    const { idAluno } = req.params;
+    const { idAssistido } = req.params;
     const { dataInicio, dataFim } = req.query;
     
-    const result = await PresencaService.listByAluno(idAluno, { dataInicio: formatDate(dataInicio), dataFim: formatDate(dataFim) });
-    if (!result) return handleNotFound('Aluno', res);
-    const { aluno, presencas } = result;
-    { const hist = PresencaDTO.list(presencas); return ok(res, { aluno: { id: aluno.id, nome: aluno.nome, matricula: aluno.id }, historico: hist }); }
+    const result = await PresencaService.listByAssistido(idAssistido, { dataInicio: formatDate(dataInicio), dataFim: formatDate(dataFim) });
+    if (!result) return handleNotFound('Assistido', res);
+    const { assistido, presencas } = result;
+    { const hist = PresencaDTO.list(presencas); return ok(res, { assistido: { id: assistido.id, nome: assistido.nome }, historico: hist }); }
   } catch (error) {
     next(error);
   }
@@ -431,7 +435,7 @@ export const atualizarPresenca = async (req, res, next) => {
     
     const result = await PresencaService.update(id, { status, data_registro: data_registro ? formatDate(data_registro) : undefined, observacao });
     if (result === null) return handleNotFound('Registro de presença', res);
-    if (result && result.conflict) return res.status(409).json({ mensagem: 'Já existe presença para este aluno nesta aula e data' });
+    if (result && result.conflict) return res.status(409).json({ mensagem: 'Já existe presença para este assistido nesta atividade e data' });
     return ok(res, PresencaDTO.from(result));
   } catch (error) {
     next(error);
@@ -455,17 +459,17 @@ export const atualizarPresenca = async (req, res, next) => {
  *             items:
  *               type: object
  *               required:
- *                 - idAluno
+ *                 - idAssistido
  *                 - idAula
  *                 - status
  *               properties:
- *                 idAluno:
+ *                 idAssistido:
  *                   type: integer
- *                   description: ID do aluno
+ *                   description: ID do assistido
  *                   example: 1
- *                 idAula:
+ *                 idAtividade:
  *                   type: integer
- *                   description: ID da aula
+ *                   description: ID da atividade
  *                   example: 1
  *                 status:
  *                   type: string
@@ -512,24 +516,45 @@ export const registrarPresencasBulk = async (req, res, next) => {
     const itemsRaw = Array.isArray(req.body) ? req.body : [];
     if (itemsRaw.length === 0) return sendError(res, 400, "Nenhum item fornecido");
 
-    // Normaliza e valida itens, creates normalized array
     const allowedStatus = new Set(['presente', 'falta', 'atraso', 'falta_justificada']);
     const dedupeMap = new Map();
     for (const it of itemsRaw) {
-      const idAluno = Number(it.idAluno);
-      const idAula = Number(it.idAula);
+      const idAssistido = Number(it.idAssistido);
+      const idAtividade = Number(it.idAtividade);
       const data_registro = formatDate(it.data_registro);
       const status = String(it.status ?? '').trim();
-      if (!idAluno || !idAula) continue;
-      const normalized = { idAluno, idAula, status: allowedStatus.has(status) ? status : 'presente', data_registro, observacao: it.observacao ?? null };
-      dedupeMap.set(`${idAluno}|${idAula}|${data_registro}`, normalized);
+      if (!idAssistido || !idAtividade) continue;
+      const normalized = { 
+        idAssistido, 
+        idAtividade, 
+        status: allowedStatus.has(status) ? status : 'presente', 
+        data_registro, 
+        observacao: it.observacao ?? null 
+      };
+      dedupeMap.set(`${idAssistido}|${idAtividade}|${data_registro}`, normalized);
     }
     const items = Array.from(dedupeMap.values());
     if (items.length === 0) return sendError(res, 400, "Nenhum item válido para inserir");
 
     const results = await PresencaService.bulkRegister(items);
-    // map presenca instances to DTOs
-    const mapped = results.map((r) => ({ presenca: r.presenca ? PresencaDTO.from(r.presenca) : null }));
+    const mapped = results.map((r) => ({
+      sucesso: !r.error,
+      dados: r.presenca ? PresencaDTO.from(r.presenca) : null,
+      erro: r.error ? { mensagem: r.error } : null
+    }));
+    
+    // Se houver algum erro de registro duplicado, retornar 409
+    if (results.some(r => r.error && (
+      r.error.includes('existe um registro') || 
+      r.error.includes('duplicado')
+    ))) {
+      return res.status(409).json({
+        sucesso: false,
+        erro: { mensagem: "Alguns registros não puderam ser criados por já existirem" },
+        resultados: mapped
+      });
+    }
+
     return ok(res, { resultados: mapped });
   } catch (err) {
     console.error('registrarPresencasBulk error:', err);
@@ -539,9 +564,3 @@ export const registrarPresencasBulk = async (req, res, next) => {
     next(err);
   }
 };
-
-
-
-
-
-

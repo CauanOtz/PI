@@ -1,27 +1,34 @@
 {
   "development": {
-    "username": null,
-    "password": null,
-    "database": "database_development",
-    "host": "127.0.0.1",
     "dialect": "sqlite",
     "storage": "./dev.sqlite",
-    "logging": false
+    "logging": false,
+    "define": {
+      "timestamps": true,
+      "underscored": true
+    }
   },
   "test": {
-    "username": "root",
-    "password": null,
-    "database": "database_test",
-    "host": "127.0.0.1",
     "dialect": "sqlite",
-    "storage": ":memory:"
+    "storage": ":memory:",
+    "logging": false,
+    "define": {
+      "timestamps": true,
+      "underscored": true
+    }
   },
   "production": {
-    "username": "root",
-    "password": null,
-    "database": "database_production",
-    "host": "127.0.0.1",
-    "dialect": "sqlite",
-    "storage": "prod.sqlite"
+    "use_env_variable": "DATABASE_URL",
+    "dialect": "postgres",
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      }
+    },
+    "define": {
+      "timestamps": true,
+      "underscored": true
+    }
   }
 }

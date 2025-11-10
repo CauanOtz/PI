@@ -5,16 +5,16 @@ export default class DocumentoDTO {
     this.id = model.id;
     this.nome = model.nome;
     this.descricao = model.descricao ?? null;
-    this.tipo = model.tipo; // enum de negócio
-    this.tamanho = model.tamanho ?? null;
-    this.alunoId = model.alunoId;
+    this.tipo = model.tipo;
+    this.assistidoId = model.assistidoId;
     this.usuarioId = model.usuarioId;
-    this.dataUpload = model.dataUpload ?? model.createdAt ?? model.data_upload ?? null;
+    this.dataUpload = model.createdAt;
+    this.ativo = model.ativo ?? true;
 
     // Não exponha o caminho físico do arquivo
-    if (opts.makeDownloadUrl && this.alunoId && this.id) {
-      const base = opts.baseUrl || `/api/v2/alunos`;
-      this.downloadUrl = `${base}/${this.alunoId}/documentos/${this.id}/download`;
+    if (opts.makeDownloadUrl && this.assistidoId && this.id) {
+      const base = opts.baseUrl || `/api/v2/assistidos`;
+      this.downloadUrl = `${base}/${this.assistidoId}/documentos/${this.id}/download`;
     }
   }
 

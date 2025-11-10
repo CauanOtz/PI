@@ -16,8 +16,8 @@ describe('presencaService', () => {
 
   it('create posts a presence', async () => {
     (http.post as any).mockResolvedValue({ data: { id: 10 } });
-    const created = await presencaService.create({ idAluno: 1, idAula: 2, status: 'presente' });
-    expect(http.post).toHaveBeenCalledWith('/presencas', { idAluno: 1, idAula: 2, status: 'presente' });
+    const created = await presencaService.create({ idAssistido: 1, idAtividade: 2, status: 'presente' });
+    expect(http.post).toHaveBeenCalledWith('/presencas', { idAssistido: 1, idAtividade: 2, status: 'presente' });
     expect(created.id).toBe(10);
   });
 
@@ -35,25 +35,25 @@ describe('presencaService', () => {
     expect(resp.status).toBe(204);
   });
 
-  it('listByAula fetches aula presencas', async () => {
-    (http.get as any).mockResolvedValue({ data: [{ id: 2 }] });
-    const res = await presencaService.listByAula(9, { page: 1 });
-    expect(http.get).toHaveBeenCalledWith('/presencas/aulas/9', { params: { page: 1 } });
-    expect(res.length).toBe(1);
+  it('listByAtividade fetches atividade presencas', async () => {
+    (http.get as any).mockResolvedValue({ data: { presencas: [{ id: 2 }], atividade: { id: 9, titulo: 'Test' } } });
+    const res = await presencaService.listByAtividade(9, { page: 1 });
+    expect(http.get).toHaveBeenCalledWith('/presencas/atividades/9', { params: { page: 1 } });
+    expect(res.presencas.length).toBe(1);
   });
 
-  it('listByAluno fetches aluno presencas', async () => {
-    (http.get as any).mockResolvedValue({ data: [{ id: 3 }] });
-    const res = await presencaService.listByAluno(11, { page: 2 });
-    expect(http.get).toHaveBeenCalledWith('/presencas/alunos/11', { params: { page: 2 } });
-    expect(res.length).toBe(1);
+  it('listByAssistido fetches assistido presencas', async () => {
+    (http.get as any).mockResolvedValue({ data: { presencas: [{ id: 3 }], paginacao: { total: 1 } } });
+    const res = await presencaService.listByAssistido(11, { page: 2 });
+    expect(http.get).toHaveBeenCalledWith('/presencas/assistidos/11', { params: { page: 2 } });
+    expect(res.presencas.length).toBe(1);
   });
 
   it('bulkCreate posts array', async () => {
     (http.post as any).mockResolvedValue({ data: [{ id: 1 }, { id: 2 }] });
     const items = [
-      { idAluno: 1, idAula: 2, status: 'presente' as const },
-      { idAluno: 3, idAula: 2, status: 'falta' as const },
+      { idAssistido: 1, idAtividade: 2, status: 'presente' as const },
+      { idAssistido: 3, idAtividade: 2, status: 'falta' as const },
     ];
     const res = await presencaService.bulkCreate(items);
     expect(http.post).toHaveBeenCalledWith('/presencas/bulk', items);

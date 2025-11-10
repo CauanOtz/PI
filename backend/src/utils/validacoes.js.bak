@@ -1,0 +1,74 @@
+/**
+ * Valida um número de cartão do SUS
+ * @param {string} numeroCartao - Número do cartão SUS a ser validado
+ * @returns {boolean} - true se o cartão for válido, false caso contrário
+ */
+export function validarCartaoSUS(numeroCartao) {
+    if (!numeroCartao) return false;
+
+    // Remove qualquer caractere não numérico
+    numeroCartao = String(numeroCartao).replace(/\D/g, '');
+
+    // Verifica se tem 15 dígitos
+    if (numeroCartao.length !== 15) {
+        return false;
+    }
+
+    // Verifica se começa com um dígito válido
+    const primeiroDigito = parseInt(numeroCartao.charAt(0));
+    if (![1, 2, 7, 8, 9].includes(primeiroDigito)) {
+        return false;
+    }
+
+    // Soma ponderada dos 14 primeiros dígitos
+    let soma = 0;
+    for (let i = 0; i < 14; i++) {
+        const digito = parseInt(numeroCartao.charAt(i));
+        const peso = 15 - i;
+        soma += digito * peso;
+    }
+    
+    let dv;
+    // Calcula o DV esperado
+    console.log('Soma:', soma);
+    console.log('Primeiro dígito:', primeiroDigito);
+
+    let dv;
+    if (primeiroDigito === 1 || primeiroDigito === 2) {
+        // Cartões definitivos (começam com 1 ou 2)
+        const resto = soma % 11;
+        console.log('Cartão definitivo - Resto:', resto);
+        dv = resto === 0 ? 0 : 11 - resto;
+        console.log('Cartão definitivo - DV:', dv);
+    } else {
+        // Cartões provisórios (começam com 7, 8 ou 9)
+        const mult = soma * 10;
+        console.log('Cartão provisório - Soma × 10:', mult);
+        const resto = mult % 11;
+        console.log('Cartão provisório - Resto:', resto);
+        dv = resto === 10 ? 0 : resto;
+        console.log('Cartão provisório - DV:', dv);
+    }
+    
+    const dvInformado = parseInt(numeroCartao.charAt(14));
+    console.log('DV calculado:', dv);
+    console.log('DV informado:', dvInformado);
+    
+    return dv === dvInformado;
+}
+
+/**
+ * Formata um número de cartão do SUS adicionando pontos
+ * @param {string} numeroCartao - Número do cartão SUS a ser formatado
+ * @returns {string} - Cartão SUS formatado ou string vazia se inválido
+ */
+export function formatarCartaoSUS(numeroCartao) {
+    // Se o cartão não for válido, retorna string vazia
+    if (!validarCartaoSUS(numeroCartao)) return '';
+    
+    // Remove caracteres não numéricos
+    const numero = String(numeroCartao).replace(/\D/g, '');
+    
+    // Formata o número (exemplo: 123.4567.8901.2345)
+    return numero.replace(/(\d{3})(\d{4})(\d{4})(\d{4})/, '$1.$2.$3.$4');
+}

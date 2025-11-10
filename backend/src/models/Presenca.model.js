@@ -1,8 +1,8 @@
 // src/models/Presenca.model.js
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
-import Aluno from './Aluno.model.js';
-import Aula from './Aula.model.js';
+import Assistido from './Assistido.model.js';
+import Atividade from './Atividade.model.js';
 
 /**
  * @openapi
@@ -11,8 +11,8 @@ import Aula from './Aula.model.js';
  *     Presenca:
  *       type: object
  *       required:
- *         - idAluno
- *         - idAula
+ *         - idAssistido
+ *         - idAtividade
  *         - status
  *         - data_registro
  *       properties:
@@ -20,13 +20,13 @@ import Aula from './Aula.model.js';
  *           type: integer
  *           description: ID auto-gerado do registro de presença.
  *           example: 1
- *         idAluno:
+ *         idAssistido:
  *           type: integer
- *           description: ID do aluno relacionado.
+ *           description: ID do assistido relacionado.
  *           example: 1
- *         idAula:
+ *         idAtividade:
  *           type: integer
- *           description: ID da aula relacionada.
+ *           description: ID da atividade relacionada.
  *           example: 1
  *         status:
  *           type: string
@@ -59,23 +59,23 @@ const Presenca = sequelize.define('Presenca', {
     autoIncrement: true,
     primaryKey: true
   },
-  idAluno: {
+  idAssistido: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    field: 'id_aluno',
+    field: 'id_assistido',
     references: {
-      model: 'alunos',
+      model: 'assistidos',
       key: 'id'
     },
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE'
   },
-  idAula: {
+  idAtividade: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    field: 'id_aula',
+    field: 'id_atividade',
     references: {
-      model: 'aulas',
+      model: 'atividades',
       key: 'id'
     },
     onUpdate: 'CASCADE',
@@ -104,24 +104,24 @@ const Presenca = sequelize.define('Presenca', {
   indexes: [
     {
       unique: true,
-      fields: ['id_aluno', 'id_aula', 'data_registro'],
-      name: 'unique_presenca_aluno_aula_data'
+      fields: ['id_assistido', 'id_atividade', 'data_registro'],
+      name: 'unique_presenca_assistido_atividade_data'
     }
   ]
 });
 
 // Associações
 Presenca.associate = (models) => {
-  Presenca.belongsTo(models.Aluno, {
-    foreignKey: 'idAluno',
-    as: 'aluno',
+  Presenca.belongsTo(models.Assistido, {
+    foreignKey: 'idAssistido',
+    as: 'assistido',
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE' 
   });
   
-  Presenca.belongsTo(models.Aula, {
-    foreignKey: 'idAula',
-    as: 'aula',
+  Presenca.belongsTo(models.Atividade, {
+    foreignKey: 'idAtividade',
+    as: 'atividade',
     onUpdate: 'CASCADE',
     onDelete: 'CASCADE' 
   });

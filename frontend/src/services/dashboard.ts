@@ -31,6 +31,74 @@ const extractTotal = (payload: any) => {
 };
 
 export const dashboardService = {
+  async getAssistidosCount() {
+    try {
+      const res = await http.get("/assistidos");
+      const body = extractBody(res);
+      // A API pode retornar { assistidos: [...] } ou { dados: { assistidos: [...] } }
+      const assistidos = body?.assistidos || body?.dados?.assistidos || [];
+      return Array.isArray(assistidos) ? assistidos.length : 0;
+    } catch (err) {
+      console.error("Erro ao buscar contagem de assistidos:", err);
+      return 0;
+    }
+  },
+
+  async getAtividadesCount() {
+    try {
+      const res = await http.get("/atividades");
+      const body = extractBody(res);
+      // A API retorna { atividades: [...] }
+      const atividades = body?.atividades || body?.dados?.atividades || [];
+      return Array.isArray(atividades) ? atividades.length : 0;
+    } catch (err) {
+      console.error("Erro ao buscar contagem de atividades:", err);
+      return 0;
+    }
+  },
+
+  async getDocumentosCount() {
+    try {
+      // Buscar todos os assistidos primeiro
+      const resAssistidos = await http.get("/assistidos", { params: { page: 1, limit: 100 } });
+      const bodyAssistidos = extractBody(resAssistidos);
+      const assistidos = extractArray(bodyAssistidos, ["assistidos", "items", "rows", "data"]);
+      
+      let totalDocumentos = 0;
+      
+      // Para cada assistido, buscar documentos
+      for (const assistido of assistidos) {
+        try {
+          const resDocs = await http.get(`/assistidos/${assistido.id}/documentos`);
+          const bodyDocs = extractBody(resDocs);
+          const docs = extractArray(bodyDocs, ["documentos", "items", "rows", "data"]);
+          totalDocumentos += docs.length;
+        } catch (err) {
+          // Continuar mesmo se falhar para um assistido
+        }
+      }
+      
+      return totalDocumentos;
+    } catch (err) {
+      console.error("Erro ao buscar contagem de documentos:", err);
+      return 0;
+    }
+  },
+
+  async getPresencasCount() {
+    try {
+      const res = await http.get("/presencas");
+      const body = extractBody(res);
+      // A API pode retornar { presencas: [...] } ou array direto
+      const presencas = body?.presencas || body?.dados?.presencas || body;
+      return Array.isArray(presencas) ? presencas.length : 0;
+    } catch (err) {
+      console.error("Erro ao buscar contagem de presenças:", err);
+      return 0;
+    }
+  },
+
+  // Métodos antigos comentados
   async getAlunosCount() {
     try {
       const res = await http.get("/alunos", { params: { page: 1, limit: 1 } });

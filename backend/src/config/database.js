@@ -39,7 +39,8 @@ if (databaseUrl) {
   sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: dbStorage,
-    logging: dbLogging,
+    logging: true, // Força o logging de SQL
+    benchmark: true, // Adiciona informações de tempo de execução
   });
 } else {
   const dbName = process.env.DB_NAME || 'teste_escola_dev';

@@ -3,19 +3,13 @@ import {
   HomeIcon,
   SettingsIcon,
   SparklesIcon,
-  UsersIcon,
-  GraduationCapIcon,
+  PersonStanding,
   ClipboardCheckIcon,
-  CalendarIcon,
   Menu,
+  BookMarked ,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "../ui/avatar";
 import { Separator } from "../ui/separator";
 import { useAuth } from "../../context/AuthProvider";
 import { toast } from "sonner";
@@ -36,45 +30,40 @@ export const SidebarSection = (): JSX.Element | null => {
       path: "/dashboard",
     },
     {
-      icon: <ClipboardCheckIcon className="w-4 h-4 text-yellow-400" />,
-      label: "Presença",
-      path: "/attendance",
-    },
-    {
-      icon: <SparklesIcon className="w-4 h-4 text-indigo-400" />,
-      label: "Aulas",
-      path: "/class",
-    },
-    {
-      icon: <GraduationCapIcon className="w-4 h-4 text-purple-400" />,
-      label: "Alunos/Turmas",
+      icon: <PersonStanding className="w-4 h-4 text-purple-400" />,
+      label: "Assistidos",
       path: "/students",
     },
     {
-      icon: <UsersIcon className="w-4 h-4 text-cyan-400" />,
-      label: "Usuários",
-      path: "/users",
+      icon: <BookMarked  className="w-4 h-4 text-indigo-400" />,
+      label: "Atividades",
+      path: "/atividades",
     },
-    // {
-    //   icon: <CalendarIcon className="w-4 h-4 text-green-400" />,
-    //   label: "Calendário",
-    //   path: "/calendar",
-    // },
+    {
+      icon: <ClipboardCheckIcon className="w-4 h-4 text-yellow-400" />,
+      label: "Presenças",
+      path: "/attendance",
+    },
     {
       icon: <FileTextIcon className="w-4 h-4 text-pink-400" />,
-      label: "Relatório",
+      label: "Documentos",
       path: "/files",
     },
-    {
-      icon: <SparklesIcon className="w-4 h-4 text-blue-300" />,
-      label: "Notificações",
-      path: "/notificacoes",
-    },
-    {
-      icon: <SettingsIcon className="w-4 h-4 text-orange-400" />,
-      label: "Configurações",
-      path: "/settings",
-    },
+    // {
+    //   icon: <UsersIcon className="w-4 h-4 text-cyan-400" />,
+    //   label: "Usuários",
+    //   path: "/users",
+    // },
+    // {
+    //   icon: <SparklesIcon className="w-4 h-4 text-blue-300" />,
+    //   label: "Notificações",
+    //   path: "/notificacoes",
+    // },
+    // {
+    //   icon: <SettingsIcon className="w-4 h-4 text-orange-400" />,
+    //   label: "Configurações",
+    //   path: "/settings",
+    // },
   ];
 
   const guardianNavItems = [
@@ -126,16 +115,15 @@ export const SidebarSection = (): JSX.Element | null => {
       >
         <nav className="h-screen flex flex-col p-6">
           <div className="flex justify-center">
-            <Avatar className="w-[65px] h-[65px]">
-              <AvatarImage src="/logoAng.png" alt="Logo da escola" />
-              <AvatarFallback>ES</AvatarFallback>
-            </Avatar>
+            <div className="w-[65px] h-[65px]">
+              <img src="/logoAng.png" alt="Logo da ANG" className="w-full h-full object-contain" />
+            </div>
           </div>
 
           <div className="mx-[25px] mt-3 rounded-lg py-2.5">
             <div className="flex items-center justify-center gap-4">
               <span className="font-['Kumbh_Sans',Helvetica] font-semibold text-white text-sm">
-                Escola
+                Associação Nova Geração
               </span>
             </div>
           </div>

@@ -1,15 +1,16 @@
 import { http } from "../lib/http";
 import { ResponseSuccess, Paginacao } from "./users";
+import { AssistidoPresenca } from "../types/assistido";
 
 export interface Presenca {
   id: number;
-  idAluno: number;
-  idAula: number;
+  idAssistido: number;
+  idAtividade: number;
   status: "presente" | "falta" | "atraso" | "falta_justificada";
-  data_registro: string;
+  dataRegistro: string;
   observacao?: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export const presencaService = {
@@ -21,18 +22,12 @@ export const presencaService = {
     return res.data.dados;
   },
 
-  async create(payload: {
-    idAluno: number | string;
-    idAula: number | string;
-    status: "presente" | "falta" | "atraso" | "falta_justificada";
-    data_registro?: string;
-    observacao?: string;
-  }) {
+  async create(payload: AssistidoPresenca) {
     const res = await http.post<ResponseSuccess<Presenca>>("/presencas", payload);
     return res.data.dados;
   },
 
-  async update(id: number | string, data: Partial<Presenca>) {
+  async update(id: number | string, data: Partial<Presenca> | AssistidoPresenca) {
     const res = await http.put<ResponseSuccess<Presenca>>(`/presencas/${id}`, data);
     return res.data.dados;
   },
@@ -42,37 +37,36 @@ export const presencaService = {
     return res.data.sucesso;
   },
 
-  async listByAula(idAula: number | string, params?: any) {
+  async listByAtividade(idAtividade: number | string, params?: any) {
     const res = await http.get<ResponseSuccess<{
-      presencas: Presenca[];
-      aula: {
+      presencas: Array<Presenca & {
+        assistido?: {
+          id: number;
+          nome: string;
+        };
+      }>;
+      atividade: {
         id: number;
         titulo: string;
         data: string;
         horario: string;
       };
-    }>>(`/presencas/aulas/${idAula}`, { params });
+    }>>(`/presencas/atividades/${idAtividade}`, { params });
     return res.data.dados;
   },
 
-  async listByAluno(idAluno: number | string, params?: any) {
+  async listByAssistido(idAssistido: number | string, params?: any) {
     const res = await http.get<ResponseSuccess<{
       presencas: Presenca[];
-      aluno: {
+      assistido: {
         id: number;
         nome: string;
       };
-    }>>(`/presencas/alunos/${idAluno}`, { params });
+    }>>(`/presencas/assistidos/${idAssistido}`, { params });
     return res.data.dados;
   },
 
-  async bulkCreate(items: Array<{
-    idAluno: number | string;
-    idAula: number | string;
-    status: "presente" | "falta" | "atraso" | "falta_justificada";
-    data_registro?: string;
-    observacao?: string;
-  }>) {
+  async bulkCreate(items: AssistidoPresenca[]) {
     const res = await http.post<ResponseSuccess<Presenca[]>>("/presencas/bulk", items);
     return res.data.dados;
   },

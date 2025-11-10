@@ -47,17 +47,24 @@ export const Files = (): JSX.Element => {
   const [reportToView, setReportToView] = React.useState<Report | null>(null);
   const [reports, setReports] = React.useState<Report[]>([]);
   const [loading, setLoading] = React.useState(false);
-  const [currentAlunoId, setCurrentAlunoId] = React.useState<string>(""); // usuario seleciona o aluno para gerenciar documentos
+  const [currentAssistidoId, setCurrentAssistidoId] = React.useState<string>(""); // usuario seleciona o assistido para gerenciar documentos
 
-  const [studentSearchQuery, setStudentSearchQuery] = React.useState("");
-  const [studentSuggestions, setStudentSuggestions] = React.useState<Student[]>([]);
-  const [loadingStudentSuggestions, setLoadingStudentSuggestions] = React.useState(false);
-  const [isStudentSuggestionsOpen, setIsStudentSuggestionsOpen] = React.useState(false);
-  const [selectedStudent, setSelectedStudent] = React.useState<Student | null>(null);
-  const studentContainerRef = React.useRef<HTMLDivElement | null>(null);
-  const studentSearchDebounceRef = React.useRef<number | null>(null);
+  const [assistidoSearchQuery, setAssistidoSearchQuery] = React.useState("");
+  const [assistidoSuggestions, setAssistidoSuggestions] = React.useState<Student[]>([]);
+  const [loadingAssistidoSuggestions, setLoadingAssistidoSuggestions] = React.useState(false);
+  const [isAssistidoSuggestionsOpen, setIsAssistidoSuggestionsOpen] = React.useState(false);
+  const [selectedAssistido, setSelectedAssistido] = React.useState<Student | null>(null);
+  const assistidoContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const assistidoSearchDebounceRef = React.useRef<number | null>(null);
 
-  const categories = ["Todos", "Desempenho", "Frequência", "Planos", "Outros"];
+  const categories = [
+    "Todos",
+    "RG",
+    "CPF",
+    "Certidão de Nascimento",
+    "Comprovante de Endereço",
+    "Outro"
+  ];
 
   const filteredReports = reports.filter(report => {
     const matchesSearch = report.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -66,61 +73,71 @@ export const Files = (): JSX.Element => {
   });
 
   React.useEffect(() => {
-    if (!isStudentSuggestionsOpen) {
-      setStudentSuggestions([]);
+    if (!isAssistidoSuggestionsOpen) {
+      setAssistidoSuggestions([]);
       return;
     }
-    setLoadingStudentSuggestions(true);
-    if (studentSearchDebounceRef.current) {
-      window.clearTimeout(studentSearchDebounceRef.current);
+    setLoadingAssistidoSuggestions(true);
+    if (assistidoSearchDebounceRef.current) {
+      window.clearTimeout(assistidoSearchDebounceRef.current);
     }
-    studentSearchDebounceRef.current = window.setTimeout(async () => {
+    assistidoSearchDebounceRef.current = window.setTimeout(async () => {
       try {
-        const params = studentSearchQuery ? { search: studentSearchQuery, limit: 10 } : { limit: 10 };
+        const params = assistidoSearchQuery ? { search: assistidoSearchQuery, limit: 10 } : { limit: 10 };
         const res = await studentsService.list(params);
-        const alunos = (res && (res as any).alunos) ? (res as any).alunos : [];
-        setStudentSuggestions(Array.isArray(alunos) ? alunos : []);
+        const assistidos = (res && (res as any).assistidos) ? (res as any).assistidos : [];
+        setAssistidoSuggestions(Array.isArray(assistidos) ? assistidos : []);
       } catch (err) {
-        console.error("Erro ao buscar alunos:", err);
-        setStudentSuggestions([]);
+        console.error("Erro ao buscar assistidos:", err);
+        setAssistidoSuggestions([]);
       } finally {
-        setLoadingStudentSuggestions(false);
+        setLoadingAssistidoSuggestions(false);
       }
     }, 300);
     return () => {
-      if (studentSearchDebounceRef.current) {
-        window.clearTimeout(studentSearchDebounceRef.current);
+      if (assistidoSearchDebounceRef.current) {
+        window.clearTimeout(assistidoSearchDebounceRef.current);
       }
     };
-  }, [studentSearchQuery, isStudentSuggestionsOpen]);
+  }, [assistidoSearchQuery, isAssistidoSuggestionsOpen]);
 
   React.useEffect(() => {
     const onDoc = (ev: MouseEvent) => {
-      if (!studentContainerRef.current) return;
-      if (!studentContainerRef.current.contains(ev.target as Node)) {
-        setIsStudentSuggestionsOpen(false);
+      if (!assistidoContainerRef.current) return;
+      if (!assistidoContainerRef.current.contains(ev.target as Node)) {
+        setIsAssistidoSuggestionsOpen(false);
       }
     };
     document.addEventListener("click", onDoc);
     return () => document.removeEventListener("click", onDoc);
   }, []);
 
-  const loadDocuments = async (alunoId?: string) => {
-    const id = alunoId ?? currentAlunoId;
+  const loadDocuments = async (assistidoId?: string) => {
+    const id = assistidoId ?? currentAssistidoId;
     if (!id) {
-      toast.error("Informe o ID do aluno para carregar documentos");
+      toast.error("Informe o ID do assistido para carregar documentos");
       return;
     }
     try {
       setLoading(true);
       const docs = await documentService.listDocuments(id);
+      
+      // Mapear tipos do backend para labels amigáveis
+      const tipoLabels: Record<string, string> = {
+        'RG': 'RG',
+        'CPF': 'CPF',
+        'CERTIDAO_NASCIMENTO': 'Certidão de Nascimento',
+        'COMPROVANTE_ENDERECO': 'Comprovante de Endereço',
+        'OUTRO': 'Outro'
+      };
+      
       const mapped = (Array.isArray(docs) ? docs : []).map((d: any) => ({
         id: String(d.id),
         name: d.nome,
-        type: d.tipo ?? d.tipoArquivo ?? "PDF",
+        type: d.tipo ?? "PDF",
         date: d.data_upload ?? d.dataUpload ?? d.createdAt,
         size: d.tamanho ?? d.size,
-        category: d.categoria ?? "Outros",
+        category: tipoLabels[d.tipo] ?? d.tipo ?? "Outro",
         descricao: d.descricao
       }));
       setReports(mapped);
@@ -135,18 +152,18 @@ export const Files = (): JSX.Element => {
   const handleCreateReport = (data: any) => {
     (async () => {
       try {
-        // data: { name, category, file, alunoId }
-        if (!data.alunoId) {
-          toast.error("Informe o ID do aluno no formulário do relatório.");
+        // data: { name, tipo, file, assistidoId }
+        if (!data.assistidoId) {
+          toast.error("Informe o ID do assistido no formulário do documento.");
           return;
         }
-        await documentService.uploadDocument(data.alunoId, data.file, data.name, { categoria: data.category });
-        toast.success("Relatório criado com sucesso!");
+        await documentService.uploadDocument(data.assistidoId, data.file, { tipo: data.tipo, descricao: data.name });
+        toast.success("Documento criado com sucesso!");
         setIsCreateModalOpen(false);
-        await loadDocuments(data.alunoId);
+        await loadDocuments(data.assistidoId);
       } catch (err: any) {
         console.error(err);
-        toast.error(err?.response?.data?.mensagem || "Erro ao criar relatório");
+        toast.error(err?.response?.data?.mensagem || "Erro ao criar documento");
       }
     })();
   };
@@ -163,17 +180,17 @@ export const Files = (): JSX.Element => {
     (async () => {
       if (!reportToEdit) return;
       try {
-        if (!currentAlunoId) {
-          toast.error("Aluno não selecionado");
+        if (!currentAssistidoId) {
+          toast.error("Assistido não selecionado");
           return;
         }
-        await documentService.updateDocument(currentAlunoId, reportToEdit.id, { nome: data.name, descricao: data.category });
-        toast.success("Relatório atualizado com sucesso!");
+        await documentService.updateDocument(currentAssistidoId, reportToEdit.id, { nome: data.name, descricao: data.category });
+        toast.success("Documento atualizado com sucesso!");
         setReportToEdit(null);
         await loadDocuments();
       } catch (err) {
         console.error(err);
-        toast.error("Erro ao atualizar relatório");
+        toast.error("Erro ao atualizar documento");
       }
     })();
   };
@@ -182,28 +199,28 @@ export const Files = (): JSX.Element => {
     (async () => {
       if (!reportToDelete) return;
       try {
-        if (!currentAlunoId) {
-          toast.error("Aluno não selecionado");
+        if (!currentAssistidoId) {
+          toast.error("Assistido não selecionado");
           return;
         }
-        await documentService.deleteDocument(currentAlunoId, reportToDelete.id);
-        toast.success("Relatório excluído com sucesso!");
+        await documentService.deleteDocument(currentAssistidoId, reportToDelete.id);
+        toast.success("Documento excluído com sucesso!");
         setReportToDelete(null);
         await loadDocuments();
       } catch (err) {
         console.error(err);
-        toast.error("Erro ao excluir relatório");
+        toast.error("Erro ao excluir documento");
       }
     })();
   };
 
   const handleDownload = async (r: Report) => {
     try {
-      if (!currentAlunoId) {
-        toast.error("Aluno não selecionado para download");
+      if (!currentAssistidoId) {
+        toast.error("Assistido não selecionado para download");
         return;
       }
-      const blob = await documentService.downloadDocument(currentAlunoId, r.id);
+      const blob = await documentService.downloadDocument(currentAssistidoId, r.id);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -225,27 +242,27 @@ export const Files = (): JSX.Element => {
   <div className="flex flex-col p-3 sm:p-4 md:p-6 lg:p-8 lg:ml-[283px]">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Relatórios</h1>
-              <p className="text-gray-600 mt-1">Gerencie seus documentos e relatórios</p>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Documentos</h1>
+              <p className="text-gray-600 mt-1">Gerencie os documentos dos assistidos</p>
             </div>
             <div className="flex items-center gap-3">
-              <div className="relative flex items-center w-full sm:w-auto" ref={studentContainerRef}>
+              <div className="relative flex items-center w-full sm:w-auto" ref={assistidoContainerRef}>
                 <Input
-                  id="alunoIdInput"
-                  placeholder="Pesquisar aluno..."
-                  value={selectedStudent ? (selectedStudent.nome ?? `#${selectedStudent.id}`) : studentSearchQuery}
-                  readOnly={!!selectedStudent}
-                  onFocus={() => !selectedStudent && setIsStudentSuggestionsOpen(true)}
-                  onChange={(e) => setStudentSearchQuery(e.target.value)}
+                  id="assistidoIdInput"
+                  placeholder="Pesquisar assistido..."
+                  value={selectedAssistido ? (selectedAssistido.nome ?? `#${selectedAssistido.id}`) : assistidoSearchQuery}
+                  readOnly={!!selectedAssistido}
+                  onFocus={() => !selectedAssistido && setIsAssistidoSuggestionsOpen(true)}
+                  onChange={(e) => setAssistidoSearchQuery(e.target.value)}
                   className="w-full sm:w-52 pr-8"
                   autoComplete="off"
                 />
-                {selectedStudent && (
+                {selectedAssistido && (
                   <button
                     onClick={() => {
-                      setSelectedStudent(null);
-                      setCurrentAlunoId("");
-                      setStudentSearchQuery("");
+                      setSelectedAssistido(null);
+                      setCurrentAssistidoId("");
+                      setAssistidoSearchQuery("");
                       setReports([]);
                     }}
                     className="absolute right-2 p-1 text-gray-500 hover:text-gray-800 rounded-full hover:bg-gray-100"
@@ -254,20 +271,20 @@ export const Files = (): JSX.Element => {
                     <XIcon className="w-4 h-4" />
                   </button>
                 )}
-                {isStudentSuggestionsOpen && (studentSuggestions.length > 0 || loadingStudentSuggestions) && !selectedStudent && (
+                {isAssistidoSuggestionsOpen && (assistidoSuggestions.length > 0 || loadingAssistidoSuggestions) && !selectedAssistido && (
                   <div className="absolute left-0 right-0 mt-1 bg-white border rounded-md shadow-lg z-50 max-h-60 overflow-auto">
-                    {loadingStudentSuggestions ? (
+                    {loadingAssistidoSuggestions ? (
                       <div className="p-3 text-center text-sm text-gray-500">Buscando...</div>
-                    ) : studentSuggestions.map((s) => (
+                    ) : assistidoSuggestions.map((s) => (
                       <button
                         key={String(s.id)}
                         type="button"
                         className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
                         onClick={() => {
-                          setSelectedStudent(s);
-                          setCurrentAlunoId(String(s.id));
-                          setStudentSearchQuery("");
-                          setIsStudentSuggestionsOpen(false);
+                          setSelectedAssistido(s);
+                          setCurrentAssistidoId(String(s.id));
+                          setAssistidoSearchQuery("");
+                          setIsAssistidoSuggestionsOpen(false);
                           loadDocuments(String(s.id));
                         }}
                       >
@@ -283,7 +300,7 @@ export const Files = (): JSX.Element => {
                 onClick={() => setIsCreateModalOpen(true)}
               >
                 <PlusIcon className="w-4 h-4 mr-2" />
-                Novo Relatório
+                Novo Documento
               </Button>
             </div>
           </div>
@@ -294,7 +311,7 @@ export const Files = (): JSX.Element => {
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                 <Input
                   type="text"
-                  placeholder="Buscar relatórios..."
+                  placeholder="Buscar documentos..."
                   className="pl-10 w-full text-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -320,18 +337,18 @@ export const Files = (): JSX.Element => {
             )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-              {!selectedStudent ? (
+              {!selectedAssistido ? (
                 <div className="col-span-full text-center py-16 text-gray-500 bg-gray-50 rounded-lg">
                   <div className="max-w-md mx-auto flex flex-col items-center">
                     <UsersIcon className="w-16 h-16 text-gray-300 mb-4" />
-                    <h3 className="text-lg font-semibold text-gray-700">Nenhum aluno selecionado</h3>
+                    <h3 className="text-lg font-semibold text-gray-700">Nenhum assistido selecionado</h3>
                     <p className="mt-1 text-sm">
-                      Use a barra de pesquisa acima para encontrar um aluno e ver seus documentos.
+                      Use a barra de pesquisa acima para encontrar um assistido e ver seus documentos.
                     </p>
                   </div>
                 </div>
               ) : filteredReports.length === 0 ? (
-                <div className="col-span-full text-center py-10 text-gray-500">Nenhum documento encontrado para o aluno {selectedStudent?.nome ?? currentAlunoId}.</div>
+                <div className="col-span-full text-center py-10 text-gray-500">Nenhum documento encontrado para o assistido {selectedAssistido?.nome ?? currentAssistidoId}.</div>
               ) : (
                 filteredReports.map((report) => (
                   <div
@@ -411,7 +428,7 @@ export const Files = (): JSX.Element => {
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateReport}
-        initialAlunoId={currentAlunoId}
+        initialAssistidoId={currentAssistidoId}
       />
       <EditReportModal
         isOpen={!!reportToEdit}
@@ -431,8 +448,8 @@ export const Files = (): JSX.Element => {
         isOpen={!!reportToDelete}
         onClose={() => setReportToDelete(null)}
         onConfirm={handleDeleteConfirm}
-        title="Excluir Relatório"
-        description={`Tem certeza que deseja excluir o relatório "${reportToDelete?.name}"? Esta ação não pode ser desfeita.`}
+        title="Excluir Documento"
+        description={`Tem certeza que deseja excluir o documento "${reportToDelete?.name}"? Esta ação não pode ser desfeita.`}
       />
     </div>
   );

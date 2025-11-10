@@ -116,35 +116,24 @@ const Usuario = sequelize.define('Usuario', {
 Usuario.associate = (models) => {
 
 
-  // Association with Aluno (many-to-many through ResponsavelAluno)
-  Usuario.belongsToMany(models.Aluno, {
-    through: models.ResponsavelAluno,
+  // Association with Assistido (many-to-many through ResponsavelAssistido)
+  Usuario.belongsToMany(models.Assistido, {
+    through: models.ResponsavelAssistido,
     foreignKey: 'id_usuario',
-    otherKey: 'id_aluno',
-    as: 'alunos',
+    otherKey: 'id_assistido',
+    as: 'assistidos',
   });
 
   // If you need to access the join table directly
-  Usuario.hasMany(models.ResponsavelAluno, {
+  Usuario.hasMany(models.ResponsavelAssistido, {
     foreignKey: 'id_usuario',
-    as: 'responsavelAlunos'
+    as: 'responsavelAssistidos'
   });
 
   // Association with Documento
   Usuario.hasMany(models.Documento, {
     foreignKey: 'usuarioId',
     as: 'documentos'
-  });
-
-  // Association with Aula
-  Usuario.hasMany(models.Aula, {
-    foreignKey: 'responsavel_id',
-    as: 'aulasResponsavel'
-  });
-
-  Usuario.hasMany(models.Aula, {
-    foreignKey: 'professor_id',
-    as: 'aulasProfessor'
   });
 
   // Usuário pode ser o criador de várias notificações

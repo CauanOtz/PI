@@ -7,19 +7,19 @@ const documentoService = new DocumentoService();
 
 /**
  * @openapi
- * /alunos/{alunoId}/documentos:
+ * /assistidos/{assistidoId}/documentos:
  *   post:
- *     summary: Adiciona um documento a um aluno
+ *     summary: Adiciona um documento a um assistido
  *     tags: [Documentos]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: alunoId
+ *         name: assistidoId
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID do aluno
+ *         description: ID do assistido
  *     requestBody:
  *       required: true
  *       content:
@@ -46,16 +46,16 @@ const documentoService = new DocumentoService();
  *       401:
  *         description: Não autorizado
  *       404:
- *         description: Aluno não encontrado
+ *         description: Assistido não encontrado
  *       413:
  *         description: Arquivo muito grande
  */
 export const adicionarDocumento = async (req, res, next) => {
     try {
-        const { alunoId } = req.params;
+        const { assistidoId } = req.params;
         const { descricao, tipo } = req.body;
         const result = await documentoService.adicionar({
-            alunoId,
+            assistidoId,
             arquivo: req.file,
             descricao,
             tipo,
@@ -66,7 +66,7 @@ export const adicionarDocumento = async (req, res, next) => {
             return res.status(result.status).json({ mensagem: result.message });
         }
 
-        const dto = DocumentoDTO.from(result.documento, { makeDownloadUrl: true, baseUrl: '/api/v2/alunos' });
+        const dto = DocumentoDTO.from(result.documento, { makeDownloadUrl: true, baseUrl: '/api/v2/assistidos' });
         return created(res, dto);
     } catch (error) {
         next(error);
@@ -77,19 +77,19 @@ export const adicionarDocumento = async (req, res, next) => {
 
 /**
  * @openapi
- * /alunos/{alunoId}/documentos:
+ * /assistidos/{assistidoId}/documentos:
  *   get:
- *     summary: Lista todos os documentos de um aluno
+ *     summary: Lista todos os documentos de um assistido
  *     tags: [Documentos]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: alunoId
+ *         name: assistidoId
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID do aluno
+ *         description: ID do assistido
  *     responses:
  *       200:
  *         description: Lista de documentos retornada com sucesso (pode ser vazia).
@@ -104,26 +104,26 @@ export const adicionarDocumento = async (req, res, next) => {
  *       403:
  *         description: Acesso negado
  *       404:
- *         description: Aluno não encontrado
+ *         description: Assistido não encontrado
  */
 export const listarDocumentos = async (req, res, next) => {
     try {
-        const { alunoId } = req.params;
+        const { assistidoId } = req.params;
 
-        const temPermissao = await documentoService.verificarPermissao(req.usuario, alunoId);
+        const temPermissao = await documentoService.verificarPermissao(req.usuario, assistidoId);
         if (!temPermissao) {
             return res.status(403).json({
                 mensagem: 'Você não tem permissão para acessar estes documentos'
             });
         }
 
-        const result = await documentoService.listar(alunoId);
+        const result = await documentoService.listar(assistidoId);
         if (result.error) {
             return res.status(result.status).json({ mensagem: result.message });
         }
 
         return ok(res, { 
-            documentos: result.documentos.map(d => DocumentoDTO.from(d, { makeDownloadUrl: true, baseUrl: '/api/v2/alunos' }))
+            documentos: result.documentos.map(d => DocumentoDTO.from(d, { makeDownloadUrl: true, baseUrl: '/api/v2/assistidos' }))
         });
     } catch (error) {
         next(error);
@@ -132,19 +132,19 @@ export const listarDocumentos = async (req, res, next) => {
 
 /**
  * @openapi
- * /alunos/{alunoId}/documentos/{documentoId}:
+ * /assistidos/{assistidoId}/documentos/{documentoId}:
  *   get:
- *     summary: Obtém um documento específico de um aluno
+ *     summary: Obtém um documento específico de um assistido
  *     tags: [Documentos]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: alunoId
+ *         name: assistidoId
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID do aluno
+ *         description: ID do assistido
  *       - in: path
  *         name: documentoId
  *         required: true
@@ -168,16 +168,16 @@ export const listarDocumentos = async (req, res, next) => {
  */
 export const obterDocumento = async (req, res, next) => {
     try {
-        const { alunoId, documentoId } = req.params;
+        const { assistidoId, documentoId } = req.params;
 
-        const temPermissao = await documentoService.verificarPermissao(req.usuario, alunoId);
+        const temPermissao = await documentoService.verificarPermissao(req.usuario, assistidoId);
         if (!temPermissao) {
             return res.status(403).json({
                 mensagem: 'Você não tem permissão para acessar este documento'
             });
         }
 
-        const result = await documentoService.obter(alunoId, documentoId);
+        const result = await documentoService.obter(assistidoId, documentoId);
         if (result.error) {
             return res.status(result.status).json({ mensagem: result.message });
         }
@@ -191,7 +191,7 @@ export const obterDocumento = async (req, res, next) => {
 
 /**
  * @openapi
- * /alunos/{alunoId}/documentos/{documentoId}:
+ * /assistidos/{assistidoId}/documentos/{documentoId}:
  *   put:
  *     summary: Atualiza as informações de um documento
  *     tags: [Documentos]
@@ -199,11 +199,11 @@ export const obterDocumento = async (req, res, next) => {
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: alunoId
+ *         name: assistidoId
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID do aluno
+ *         description: ID do assistido
  *       - in: path
  *         name: documentoId
  *         required: true
@@ -242,10 +242,10 @@ export const obterDocumento = async (req, res, next) => {
  */
 export const atualizarDocumento = async (req, res, next) => {
     try {
-        const { alunoId, documentoId } = req.params;
+        const { assistidoId, documentoId } = req.params;
         const { nome, descricao } = req.body;
 
-        const temPermissao = await documentoService.verificarPermissao(req.usuario, alunoId);
+        const temPermissao = await documentoService.verificarPermissao(req.usuario, assistidoId);
         if (!temPermissao) {
             return res.status(403).json({
                 mensagem: 'Você não tem permissão para acessar este documento'
@@ -253,7 +253,7 @@ export const atualizarDocumento = async (req, res, next) => {
         }
 
         const result = await documentoService.atualizar({
-            alunoId,
+            assistidoId,
             documentoId,
             nome,
             descricao
@@ -263,7 +263,7 @@ export const atualizarDocumento = async (req, res, next) => {
             return res.status(result.status).json({ mensagem: result.message });
         }
 
-        return ok(res, DocumentoDTO.from(result.documento, { makeDownloadUrl: true, baseUrl: '/api/v2/alunos' }));
+        return ok(res, DocumentoDTO.from(result.documento, { makeDownloadUrl: true, baseUrl: '/api/v2/assistidos' }));
     } catch (error) {
         next(error);
     }
@@ -272,7 +272,7 @@ export const atualizarDocumento = async (req, res, next) => {
 
 /**
  * @openapi
- * /alunos/{alunoId}/documentos/{documentoId}:
+ * /assistidos/{assistidoId}/documentos/{documentoId}:
  *   delete:
  *     summary: Exclui um documento específico
  *     tags: [Documentos]
@@ -280,11 +280,11 @@ export const atualizarDocumento = async (req, res, next) => {
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: alunoId
+ *         name: assistidoId
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID do aluno
+ *         description: ID do assistido
  *       - in: path
  *         name: documentoId
  *         required: true
@@ -303,16 +303,16 @@ export const atualizarDocumento = async (req, res, next) => {
  */
 export const excluirDocumento = async (req, res, next) => {
     try {
-        const { alunoId, documentoId } = req.params;
+        const { assistidoId, documentoId } = req.params;
 
-        const temPermissao = await documentoService.verificarPermissao(req.usuario, alunoId);
+        const temPermissao = await documentoService.verificarPermissao(req.usuario, assistidoId);
         if (!temPermissao) {
             return res.status(403).json({
                 mensagem: 'Você não tem permissão para acessar este documento'
             });
         }
 
-        const result = await documentoService.excluir(alunoId, documentoId);
+        const result = await documentoService.excluir(assistidoId, documentoId);
         if (result.error) {
             return res.status(result.status).json({ mensagem: result.message });
         }
@@ -326,7 +326,7 @@ export const excluirDocumento = async (req, res, next) => {
 
 /**
  * @openapi
- * /alunos/{alunoId}/documentos/{documentoId}/download:
+ * /assistidos/{assistidoId}/documentos/{documentoId}/download:
  *   get:
  *     summary: Faz o download de um documento
  *     tags: [Documentos]
@@ -334,11 +334,11 @@ export const excluirDocumento = async (req, res, next) => {
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: alunoId
+ *         name: assistidoId
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID do aluno
+ *         description: ID do assistido
  *       - in: path
  *         name: documentoId
  *         required: true
@@ -362,16 +362,16 @@ export const excluirDocumento = async (req, res, next) => {
  */
 export const downloadDocumento = async (req, res, next) => {
     try {
-        const { alunoId, documentoId } = req.params;
+        const { assistidoId, documentoId } = req.params;
 
-        const temPermissao = await documentoService.verificarPermissao(req.usuario, alunoId);
+        const temPermissao = await documentoService.verificarPermissao(req.usuario, assistidoId);
         if (!temPermissao) {
             return res.status(403).json({
-                mensagem: 'Você não tem permissão para acessar documentos deste aluno.'
+                mensagem: 'Você não tem permissão para acessar documentos deste assistido.'
             });
         }
 
-        const result = await documentoService.obter(alunoId, documentoId);
+        const result = await documentoService.obter(assistidoId, documentoId);
         if (result.error) {
             return res.status(result.status).json({ mensagem: result.message });
         }

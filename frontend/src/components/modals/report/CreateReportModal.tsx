@@ -11,14 +11,14 @@ interface CreateReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: ReportFormData) => Promise<void> | void;
-  initialAlunoId?: string | number;
+  initialAssistidoId?: string | number;
 }
 
 interface ReportFormData {
   name: string;
-  category: string;
+  tipo: string;
   file: File | null;
-  alunoId?: string | number;
+  assistidoId?: string | number;
 }
 
 interface Student {
@@ -32,13 +32,13 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
-  initialAlunoId
+  initialAssistidoId
 }) => {
   const [formData, setFormData] = React.useState<ReportFormData>({
     name: "",
-    category: "Desempenho",
+    tipo: "OUTRO",
     file: null,
-    alunoId: ""
+    assistidoId: ""
   });
 
   const [query, setQuery] = React.useState("");
@@ -49,18 +49,24 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const searchDebounceRef = React.useRef<number | null>(null);
 
-  const categories = ["Desempenho", "Frequência", "Planos", "Outros"];
+  const tiposDocumento = [
+    { value: "RG", label: "RG" },
+    { value: "CPF", label: "CPF" },
+    { value: "CERTIDAO_NASCIMENTO", label: "Certidão de Nascimento" },
+    { value: "COMPROVANTE_ENDERECO", label: "Comprovante de Endereço" },
+    { value: "OUTRO", label: "Outro" }
+  ];
 
   React.useEffect(() => {
     let mounted = true;
-    if (isOpen && initialAlunoId) {
+    if (isOpen && initialAssistidoId) {
       (async () => {
         try {
-          const s = await studentsService.get(Number(initialAlunoId));
+          const s = await studentsService.get(Number(initialAssistidoId));
           if (!mounted) return;
           if (s) {
             setSelected(s);
-            setFormData(prev => ({ ...prev, alunoId: String(s.id) }));
+            setFormData(prev => ({ ...prev, assistidoId: String(s.id) }));
           }
         } catch (e) {
           // ignora
@@ -68,13 +74,13 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
       })();
     }
     if (!isOpen) {
-      setFormData({ name: "", category: "Desempenho", file: null, alunoId: "" });
+      setFormData({ name: "", tipo: "OUTRO", file: null, assistidoId: "" });
       setQuery("");
       setSuggestions([]);
       setSelected(null);
     }
     return () => { mounted = false; };
-  }, [isOpen, initialAlunoId]);
+  }, [isOpen, initialAssistidoId]);
 
   React.useEffect(() => {
     if (!isSuggestionsOpen) {
@@ -91,10 +97,10 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
       try {
         const params = query ? { search: query, limit: 10 } : { limit: 10 };
         const res = await studentsService.list(params);
-        const alunos = (res && (res as any).alunos) ? (res as any).alunos : [];
-        setSuggestions(Array.isArray(alunos) ? alunos : []);
+        const assistidos = (res && (res as any).assistidos) ? (res as any).assistidos : [];
+        setSuggestions(Array.isArray(assistidos) ? assistidos : []);
       } catch (err) {
-        console.error("Erro ao buscar alunos:", err);
+        console.error("Erro ao buscar assistidos:", err);
         setSuggestions([]);
       } finally {
         setLoadingSuggestions(false);
@@ -122,8 +128,8 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      if (!formData.alunoId && !selected) {
-        toast.error("Selecione o aluno (campo obrigatório).");
+      if (!formData.assistidoId && !selected) {
+        toast.error("Selecione o assistido (campo obrigatório).");
         return;
       }
 
@@ -139,10 +145,10 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
         return;
       }
 
-      const payload = { ...formData, alunoId: String(formData.alunoId ?? selected?.id) };
+      const payload = { ...formData, assistidoId: String(formData.assistidoId ?? selected?.id) };
       await onSubmit(payload);
       onClose();
-      setFormData({ name: "", category: "Desempenho", file: null, alunoId: "" });
+      setFormData({ name: "", tipo: "OUTRO", file: null, assistidoId: "" });
       setQuery("");
       setSuggestions([]);
       setSelected(null);
@@ -150,7 +156,7 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
       toast.error(
         error instanceof Error
           ? error.message
-          : "Erro ao criar relatório. Tente novamente."
+          : "Erro ao criar documento. Tente novamente."
       );
     }
   };
@@ -167,16 +173,16 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl font-bold">
             <FileTextIcon className="w-5 h-5 text-blue-600" />
-            Novo Relatório
+            Novo Documento
           </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           <div className="space-y-2 relative" ref={containerRef}>
-            <Label htmlFor="alunoSearch">Aluno</Label>
+            <Label htmlFor="assistidoSearch">Assistido</Label>
             <Input
-              id="alunoSearch"
-              placeholder={selected ? `${selected.nome ?? selected.matricula ?? `#${selected.id}`}` : "Pesquisar aluno por nome / matrícula / id"}
+              id="assistidoSearch"
+              placeholder={selected ? `${selected.nome ?? selected.matricula ?? `#${selected.id}`}` : "Pesquisar assistido por nome / matrícula / id"}
               value={query}
               onFocus={() => setIsSuggestionsOpen(true)}
               onChange={(e) => {
@@ -186,7 +192,7 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
                 }
                 if (selected) {
                   setSelected(null);
-                  setFormData(prev => ({ ...prev, alunoId: "" }));
+                  setFormData(prev => ({ ...prev, assistidoId: "" }));
                 }
               }}
               className="w-full"
@@ -205,7 +211,7 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
                     className="w-full text-left px-3 py-2 hover:bg-gray-50 text-sm"
                     onClick={() => {
                       setSelected(s);
-                      setFormData(prev => ({ ...prev, alunoId: String(s.id) }));
+                      setFormData(prev => ({ ...prev, assistidoId: String(s.id) }));
                       setQuery("");
                       setSuggestions([]);
                       setIsSuggestionsOpen(false);
@@ -229,7 +235,7 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
                   className="text-xs text-red-600 px-2 py-1"
                   onClick={() => {
                     setSelected(null);
-                    setFormData(prev => ({ ...prev, alunoId: "" }));
+                    setFormData(prev => ({ ...prev, assistidoId: "" }));
                   }}
                 >
                   Remover
@@ -239,29 +245,29 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="name">Nome do relatório</Label>
+            <Label htmlFor="name">Nome do documento</Label>
             <Input
               id="name"
               value={formData.name}
               onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-              placeholder="Ex: Relatório de Desempenho - 1º Bimestre"
+              placeholder="Ex: Documento de Desempenho - 1º Bimestre"
               className="w-full"
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="category">Categoria</Label>
+            <Label htmlFor="tipo">Tipo de Documento</Label>
             <select
-              id="category"
-              value={formData.category}
-              onChange={(e) => setFormData((prev) => ({ ...prev, category: e.target.value }))}
+              id="tipo"
+              value={formData.tipo}
+              onChange={(e) => setFormData((prev) => ({ ...prev, tipo: e.target.value }))}
               className="w-full border rounded-md px-3 py-2"
               required
             >
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
+              {tiposDocumento.map((tipo) => (
+                <option key={tipo.value} value={tipo.value}>
+                  {tipo.label}
                 </option>
               ))}
             </select>
@@ -305,7 +311,7 @@ export const CreateReportModal: React.FC<CreateReportModalProps> = ({
               type="submit"
               className="bg-blue-600 hover:bg-blue-700"
             >
-              Criar Relatório
+              Criar Documento
             </Button>
           </DialogFooter>
         </form>
