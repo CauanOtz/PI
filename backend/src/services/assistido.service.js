@@ -88,16 +88,16 @@ export default class AssistidoService {
     nome, 
     dataNascimento, 
     sexo, 
-    cartaoSus, 
-    rg, 
-    endereco, 
-    bairro, 
-    cep, 
-    cidade, 
-    contato, 
-    problemasSaude, 
-    pai, 
-    mae 
+    cartaoSus = null, 
+    rg = null, 
+    endereco = null, 
+    bairro = null, 
+    cep = null, 
+    cidade = null, 
+    contato = null, 
+    problemasSaude = null, 
+    pai = null, 
+    mae = null 
   }) {
     // Primeiro, vamos verificar os índices da tabela
     try {
@@ -117,7 +117,8 @@ export default class AssistidoService {
         const [existingAssistido] = await sequelize.query(`
           SELECT id FROM assistidos WHERE cartao_sus = :cartaoSus;
         `, {
-          replacements: { cartaoSus }
+          replacements: { cartaoSus },
+          type: sequelize.QueryTypes.SELECT
         });
         console.log('Assistidos com mesmo cartão SUS:', existingAssistido);
       }
@@ -259,16 +260,16 @@ export default class AssistidoService {
     nome, 
     dataNascimento, 
     sexo, 
-    cartaoSus, 
-    rg, 
-    endereco, 
-    bairro, 
-    cep, 
-    cidade, 
-    contato, 
-    problemasSaude, 
-    pai, 
-    mae 
+    cartaoSus = null, 
+    rg = null, 
+    endereco = null, 
+    bairro = null, 
+    cep = null, 
+    cidade = null, 
+    contato = null, 
+    problemasSaude = null, 
+    pai = null, 
+    mae = null 
   }) {
     const transaction = await sequelize.transaction();
     try {

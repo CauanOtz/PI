@@ -3,14 +3,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
-import { toast } from "sonner";
-import { usuariosService } from "../../../services/users";
-import { XIcon, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { AssistidoFormData, CreateAssistidoModalProps } from "./types";
 import { Textarea } from "../../ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 
-export const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
+export const CreateStudentModal: React.FC<CreateAssistidoModalProps> = ({
   isOpen,
   onClose,
   onSubmit,
@@ -36,6 +34,15 @@ export const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
     e.preventDefault();
     onSubmit({
       ...formData,
+      cartaoSus: formData.cartaoSus || null,
+      rg: formData.rg || null,
+      bairro: formData.bairro || null,
+      cidade: formData.cidade || null,
+      cep: formData.cep || null,
+      contatoEmergencia: formData.contatoEmergencia || null,
+      mae: formData.mae || null,
+      pai: formData.pai || null,
+      problemasSaude: formData.problemasSaude || null,
     });
     setFormData({
       nome: "",
@@ -76,6 +83,7 @@ export const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
               <Input
                 id="dataNascimento"
                 type="date"
+                max={new Date().toISOString().split('T')[0]}
                 value={formData.dataNascimento}
                 onChange={(e) => setFormData(prev => ({ ...prev, dataNascimento: e.target.value }))}
                 required
@@ -207,9 +215,16 @@ export const CreateStudentModal: React.FC<CreateStudentModalProps> = ({
             </div>
           </div>
 
-
-
-          
+          <div className="space-y-2">
+            <Label htmlFor="problemasSaude">Problemas de Saúde</Label>
+            <Textarea
+              id="problemasSaude"
+              placeholder="Descreva condições de saúde relevantes (opcional)"
+              value={formData.problemasSaude ?? ""}
+              onChange={(e) => setFormData(prev => ({ ...prev, problemasSaude: e.target.value }))}
+              rows={3}
+            />
+          </div>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>
