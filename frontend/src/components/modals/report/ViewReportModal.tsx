@@ -43,9 +43,9 @@ export const ViewReportModal: React.FC<ViewReportModalProps> = ({ isOpen, onClos
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
+          <DialogTitle className="flex items-center gap-2 text-xl font-semibold">
             <FileTextIcon className="w-5 h-5 text-blue-600" />
-            Informações do Relatório
+            Informações do Documento
           </DialogTitle>
         </DialogHeader>
 

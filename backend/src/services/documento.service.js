@@ -99,7 +99,7 @@ class DocumentoService {
             attributes: {
                 exclude: ['assistidoId', 'usuarioId', 'caminhoArquivo']
             },
-            order: [['dataUpload', 'DESC']]
+            order: [['createdAt', 'DESC']]
         });
 
         return { documentos };

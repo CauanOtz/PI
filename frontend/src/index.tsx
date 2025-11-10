@@ -18,7 +18,7 @@ import { AuthProvider } from "./context/AuthProvider";
 import PrivateRoute from "./routes/PrivateRoute";
 import { Users } from "./screens/Users/Users";
 import { GuardianDashboard } from "./screens/Guardian/GuardianDashboard";
-import { Class } from "./screens/Aulas/Class";
+import { Activity } from "./screens/Atividades/Activity";
 
 function App() {
   return (
@@ -37,7 +37,7 @@ function App() {
             <Route path="/exams" element={<Exams />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/users" element={<Users />} />
-            <Route path="/class" element={<Class />} />
+            <Route path="/atividades" element={<Activity />} />
             <Route path="/guardian-dashboard" element={<GuardianDashboard />} />
             <Route path="/notificacoes" element={<NotificationsAdmin />} />
             <Route path="/minhas-notificacoes" element={<NotificationsGuardian />} />

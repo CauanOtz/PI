@@ -2,7 +2,6 @@
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
 import Assistido from './Assistido.model.js';
-import Aula from './Aula.model.js';
 import Atividade from './Atividade.model.js';
 
 /**
@@ -13,7 +12,7 @@ import Atividade from './Atividade.model.js';
  *       type: object
  *       required:
  *         - idAssistido
- *         - idAula
+ *         - idAtividade
  *         - status
  *         - data_registro
  *       properties:

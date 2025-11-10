@@ -82,24 +82,35 @@ const setupSwagger = (app) => {
               nome: { type: 'string' },
               descricao: { type: 'string', nullable: true },
               tipo: { type: 'string', enum: ['RG','CPF','CERTIDAO_NASCIMENTO','COMPROVANTE_ENDERECO','OUTRO'] },
-              tamanho: { type: 'integer', nullable: true },
               assistidoId: { type: 'integer' },
               usuarioId: { type: 'integer' },
               dataUpload: { type: 'string', format: 'date-time' },
+              ativo: { type: 'boolean' },
               downloadUrl: { type: 'string' },
             },
           },
-          AulaDTO: {
+          Atividade: {
             type: 'object',
             properties: {
               id: { type: 'integer' },
-              titulo: { type: 'string' },
+              titulo: { type: 'string', maxLength: 100, minLength: 3 },
               data: { type: 'string', format: 'date' },
-              horario: { type: 'string' },
-              descricao: { type: 'string', nullable: true },
+              horario: { type: 'string', pattern: '^([01]\\d|2[0-3]):([0-5]\\d)(?::([0-5]\\d))?$' },
+              descricao: { type: 'string', nullable: true, maxLength: 500 },
               createdAt: { type: 'string', format: 'date-time' },
               updatedAt: { type: 'string', format: 'date-time' },
             },
+            required: ['titulo', 'data', 'horario']
+          },
+          NovaAtividade: {
+            type: 'object',
+            properties: {
+              titulo: { type: 'string', maxLength: 100, minLength: 3, example: "Matemática Básica" },
+              data: { type: 'string', format: 'date', example: "2025-11-08" },
+              horario: { type: 'string', pattern: '^([01]\\d|2[0-3]):([0-5]\\d)(?::([0-5]\\d))?$', example: "14:30" },
+              descricao: { type: 'string', nullable: true, maxLength: 500, example: "Atividade introdutória sobre conceitos básicos" }
+            },
+            required: ['titulo', 'data', 'horario']
           },
           PresencaDTO: {
             type: 'object',
@@ -200,21 +211,21 @@ const setupSwagger = (app) => {
               },
             },
           },
-          SuccessAula: {
+          SuccessAtividade: {
             type: 'object',
             properties: {
               sucesso: { type: 'boolean', example: true },
-              dados: { $ref: '#/components/schemas/AulaDTO' },
+              dados: { $ref: '#/components/schemas/Atividade' },
             },
           },
-          SuccessAulas: {
+          SuccessAtividades: {
             type: 'object',
             properties: {
               sucesso: { type: 'boolean', example: true },
               dados: {
                 type: 'object',
                 properties: {
-                  aulas: { type: 'array', items: { $ref: '#/components/schemas/AulaDTO' } },
+                  atividades: { type: 'array', items: { $ref: '#/components/schemas/Atividade' } },
                 },
               },
             },

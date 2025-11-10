@@ -4,49 +4,82 @@ import { ptBR } from "date-fns/locale";
 import { Button } from "../../ui/button";
 import { toast } from "sonner";
 import { presencaService } from "../../../services/presencaService";
-import { Aula } from "../../../services/class";
+import { studentsService } from "../../../services/students";
 
-interface Presenca {
+type ModalPresenca = {
   id: number;
-  idAluno?: number;
-  status?: string;
+  idAssistido: number;
+  status: "presente" | "falta" | "atraso" | "falta_justificada";
   observacao?: string;
-  data_registro?: string;
-  aluno?: { id?: number; nome?: string };
-}
+  dataRegistro: string;
+  assistido?: {
+    id: number;
+    nome: string;
+  };
+};
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  idAula?: number | string | "";
+  idAtividade?: number | string | "";
   date?: string;
 }
 
-export const AttendanceModal = ({ isOpen, onClose, idAula, date }: Props) => {
+export const AttendanceModal = ({ isOpen, onClose, idAtividade, date }: Props) => {
   const [loading, setLoading] = useState(false);
-  const [presencas, setPresencas] = useState<Presenca[]>([]);
+  const [presencas, setPresencas] = useState<ModalPresenca[]>([]);
+  const [assistidosMap, setAssistidosMap] = useState<Map<number, string>>(new Map());
+
+  const loadAssistidosInfo = async (presencasList: ModalPresenca[]) => {
+    try {
+      const idsAssistidos = [...new Set(presencasList.map(p => p.idAssistido))];
+      const res = await studentsService.list({ limit: 500 });
+      const assistidos = res.assistidos || [];
+      
+      const newMap = new Map<number, string>();
+      assistidos.forEach(assistido => {
+        if (idsAssistidos.includes(Number(assistido.id))) {
+          newMap.set(Number(assistido.id), assistido.nome);
+        }
+      });
+      
+      setAssistidosMap(newMap);
+    } catch (err) {
+      console.error("Erro ao carregar informações dos assistidos:", err);
+      toast.error("Erro ao carregar nomes dos assistidos.");
+    }
+  };
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !date) return;
     const load = async () => {
-      if (!idAula) {
+      if (!idAtividade) {
         setPresencas([]);
         return;
       }
       try {
         setLoading(true);
-        const res = await presencaService.list({ idAula, dataInicio: date, dataFim: date });
-        const list = Array.isArray(res) ? res : (res && res.presencas) ? res.presencas : (res && res.presencas === undefined ? res : []);
+        const res = await presencaService.listByAtividade(idAtividade, { 
+          dataInicio: date,
+          dataFim: date
+        });
+        
+        // Filtrando apenas as presenças do dia específico
+        const list = res.presencas.filter(p => {
+          return p.dataRegistro === date;
+        });
+        
         setPresencas(list);
+        await loadAssistidosInfo(list);
       } catch (err) {
-        console.error("Erro ao carregar presenças da aula:", err);
+        console.error("Erro ao carregar presenças da atividade:", err);
         toast.error("Erro ao carregar presenças.");
       } finally {
         setLoading(false);
       }
     };
     load();
-  }, [isOpen, idAula, date]);
+  }, [isOpen, idAtividade, date]);
 
   if (!isOpen) return null;
 
@@ -58,9 +91,6 @@ export const AttendanceModal = ({ isOpen, onClose, idAula, date }: Props) => {
           <h3 className="text-lg font-semibold">
             Presenças - {date ? format(new Date(date), "dd/MM/yyyy", { locale: ptBR }) : "Todas as datas"}
           </h3>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>Fechar</Button>
-          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -72,19 +102,44 @@ export const AttendanceModal = ({ isOpen, onClose, idAula, date }: Props) => {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b">
-                  <th className="text-left py-2">Aluno</th>
-                  <th className="text-left py-2">Status</th>
-                  <th className="text-left py-2">Observação</th>
-                  <th className="text-left py-2">Data</th>
+                  <th className="text-left py-3 px-4">Assistido</th>
+                  <th className="text-left py-3 px-4">Status</th>
+                  <th className="text-left py-3 px-4">Observação</th>
                 </tr>
               </thead>
               <tbody>
                 {presencas.map((p) => (
-                  <tr key={p.id} className="border-b">
-                    <td className="py-2">{p.aluno?.nome ?? `#${p.idAluno ?? p.id}`}</td>
-                    <td className="py-2">{p.status ?? "-"}</td>
-                    <td className="py-2">{p.observacao ?? "-"}</td>
-                    <td className="py-2">{p.data_registro ? format(new Date(p.data_registro), "dd/MM/yyyy") : "-"}</td>
+                  <tr key={p.id} className="border-b hover:bg-gray-50">
+                    <td className="py-3 px-4 font-medium">{assistidosMap.get(p.idAssistido) || 'Carregando...'}</td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        p.status === "presente" 
+                          ? "bg-green-100 text-green-700"
+                          : p.status === "falta"
+                          ? "bg-red-100 text-red-700"
+                          : p.status === "atraso"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : p.status === "falta_justificada"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-gray-100 text-gray-700"
+                      }`}>
+                        {p.status === "presente" 
+                          ? "Presente"
+                          : p.status === "falta"
+                          ? "Ausente"
+                          : p.status === "atraso"
+                          ? "Atrasado"
+                          : p.status === "falta_justificada"
+                          ? "Falta Justificada"
+                          : "Não registrado"}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      {p.observacao 
+                        ? <span className="inline-block max-w-xs truncate" title={p.observacao}>{p.observacao}</span>
+                        : <span className="text-gray-400">-</span>
+                      }
+                    </td>
                   </tr>
                 ))}
               </tbody>

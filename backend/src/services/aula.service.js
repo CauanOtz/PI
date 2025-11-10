@@ -1,33 +1,33 @@
 import { sequelize } from '../config/database.js';
-import Aula from '../models/Aula.model.js';
+import Atividade from '../models/Atividade.model.js';
 
-export default class AulaService {
+export default class AtividadeService {
   static async listAll() {
     // Simple list, controller will map DTOs
-    const aulas = await Aula.findAll({ order: [['data', 'ASC'], ['horario', 'ASC']] });
-    return aulas;
+    const atividades = await Atividade.findAll({ order: [['data', 'ASC'], ['horario', 'ASC']] });
+    return atividades;
   }
 
   static async getById(id) {
-    const aulaId = parseInt(id);
-    if (Number.isNaN(aulaId)) {
-      const err = new Error('ID da aula inválido');
+    const atividadeId = parseInt(id);
+    if (Number.isNaN(atividadeId)) {
+      const err = new Error('ID da atividade inválido');
       err.status = 400;
       throw err;
     }
-    const aula = await Aula.findByPk(aulaId);
-    if (!aula) {
-      const err = new Error('Aula não encontrada');
+    const atividade = await Atividade.findByPk(atividadeId);
+    if (!atividade) {
+      const err = new Error('Atividade não encontrada');
       err.status = 404;
       throw err;
     }
-    return aula;
+    return atividade;
   }
 
   static async create({ titulo, data, horario, descricao }) {
     const transaction = await sequelize.transaction();
     try {
-      const novo = await Aula.create({ titulo, data, horario, descricao }, { transaction });
+      const novo = await Atividade.create({ titulo, data, horario, descricao }, { transaction });
       await transaction.commit();
       return novo;
     } catch (e) {
@@ -39,15 +39,15 @@ export default class AulaService {
   static async update(id, { titulo, data, horario, descricao }) {
     const transaction = await sequelize.transaction();
     try {
-      const aula = await Aula.findByPk(id);
-      if (!aula) {
+      const atividade = await Atividade.findByPk(id);
+      if (!atividade) {
         await transaction.commit();
         return null;
       }
 
-      await aula.update({ titulo, data, horario, descricao }, { transaction });
+      await atividade.update({ titulo, data, horario, descricao }, { transaction });
       await transaction.commit();
-      return aula;
+      return atividade;
     } catch (e) {
       await transaction.rollback();
       throw e;
@@ -57,12 +57,12 @@ export default class AulaService {
   static async remove(id) {
     const transaction = await sequelize.transaction();
     try {
-      const aula = await Aula.findByPk(id);
-      if (!aula) {
+      const atividade = await Atividade.findByPk(id);
+      if (!atividade) {
         await transaction.commit();
         return null;
       }
-      await aula.destroy({ transaction });
+      await atividade.destroy({ transaction });
       await transaction.commit();
       return true;
     } catch (e) {

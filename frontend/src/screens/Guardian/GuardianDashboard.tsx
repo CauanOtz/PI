@@ -256,7 +256,7 @@ export const GuardianDashboard = () => {
                       <thead>
                         <tr className="text-left text-slate-500 border-b">
                           <th className="py-2 pr-2 font-medium">Data</th>
-                          <th className="py-2 pr-2 font-medium">Aula</th>
+                          <th className="py-2 pr-2 font-medium">Atividade</th>
                           <th className="py-2 pr-2 font-medium">Status</th>
                           <th className="py-2 pr-2 font-medium">Observação</th>
                         </tr>
@@ -268,12 +268,12 @@ export const GuardianDashboard = () => {
                           const d = dateStr ? new Date(dateStr) : null;
                           const labelDate = d ? d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }) : '--';
                           const statusColor = status === 'presente' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : status === 'falta' ? 'bg-red-100 text-red-700 border-red-200' : status === 'atraso' ? 'bg-amber-100 text-amber-700 border-amber-200' : status === 'falta_justificada' ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-slate-100 text-slate-600 border-slate-200';
-                          const aulaTitulo = p.aula?.titulo || p.aula?.nome || p.titulo_aula || '-';
+                          const atividadeTitulo = p.atividade?.titulo || p.atividade?.nome || p.titulo_atividade || '-';
                           const obs = p.observacao || p.obs || '';
                           return (
                             <tr key={idx} className="border-b last:border-none">
                               <td className="py-2 pr-2 whitespace-nowrap text-slate-700">{labelDate}</td>
-                              <td className="py-2 pr-2 max-w-[160px] truncate text-slate-600" title={aulaTitulo}>{aulaTitulo}</td>
+                              <td className="py-2 pr-2 max-w-[160px] truncate text-slate-600" title={atividadeTitulo}>{atividadeTitulo}</td>
                               <td className="py-2 pr-2">
                                 <span className={`inline-block px-2 py-0.5 rounded border text-[11px] capitalize ${statusColor}`}>{status || '—'}</span>
                               </td>

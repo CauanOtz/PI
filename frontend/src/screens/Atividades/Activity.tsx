@@ -5,18 +5,30 @@ import { Input } from '../../components/ui/input';
 import { PlusIcon, SearchIcon, PencilIcon, TrashIcon } from 'lucide-react';
 import { DeleteConfirmationModal } from '../../components/modals/shared/DeleteConfirmationModal';
 import { listAtividades, createAtividade, updateAtividade, deleteAtividade, Atividade } from '../../services/atividade';
-import CreateAtividadeModal from '../../components/modals/atividades/CreateAtividadeModal';
-import EditAtividadeModal from '../../components/modals/atividades/EditAtividadeModal';
+import CreateAtividadeModal from '../../components/modals/atividades/CreateActivityModal';
+import EditAtividadeModal from '../../components/modals/atividades/EditActivityModal';
 import { toast } from 'sonner';
 
-export const Class: React.FC = () => {
+export const Activity: React.FC = () => {
   const [atividades, setAtividades] = useState<Atividade[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const [editing, setEditing] = useState<any | null>(null);
+  const [editing, setEditing] = useState<Atividade | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Atividade | null>(null);
+
+  const formatDate = (dateStr: string | null | undefined): string => {
+    if (!dateStr) return '-';
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
+  const formatTime = (timeStr: string | null | undefined): string => {
+    if (!timeStr) return '-';
+    const [hours, minutes] = timeStr.split(':');
+    return `${hours}:${minutes}`;
+  };
 
   const load = async () => {
     setLoading(true);
@@ -40,7 +52,7 @@ export const Class: React.FC = () => {
       await load();
     } catch (err: any) {
       console.error(err);
-      toast.error('Falha ao criar aula');
+      toast.error('Falha ao criar atividade');
     }
   };
 
@@ -51,7 +63,7 @@ export const Class: React.FC = () => {
       await load();
     } catch (err: any) {
       console.error(err);
-      toast.error('Falha ao atualizar aula');
+      toast.error('Falha ao atualizar atividade');
     }
   };
 
@@ -62,7 +74,7 @@ export const Class: React.FC = () => {
       await load();
     } catch (err: any) {
       console.error(err);
-      toast.error('Falha ao remover aula');
+      toast.error('Falha ao remover atividade');
     }
   };
 
@@ -111,7 +123,7 @@ export const Class: React.FC = () => {
                     <th className="text-left p-4">Título</th>
                     <th className="text-center p-4">Data</th>
                     <th className="text-center p-4 hidden sm:table-cell">Horário</th>
-                    <th className="text-center p-4 hidden md:table-cell">ID</th>
+                    <th className="text-left p-4 hidden lg:table-cell">Descrição</th>
                     <th className="text-center p-4">Ações</th>
                   </tr>
                 </thead>
@@ -128,16 +140,22 @@ export const Class: React.FC = () => {
                           <td className="p-4">
                             <div className="font-medium text-slate-800">{a.titulo}</div>
                           </td>
-                          <td className="p-4 text-center whitespace-nowrap">{a.data || '-'}</td>
-                          <td className="p-4 text-center whitespace-nowrap hidden sm:table-cell">{a.horario || '-'}</td>
-                          <td className="p-4 text-center whitespace-nowrap hidden md:table-cell">#{a.id}</td>
+                          <td className="p-4 text-center whitespace-nowrap">{formatDate(a.data)}</td>
+                          <td className="p-4 text-center whitespace-nowrap hidden sm:table-cell">{formatTime(a.horario)}</td>
+                          <td className="p-4 hidden lg:table-cell">
+                            <div className="text-gray-600 text-sm max-w-md truncate">
+                              {a.descricao || '-'}
+                            </div>
+                          </td>
                           <td className="p-4">
-                            <div className="flex justify-center gap-1">
+                            <div className="flex justify-center gap-2">
                               <Button variant="ghost" size="sm" onClick={() => { setEditing(a); setEditOpen(true); }} className="text-blue-600 hover:text-blue-700">
-                                <PencilIcon className="w-4 h-4" />
+                                <PencilIcon className="w-4 h-4 mr-1" />
+                                Editar Atividade
                               </Button>
                               <Button variant="ghost" size="sm" onClick={() => setDeleteTarget(a)} className="text-red-600 hover:text-red-700">
-                                <TrashIcon className="w-4 h-4" />
+                                <TrashIcon className="w-4 h-4 mr-1" />
+                                Excluir Atividade
                               </Button>
                             </div>
                           </td>
@@ -164,4 +182,4 @@ export const Class: React.FC = () => {
   );
 };
 
-export default Class;
+export default Activity;

@@ -1,7 +1,6 @@
 // src/models/Atividade.model.js
 import { DataTypes } from 'sequelize';
 import { sequelize } from '../config/database.js';
-import Usuario from './Usuario.model.js';
 
 /**
  * @openapi

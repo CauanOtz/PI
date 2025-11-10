@@ -8,19 +8,19 @@ const mockPresenca = {
   upsert: jest.fn(),
 };
 
-const mockAluno = { findByPk: jest.fn() };
-const mockAula = { findByPk: jest.fn() };
+const mockAssistido = { findByPk: jest.fn() };
+const mockAtividade = { findByPk: jest.fn() };
 
 const mockSequelize = { transaction: jest.fn() };
 
 jest.unstable_mockModule('../../src/models/Presenca.model.js', () => ({ default: mockPresenca }));
-jest.unstable_mockModule('../../src/models/Aluno.model.js', () => ({ default: mockAluno }));
-jest.unstable_mockModule('../../src/models/Aula.model.js', () => ({ default: mockAula }));
+jest.unstable_mockModule('../../src/models/Assistido.model.js', () => ({ default: mockAssistido }));
+jest.unstable_mockModule('../../src/models/Atividade.model.js', () => ({ default: mockAtividade }));
 jest.unstable_mockModule('../../src/config/database.js', () => ({ sequelize: mockSequelize }));
 
 const Presenca = (await import('../../src/models/Presenca.model.js')).default;
-const Aluno = (await import('../../src/models/Aluno.model.js')).default;
-const Aula = (await import('../../src/models/Aula.model.js')).default;
+const Assistido = (await import('../../src/models/Assistido.model.js')).default;
+const Atividade = (await import('../../src/models/Atividade.model.js')).default;
 const { sequelize } = await import('../../src/config/database.js');
 const PresencaService = (await import('../../src/services/presenca.service.js')).default;
 
@@ -39,44 +39,44 @@ describe('PresencaService', () => {
     mockPresenca.findByPk.mockReset();
     mockPresenca.findOne.mockReset();
     mockPresenca.upsert.mockReset();
-    mockAluno.findByPk.mockReset();
-    mockAula.findByPk.mockReset();
+    mockAssistido.findByPk.mockReset();
+    mockAtividade.findByPk.mockReset();
   });
 
   afterEach(() => jest.clearAllMocks());
 
   it('registrarPresenca creates when not existing', async () => {
     const fake = { id: 1 };
-    mockAluno.findByPk.mockResolvedValue({ id: 1 });
-    mockAula.findByPk.mockResolvedValue({ id: 2 });
+    mockAssistido.findByPk.mockResolvedValue({ id: 1 });
+    mockAtividade.findByPk.mockResolvedValue({ id: 2 });
     mockPresenca.findOrCreate.mockResolvedValue([fake, true]);
-    const res = await PresencaService.registrarPresenca({ idAluno: 1, idAula: 2, status: 'presente' });
+    const res = await PresencaService.registrarPresenca({ idAssistido: 1, idAtividade: 2, status: 'presente' });
     expect(res.presenca).toBe(fake);
     expect(res.created).toBe(true);
   });
 
   it('registrarPresenca returns created false when exists', async () => {
     const fake = { id: 2 };
-    mockAluno.findByPk.mockResolvedValue({ id: 1 });
-    mockAula.findByPk.mockResolvedValue({ id: 2 });
+    mockAssistido.findByPk.mockResolvedValue({ id: 1 });
+    mockAtividade.findByPk.mockResolvedValue({ id: 2 });
     mockPresenca.findOrCreate.mockResolvedValue([fake, false]);
-    const res = await PresencaService.registrarPresenca({ idAluno: 1, idAula: 2, status: 'presente' });
+    const res = await PresencaService.registrarPresenca({ idAssistido: 1, idAtividade: 2, status: 'presente' });
     expect(res.presenca).toBe(fake);
     expect(res.created).toBe(false);
   });
 
-  it('registrarPresenca returns notFound when aluno missing', async () => {
-    mockAluno.findByPk.mockResolvedValue(null);
-    mockAula.findByPk.mockResolvedValue({ id: 2 });
-    const res = await PresencaService.registrarPresenca({ idAluno: 999, idAula: 2, status: 'presente' });
-    expect(res).toEqual({ notFound: 'Aluno' });
+  it('registrarPresenca returns notFound when assistido missing', async () => {
+    mockAssistido.findByPk.mockResolvedValue(null);
+    mockAtividade.findByPk.mockResolvedValue({ id: 2 });
+    const res = await PresencaService.registrarPresenca({ idAssistido: 999, idAtividade: 2, status: 'presente' });
+    expect(res).toEqual({ notFound: 'Assistido' });
   });
 
-  it('registrarPresenca returns notFound when aula missing', async () => {
-    mockAluno.findByPk.mockResolvedValue({ id: 1 });
-    mockAula.findByPk.mockResolvedValue(null);
-    const res = await PresencaService.registrarPresenca({ idAluno: 1, idAula: 999, status: 'presente' });
-    expect(res).toEqual({ notFound: 'Aula' });
+  it('registrarPresenca returns notFound when atividade missing', async () => {
+    mockAssistido.findByPk.mockResolvedValue({ id: 1 });
+    mockAtividade.findByPk.mockResolvedValue(null);
+    const res = await PresencaService.registrarPresenca({ idAssistido: 1, idAtividade: 999, status: 'presente' });
+    expect(res).toEqual({ notFound: 'Atividade' });
   });
 
   it('listAll returns array', async () => {
@@ -86,24 +86,24 @@ describe('PresencaService', () => {
     expect(res).toBe(arr);
   });
 
-  it('listByAula returns null when aula not found', async () => {
-    mockAula.findByPk.mockResolvedValue(null);
-    const res = await PresencaService.listByAula(10, {});
+  it('listByAtividade returns null when atividade not found', async () => {
+    mockAtividade.findByPk.mockResolvedValue(null);
+    const res = await PresencaService.listByAtividade(10, {});
     expect(res).toBeNull();
   });
 
-  it('listByAula returns aula and presencas', async () => {
-    const aula = { id: 10, titulo: 'A' };
-    mockAula.findByPk.mockResolvedValue(aula);
+  it('listByAtividade returns atividade and presencas', async () => {
+    const atividade = { id: 10, titulo: 'A' };
+    mockAtividade.findByPk.mockResolvedValue(atividade);
     mockPresenca.findAll.mockResolvedValue([{ id: 1 }]);
-    const res = await PresencaService.listByAula(10, {});
-    expect(res.aula).toBe(aula);
+    const res = await PresencaService.listByAtividade(10, {});
+    expect(res.atividade).toBe(atividade);
     expect(res.presencas).toBeInstanceOf(Array);
   });
 
-  it('listByAluno returns null when aluno not found', async () => {
-    mockAluno.findByPk.mockResolvedValue(null);
-    const res = await PresencaService.listByAluno(5, {});
+  it('listByAssistido returns null when assistido not found', async () => {
+    mockAssistido.findByPk.mockResolvedValue(null);
+    const res = await PresencaService.listByAssistido(5, {});
     expect(res).toBeNull();
   });
 
@@ -120,7 +120,7 @@ describe('PresencaService', () => {
   });
 
   it('update returns conflict when colisao found', async () => {
-    const pres = { id: 10, idAluno: 1, idAula: 2, update: jest.fn(), reload: jest.fn() };
+    const pres = { id: 10, idAssistido: 1, idAtividade: 2, update: jest.fn(), reload: jest.fn() };
     mockPresenca.findByPk.mockResolvedValue(pres);
     mockPresenca.findOne.mockResolvedValue({ id: 11 });
     const res = await PresencaService.update(10, { data_registro: '2025-01-01' });
@@ -128,7 +128,7 @@ describe('PresencaService', () => {
   });
 
   it('update updates and returns presenca', async () => {
-    const pres = { id: 20, idAluno: 1, idAula: 2, update: jest.fn().mockResolvedValue(undefined), reload: jest.fn().mockResolvedValue(undefined) };
+    const pres = { id: 20, idAssistido: 1, idAtividade: 2, update: jest.fn().mockResolvedValue(undefined), reload: jest.fn().mockResolvedValue(undefined) };
     mockPresenca.findByPk.mockResolvedValue(pres);
     mockPresenca.findOne.mockResolvedValue(null);
     const res = await PresencaService.update(20, { status: 'atraso' });
@@ -137,9 +137,9 @@ describe('PresencaService', () => {
   });
 
   it('bulkRegister upserts and returns results', async () => {
-    const items = [{ idAluno:1, idAula:2, status:'presente', data_registro:'2025-01-01', observacao:null }];
-    mockAluno.findByPk.mockResolvedValue({ id: 1 });
-    mockAula.findByPk.mockResolvedValue({ id: 2 });
+    const items = [{ idAssistido:1, idAtividade:2, status:'presente', data_registro:'2025-01-01', observacao:null }];
+    mockAssistido.findByPk.mockResolvedValue({ id: 1 });
+    mockAtividade.findByPk.mockResolvedValue({ id: 2 });
     mockPresenca.upsert.mockResolvedValue(undefined);
     mockPresenca.findOne.mockResolvedValue({ id: 50 });
     const res = await PresencaService.bulkRegister(items);
@@ -147,20 +147,20 @@ describe('PresencaService', () => {
     expect(mockPresenca.upsert).toHaveBeenCalled();
   });
 
-  it('bulkRegister returns error entry when aluno missing', async () => {
-    const items = [{ idAluno:999, idAula:2, status:'presente', data_registro:'2025-01-01', observacao:null }];
-    mockAluno.findByPk.mockResolvedValue(null);
+  it('bulkRegister returns error entry when assistido missing', async () => {
+    const items = [{ idAssistido:999, idAtividade:2, status:'presente', data_registro:'2025-01-01', observacao:null }];
+    mockAssistido.findByPk.mockResolvedValue(null);
     const res = await PresencaService.bulkRegister(items);
     expect(res).toHaveLength(1);
-    expect(res[0]).toEqual({ presenca: null, error: 'Aluno' });
+    expect(res[0]).toEqual({ presenca: null, error: 'Assistido' });
   });
 
-  it('bulkRegister returns error entry when aula missing', async () => {
-    const items = [{ idAluno:1, idAula:999, status:'presente', data_registro:'2025-01-01', observacao:null }];
-    mockAluno.findByPk.mockResolvedValue({ id: 1 });
-    mockAula.findByPk.mockResolvedValue(null);
+  it('bulkRegister returns error entry when atividade missing', async () => {
+    const items = [{ idAssistido:1, idAtividade:999, status:'presente', data_registro:'2025-01-01', observacao:null }];
+    mockAssistido.findByPk.mockResolvedValue({ id: 1 });
+    mockAtividade.findByPk.mockResolvedValue(null);
     const res = await PresencaService.bulkRegister(items);
     expect(res).toHaveLength(1);
-    expect(res[0]).toEqual({ presenca: null, error: 'Aula' });
+    expect(res[0]).toEqual({ presenca: null, error: 'Atividade' });
   });
 });

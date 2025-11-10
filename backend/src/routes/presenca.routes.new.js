@@ -7,7 +7,7 @@ import {
   listarPresencas, 
   obterPresenca, 
   atualizarPresenca,
-  listarPresencasPorAula,
+  listarPresencasPorAtividade,
   listarHistoricoAssistido,
   registrarPresencasBulk
 } from '../controllers/presenca.controller.js';

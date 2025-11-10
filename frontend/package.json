@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "source": "./index.html",
   "type": "module",
-  "name": "Escola",
+  "name": "escola",
   "description": "Escola PI",
   "scripts": {
     "dev": "vite",

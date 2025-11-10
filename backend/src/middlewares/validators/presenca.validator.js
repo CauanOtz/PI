@@ -19,8 +19,8 @@ export const validateRegistrarPresenca = [
   body('idAssistido')
     .isInt({ min: 1 }).withMessage('ID do assistido deve ser um número inteiro positivo.')
     .toInt(),
-  body('idAula')
-    .isInt({ min: 1 }).withMessage('ID da aula deve ser um número inteiro positivo.')
+  body('idAtividade')
+    .isInt({ min: 1 }).withMessage('ID da atividade deve ser um número inteiro positivo.')
     .toInt(),
   body('status')
     .isIn(['presente', 'falta'])
@@ -42,9 +42,9 @@ export const validateListarPresencas = [
     .optional()
     .isInt({ min: 1 }).withMessage('ID do assistido deve ser um número inteiro positivo.')
     .toInt(),
-  query('idAula')
+  query('idAtividade')
     .optional()
-    .isInt({ min: 1 }).withMessage('ID da aula deve ser um número inteiro positivo.')
+    .isInt({ min: 1 }).withMessage('ID da atividade deve ser um número inteiro positivo.')
     .toInt(),
   query('dataInicio')
     .optional()
@@ -101,10 +101,10 @@ export const validateHistoricoAssistido = [
   validateRequest
 ];
 
-// Validação para listar presenças de uma aula específica
-export const validatePresencasPorAula = [
-  param('idAula')
-    .isInt({ min: 1 }).withMessage('ID da aula deve ser um número inteiro positivo.')
+// Validação para listar presenças de uma atividade específica
+export const validatePresencasPorAtividade = [
+  param('idAtividade')
+    .isInt({ min: 1 }).withMessage('ID da atividade deve ser um número inteiro positivo.')
     .toInt(),
   query('data')
     .optional()

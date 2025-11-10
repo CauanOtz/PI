@@ -7,7 +7,7 @@ import morgan from 'morgan';
 import logger from './utils/logger.js';
 import setupSwagger from './config/swagger.js'; // Importe a configuração do Swagger
 // import mainRoutes from './routes/index.js'; // Descomente quando tiver rotas
-import aulaRoutes from './routes/aula.routes.js'; // Importe suas rotas de aula
+// DEPRECATED: aula routes removed, using atividade routes instead
 import atividadeRoutes from './routes/atividade.routes.js'; // Importe suas rotas de atividade
 import usuarioRoutes from './routes/usuario.routes.js'; // Importe suas rotas de usuário
 import assistidoRoutes from './routes/assistido.routes.js'; // Importe as rotas de assistido
