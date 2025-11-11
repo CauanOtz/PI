@@ -18,7 +18,8 @@ const Documento = sequelize.define('Documento', {
   },
   caminhoArquivo: {
     type: DataTypes.STRING(255),
-    allowNull: false
+    allowNull: false,
+    field: 'caminho_arquivo'
   },
   tipo: {
     type: DataTypes.ENUM('RG', 'CPF', 'CERTIDAO_NASCIMENTO', 'COMPROVANTE_ENDERECO', 'OUTRO'),
@@ -27,6 +28,7 @@ const Documento = sequelize.define('Documento', {
   assistidoId: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    field: 'assistido_id',
     references: {
       model: 'assistidos',
       key: 'id'
@@ -37,6 +39,7 @@ const Documento = sequelize.define('Documento', {
   usuarioId: {
     type: DataTypes.INTEGER,
     allowNull: false,
+    field: 'usuario_id',
     references: {
       model: 'usuarios',
       key: 'id'
