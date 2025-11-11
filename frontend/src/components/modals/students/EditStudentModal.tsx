@@ -3,17 +3,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
-import { PencilIcon, XIcon } from "lucide-react";
-import { usuariosService } from "../../../services/users";
-import { toast } from "sonner";
+import { PencilIcon } from "lucide-react";
 import { AssistidoFormData, EditAssistidoModalProps } from "./types";
 import { Textarea } from "../../ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 
-export const EditStudentModal: React.FC<EditStudentModalProps> = ({
+export const EditStudentModal: React.FC<EditAssistidoModalProps> = ({
   isOpen,
   onClose,
-  student,
+  assistido,
   onSubmit,
 }) => {
   const [formData, setFormData] = React.useState<AssistidoFormData | null>(null);
@@ -28,28 +26,28 @@ export const EditStudentModal: React.FC<EditStudentModalProps> = ({
   };
 
   React.useEffect(() => {
-    if (student) {
+    if (assistido) {
       setFormData({
-        id: student.id,
-        nome: student.nome,
-        dataNascimento: student.dataNascimento,
-        sexo: student.sexo,
-        cartaoSus: student.cartaoSus ?? "",
-        rg: student.rg ?? "",
-        endereco: student.endereco ?? "",
-        bairro: student.bairro ?? "",
-        cidade: student.cidade ?? "",
-        cep: student.cep ?? "",
-        contato: student.contato ?? "",
-        contatoEmergencia: student.contatoEmergencia ?? "",
-        observacoes: student.observacoes ?? "",
-        mae: student.mae ?? "",
-        pai: student.pai ?? "",
+        nome: assistido.nome,
+        dataNascimento: assistido.dataNascimento,
+        sexo: assistido.sexo,
+        cartaoSus: assistido.cartaoSus ?? "",
+        rg: assistido.rg ?? "",
+        endereco: assistido.endereco ?? "",
+        bairro: assistido.bairro ?? "",
+        cidade: assistido.cidade ?? "",
+        cep: assistido.cep ?? "",
+        contato: assistido.contato ?? "",
+        contatoEmergencia: assistido.contatoEmergencia ?? "",
+        problemasSaude: assistido.problemasSaude ?? "",
+        observacoes: assistido.observacoes ?? "",
+        mae: assistido.mae ?? "",
+        pai: assistido.pai ?? "",
       });
     } else {
       setFormData(null);
     }
-  }, [student]);
+  }, [assistido]);
 
 
 
@@ -219,6 +217,17 @@ export const EditStudentModal: React.FC<EditStudentModalProps> = ({
                 onChange={(e) => setFormData(prev => ({ ...prev!, pai: e.target.value }))}
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="problemasSaude">Problemas de Saúde</Label>
+            <Textarea
+              id="problemasSaude"
+              placeholder="Descreva condições de saúde relevantes (opcional)"
+              value={formData.problemasSaude ?? ""}
+              onChange={(e) => setFormData(prev => ({ ...prev!, problemasSaude: e.target.value }))}
+              rows={3}
+            />
           </div>
 
           <DialogFooter>

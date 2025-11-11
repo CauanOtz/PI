@@ -12,7 +12,7 @@ export interface AssistidoFormData {
   cidade?: string;
   contato?: string;
   contatoEmergencia?: string;
-
+  problemasSaude?: string;
   observacoes?: string;
   pai?: string;
   mae?: string;

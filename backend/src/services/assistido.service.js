@@ -88,43 +88,17 @@ export default class AssistidoService {
     nome, 
     dataNascimento, 
     sexo, 
-    cartaoSus, 
-    rg, 
-    endereco, 
-    bairro, 
-    cep, 
-    cidade, 
-    contato, 
-    problemasSaude, 
-    pai, 
-    mae 
+    cartaoSus = null, 
+    rg = null, 
+    endereco = null, 
+    bairro = null, 
+    cep = null, 
+    cidade = null, 
+    contato = null, 
+    problemasSaude = null, 
+    pai = null, 
+    mae = null 
   }) {
-    // Primeiro, vamos verificar os índices da tabela
-    try {
-      const [indexes] = await sequelize.query(`
-        SELECT * FROM sqlite_master 
-        WHERE type = 'index' 
-        AND tbl_name = 'assistidos';
-      `);
-      console.log('Índices encontrados:', indexes);
-
-      const [indexInfo] = await sequelize.query(`
-        PRAGMA index_list('assistidos');
-      `);
-      console.log('Informações dos índices:', indexInfo);
-
-      if (cartaoSus) {
-        const [existingAssistido] = await sequelize.query(`
-          SELECT id FROM assistidos WHERE cartao_sus = :cartaoSus;
-        `, {
-          replacements: { cartaoSus }
-        });
-        console.log('Assistidos com mesmo cartão SUS:', existingAssistido);
-      }
-    } catch (error) {
-      console.error('Erro ao verificar índices:', error);
-    }
-
     const transaction = await sequelize.transaction();
     
     try {
@@ -259,16 +233,16 @@ export default class AssistidoService {
     nome, 
     dataNascimento, 
     sexo, 
-    cartaoSus, 
-    rg, 
-    endereco, 
-    bairro, 
-    cep, 
-    cidade, 
-    contato, 
-    problemasSaude, 
-    pai, 
-    mae 
+    cartaoSus = null, 
+    rg = null, 
+    endereco = null, 
+    bairro = null, 
+    cep = null, 
+    cidade = null, 
+    contato = null, 
+    problemasSaude = null, 
+    pai = null, 
+    mae = null 
   }) {
     const transaction = await sequelize.transaction();
     try {
