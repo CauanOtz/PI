@@ -62,7 +62,7 @@ export const EditStudentModal: React.FC<EditAssistidoModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+    <DialogContent className="w-full max-w-[640px] sm:max-w-[425px] max-h-[90vh] overflow-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <PencilIcon className="w-5 h-5 text-blue-600" />
@@ -82,7 +82,7 @@ export const EditStudentModal: React.FC<EditAssistidoModalProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="dataNascimento">Data de Nascimento</Label>
               <Input
@@ -100,7 +100,7 @@ export const EditStudentModal: React.FC<EditAssistidoModalProps> = ({
                 value={formData.sexo} 
                 onValueChange={(value) => setFormData(prev => ({ ...prev!, sexo: value as 'Masculino' | 'Feminino' }))}
               >
-                <SelectTrigger id="sexo">
+                <SelectTrigger id="sexo" className="w-full">
                   <SelectValue placeholder="Selecione" />
                 </SelectTrigger>
                 <SelectContent>
@@ -111,7 +111,7 @@ export const EditStudentModal: React.FC<EditAssistidoModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="cartaoSus">Cartão SUS</Label>
               <Input
@@ -143,7 +143,7 @@ export const EditStudentModal: React.FC<EditAssistidoModalProps> = ({
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label htmlFor="bairro">Bairro</Label>
               <Input
@@ -175,7 +175,7 @@ export const EditStudentModal: React.FC<EditAssistidoModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="contato">Contato</Label>
               <Input
@@ -197,7 +197,7 @@ export const EditStudentModal: React.FC<EditAssistidoModalProps> = ({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="mae">Nome da Mãe</Label>
               <Input
@@ -230,11 +230,11 @@ export const EditStudentModal: React.FC<EditAssistidoModalProps> = ({
             />
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Cancelar
             </Button>
-            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+            <Button type="submit" className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700">
               Salvar Alterações
             </Button>
           </DialogFooter>

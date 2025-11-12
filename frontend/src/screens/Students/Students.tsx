@@ -25,6 +25,7 @@ export const Students = (): JSX.Element => {
   const [loading, setLoading] = useState(false);
   const [page] = useState(1);
   const [limit] = useState(10);
+  const [showAllColumns, setShowAllColumns] = useState(false);
 
   const load = async () => {
     try {
@@ -66,13 +67,24 @@ export const Students = (): JSX.Element => {
               <h1 className="text-xl sm:text-2xl font-bold">Assistidos</h1>
               <p className="text-gray-600 mt-1">Gerenciamento de Assistidos</p>
             </div>
-            <Button
-              onClick={() => setIsCreateModalOpen(true)}
-              className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
-            >
-              <PlusIcon className="w-4 h-4 mr-2" />
-              Novo Assistido
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto"
+              >
+                <PlusIcon className="w-4 h-4 mr-2" />
+                Novo Assistido
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => setShowAllColumns((v) => !v)}
+                className="inline-flex"
+                aria-pressed={showAllColumns}
+              >
+                {showAllColumns ? 'Ver menos' : 'Ver mais'}
+              </Button>
+            </div>
           </div>
 
           <div className="bg-white p-4 rounded-lg shadow-sm mb-6">
@@ -96,9 +108,9 @@ export const Students = (): JSX.Element => {
                     <th className="text-left p-4">Nome</th>
                     <th className="text-center p-4">Nascimento</th>
                     <th className="text-center p-4">Sexo</th>
-                    <th className="text-center p-4 hidden sm:table-cell">Contato</th>
-                    <th className="text-center p-4 hidden md:table-cell">Endereço</th>
-                    <th className="text-center p-4 hidden lg:table-cell">Pais</th>
+                    <th className="text-center p-4">Contato</th>
+                    <th className={"text-center p-4 " + (showAllColumns ? "table-cell" : "hidden")}>Endereço</th>
+                    <th className={"text-center p-4 " + (showAllColumns ? "table-cell" : "hidden")}>Pais</th>
                     <th className="text-center p-4">Ações</th>
                   </tr>
                 </thead>
@@ -119,21 +131,33 @@ export const Students = (): JSX.Element => {
 
                       return (
                         <tr key={student.id} className="border-b last:border-0 hover:bg-gray-50">
-                          <td className="p-4">
-                            <div>
-                              <div className="font-medium">{student.nome}</div>
-                              {student.cartaoSus && (
-                                <div className="text-xs text-gray-500 mt-1">
-                                  <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
+                          <td className="p-4 align-top">
+                            <div className="flex flex-col gap-3">
+                              <div className="min-w-0">
+                                <div className="font-medium truncate">{student.nome}</div>
+                                <div className="text-xs text-gray-500 mt-2 flex flex-col sm:flex-row sm:flex-wrap gap-2 items-start">
+                                  {student.rg && (
+                                    <span className="text-xs text-gray-500">RG: <span className="text-gray-700">{student.rg}</span></span>
+                                  )}
+                                  {student.cidade && (
+                                    <span className="text-xs text-gray-500">{student.cidade}</span>
+                                  )}
+                                </div>
+                              </div>
+
+                              <div className="flex items-start gap-2 flex-wrap">
+                                {student.cartaoSus && (
+                                  <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-xs">
                                     SUS: {student.cartaoSus}
                                   </span>
-                                </div>
-                              )}
-                              {student.rg && (
-                                <div className="text-xs text-gray-500 mt-1">
-                                  RG: {student.rg}
-                                </div>
-                              )}
+                                )}
+                                {student.problemasSaude && (
+                                  <span className="hidden md:inline-flex bg-red-50 text-red-700 text-xs px-2 py-0.5 rounded-full items-center gap-1">
+                                    <AlertCircleIcon className="w-3 h-3" />
+                                    Condição
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </td>
                           <td className="p-4 text-center">
@@ -143,40 +167,45 @@ export const Students = (): JSX.Element => {
                             </span>
                           </td>
                           <td className="p-4 text-center">{student.sexo}</td>
-                          <td className="p-4 text-center hidden sm:table-cell">
-                            {student.contato ?? "-"}
-                            {student.cidade && (
-                              <div className="text-xs text-gray-500 mt-1">{student.cidade}</div>
-                            )}
-                          </td>
-                          <td className="p-4 text-center hidden md:table-cell">
-                            <div>{student.endereco ?? "-"}</div>
-                            {student.bairro && (
-                              <div className="text-xs text-gray-500">{student.bairro}</div>
-                            )}
-                            {student.cep && (
-                              <div className="text-xs text-gray-500">CEP: {student.cep}</div>
-                            )}
-                            {student.problemasSaude && (
-                              <div className="mt-1 group relative inline-block">
-                                <span className="bg-red-50 text-red-700 text-xs px-2 py-0.5 rounded-full cursor-help flex items-center gap-1">
-                                  <AlertCircleIcon className="w-3 h-3" />
-                                  Condição de Saúde
-                                </span>
-                                <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-64 bg-gray-900 text-white text-xs rounded p-2 shadow-lg">
-                                  <p className="font-semibold mb-1">Condições de Saúde:</p>
-                                  <p>{student.problemasSaude}</p>
-                                  {student.medicamentosAlergias && (
-                                    <>
-                                      <p className="font-semibold mt-2 mb-1">Medicamentos e Alergias:</p>
-                                      <p>{student.medicamentosAlergias}</p>
-                                    </>
-                                  )}
-                                </div>
+                            <td className="p-4 text-center">
+                              {student.contato ?? "-"}
+                              {student.cidade && (
+                                <div className="text-xs text-gray-500 mt-1">{student.cidade}</div>
+                              )}
+                            </td>
+                            <td className={"p-4 text-left align-top max-w-[320px] " + (showAllColumns ? "table-cell" : "hidden")}>
+                            <div className="flex flex-col gap-1">
+                              <div className="font-medium truncate">{student.endereco ?? "-"}</div>
+                              <div className="flex flex-wrap gap-3 items-center">
+                                {student.bairro && (
+                                  <div className="text-xs text-gray-500 truncate">{student.bairro}</div>
+                                )}
+                                {student.cep && (
+                                  <div className="text-xs text-gray-500">CEP: {student.cep}</div>
+                                )}
                               </div>
-                            )}
+
+                              {student.problemasSaude && (
+                                <div className="mt-1 group relative inline-block">
+                                  <button className="bg-red-50 text-red-700 text-xs px-2 py-0.5 rounded-full cursor-help flex items-center gap-1">
+                                    <AlertCircleIcon className="w-3 h-3" />
+                                    Condição de Saúde
+                                  </button>
+                                  <div className="absolute left-0 bottom-full mb-2 hidden group-hover:block w-72 bg-gray-900 text-white text-xs rounded p-2 shadow-lg">
+                                    <p className="font-semibold mb-1">Condições de Saúde:</p>
+                                    <p className="whitespace-pre-wrap">{student.problemasSaude}</p>
+                                    {student.medicamentosAlergias && (
+                                      <>
+                                        <p className="font-semibold mt-2 mb-1">Medicamentos e Alergias:</p>
+                                        <p className="whitespace-pre-wrap">{student.medicamentosAlergias}</p>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
                           </td>
-                          <td className="p-4 text-center hidden lg:table-cell">
+                          <td className={"p-4 text-center " + (showAllColumns ? "table-cell" : "hidden")}>
                             {student.mae && (
                               <div className="text-sm">
                                 Mãe: <span className="text-gray-600">{student.mae}</span>
@@ -238,7 +267,7 @@ export const Students = (): JSX.Element => {
       <EditStudentModal
         isOpen={!!editingStudent}
         onClose={() => setEditingStudent(null)}
-        student={editingStudent}
+        assistido={editingStudent}
         onSubmit={async (data: AssistidoFormData) => {
           try {
             if (!editingStudent) return;
