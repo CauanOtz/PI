@@ -12,7 +12,7 @@ async function createAdmin() {
         'Administrador do Sistema',
         'admin@escola.com',
         :senha,
-        '123.456.789-00',
+        '623.920.600-88',
         '(11) 99999-9999',
         'admin',
         datetime('now'),

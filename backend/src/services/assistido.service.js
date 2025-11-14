@@ -2,10 +2,18 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../config/database.js';
 import Assistido from '../models/Assistido.model.js';
-import Documento from '../models/Documento.model.js';
+import Endereco from '../models/Endereco.model.js';
+import ContatoAssistido from '../models/ContatoAssistido.model.js';
+import FiliacaoAssistido from '../models/FiliacaoAssistido.model.js';
+import EnderecoService from './endereco.service.js';
+import ContatoAssistidoService from './contato-assistido.service.js';
+import FiliacaoAssistidoService from './filiacao-assistido.service.js';
 
 export default class AssistidoService {
-  static async listAll({ page = 1, limit = 10, search, responsavelId }) {
+  /**
+   * Lista todos os assistidos com paginação e includes
+   */
+  static async listAll({ page = 1, limit = 10, search }) {
     const safePage = Math.max(1, parseInt(page) || 1);
     const safeLimit = Math.min(100, Math.max(1, parseInt(limit) || 10));
     const offset = (safePage - 1) * safeLimit;
@@ -20,293 +28,240 @@ export default class AssistidoService {
     }
 
     const { count, rows } = await Assistido.findAndCountAll({
-      attributes: [
-        'id',
-        'nome',
-        'dataNascimento',
-        'sexo',
-        'cartaoSus',
-        'rg',
-        'endereco',
-        'bairro',
-        'cep',
-        'cidade',
-        'contato',
-        'problemasSaude',
-        'pai',
-        'mae',
-        'created_at',
-        'updated_at'
-      ],
       where: whereClause,
-      // Removida a inclusão de responsáveis
+      include: [
+        {
+          model: Endereco,
+          as: 'endereco',
+          required: false
+        },
+        {
+          model: ContatoAssistido,
+          as: 'contatos',
+          required: false,
+          separate: true,
+          order: [['ordem_prioridade', 'ASC']]
+        },
+        {
+          model: FiliacaoAssistido,
+          as: 'filiacao',
+          required: false,
+          separate: true
+        }
+      ],
       limit: safeLimit,
       offset,
       order: [['nome', 'ASC']],
+      distinct: true
     });
+
     return { count, rows, page: safePage, limit: safeLimit };
   }
 
+  /**
+   * Busca assistido por ID com todos os relacionamentos
+   */
   static async getById(id) {
     const assistidoId = parseInt(id);
-    if (isNaN(assistidoId)) {
-      const err = new Error('ID do assistido inválido');
-      err.status = 400;
-      throw err;
+    if (isNaN(assistidoId) || assistidoId <= 0) {
+      throw new Error('ID do assistido inválido');
     }
+
     const assistido = await Assistido.findByPk(assistidoId, {
-      attributes: [
-        'id',
-        'nome',
-        'dataNascimento',
-        'sexo',
-        'cartaoSus',
-        'rg',
-        'endereco',
-        'bairro',
-        'cep',
-        'cidade',
-        'contato',
-        'problemasSaude',
-        'pai',
-        'mae',
-        'created_at',
-        'updated_at'
-      ],
+      include: [
+        {
+          model: Endereco,
+          as: 'endereco',
+          required: false
+        },
+        {
+          model: ContatoAssistido,
+          as: 'contatos',
+          required: false,
+          order: [['ordem_prioridade', 'ASC']]
+        },
+        {
+          model: FiliacaoAssistido,
+          as: 'filiacao',
+          required: false
+        }
+      ]
     });
+
     if (!assistido) {
-      const err = new Error('Assistido não encontrado');
-      err.status = 404;
-      throw err;
+      throw new Error('Assistido não encontrado');
     }
+
     return assistido;
   }
 
-  // Método removido pois não é mais necessário após a remoção da funcionalidade de responsáveis
-
+  /**
+   * Cria novo assistido com endereço, contatos e filiação
+   */
   static async create({ 
     nome, 
     dataNascimento, 
     sexo, 
     cartaoSus = null, 
     rg = null, 
-    endereco = null, 
-    bairro = null, 
-    cep = null, 
-    cidade = null, 
-    contato = null, 
-    problemasSaude = null, 
-    pai = null, 
-    mae = null 
+    endereco = null, // { cep, logradouro, bairro, cidade, estado }
+    numero = null,
+    complemento = null,
+    contatos = [], // Array de contatos
+    filiacao = null, // { mae, pai }
+    problemasSaude = null
   }) {
     const transaction = await sequelize.transaction();
     
     try {
       console.log('Dados recebidos:', {
-        nome, 
-        dataNascimento, 
-        sexo, 
-        cartaoSus, 
-        rg, 
-        endereco, 
-        bairro, 
-        cep, 
-        cidade, 
-        contato, 
-        problemasSaude, 
-        pai, 
-        mae
+        nome, dataNascimento, sexo, cartaoSus, rg,
+        endereco, numero, complemento, contatos, filiacao, problemasSaude
       });
+      console.log('Tipo de contatos:', typeof contatos);
+      console.log('contatos é array?', Array.isArray(contatos));
+      console.log('contatos length:', contatos ? contatos.length : 'undefined/null');
+      console.log('contatos value:', JSON.stringify(contatos));
 
-      // Primeiro valida os dados antes de tentar criar
-      const assistido = Assistido.build({ 
-        nome, 
-        dataNascimento, 
-        sexo, 
-        cartaoSus, 
-        rg, 
-        endereco, 
-        bairro, 
-        cep, 
-        cidade, 
-        contato, 
-        problemasSaude, 
-        pai, 
-        mae 
-      });
+      let enderecoId = null;
+
+      // 1. Criar ou buscar endereço se fornecido
+      if (endereco && endereco.cep) {
+        const enderecoModel = await EnderecoService.findOrCreate(endereco);
+        enderecoId = enderecoModel.id;
+      }
+
+      // 2. Criar assistido
+      const assistido = await Assistido.create({
+        nome,
+        dataNascimento,
+        sexo,
+        cartaoSus,
+        rg,
+        enderecoId,
+        numero,
+        complemento,
+        problemasSaude
+      }, { transaction });
+
+      // 3. Criar contatos (mínimo 1 obrigatório)
+      if (!contatos || contatos.length === 0) {
+        throw new Error('É obrigatório cadastrar pelo menos um contato');
+      }
+
+      await ContatoAssistidoService.createMultiple(
+        assistido.id,
+        contatos,
+        transaction
+      );
+
+      // 4. Criar filiação (opcional)
+      if (filiacao) {
+        await FiliacaoAssistidoService.createFromObject(
+          assistido.id,
+          filiacao,
+          transaction
+        );
+      }
+
+      await transaction.commit();
+
+      // Retornar assistido completo com relacionamentos
+      return await this.getById(assistido.id);
       
-      try {
-        await assistido.validate();
-      } catch (validationError) {
-        console.error('Detalhes do erro de validação:', {
-          name: validationError.name,
-          message: validationError.message,
-          errors: validationError.errors?.map(err => ({
-            path: err.path,
-            value: err.value,
-            message: err.message,
-            type: err.type
-          }))
-        });
-        throw validationError;
-      }
-
-      // Se passou na validação, tenta criar usando o modelo
-      try {
-        const novoAssistido = await assistido.save({ transaction });
-        await transaction.commit();
-        return novoAssistido;
-      } catch (modelError) {
-        console.error('Erro ao criar usando modelo:', modelError);
-        
-        // Se falhou, tenta inserção direta via SQL
-        const [result] = await sequelize.query(`
-          INSERT INTO assistidos (
-            nome, 
-            data_nascimento, 
-            sexo, 
-            cartao_sus, 
-            rg, 
-            endereco, 
-            bairro, 
-            cep, 
-            cidade, 
-            contato, 
-            problemas_saude, 
-            pai, 
-            mae,
-            created_at,
-            updated_at
-          ) VALUES (
-            :nome,
-            :dataNascimento,
-            :sexo,
-            :cartaoSus,
-            :rg,
-            :endereco,
-            :bairro,
-            :cep,
-            :cidade,
-            :contato,
-            :problemasSaude,
-            :pai,
-            :mae,
-            datetime('now'),
-            datetime('now')
-          )
-          RETURNING id;
-        `, {
-          replacements: {
-            nome, 
-            dataNascimento, 
-            sexo,
-            cartaoSus,
-            rg,
-            endereco,
-            bairro,
-            cep,
-            cidade,
-            contato,
-            problemasSaude,
-            pai,
-            mae
-          },
-          transaction,
-          type: sequelize.QueryTypes.INSERT
-        });
-
-        if (result && result[0]?.id) {
-          const assistidoCriado = await Assistido.findByPk(result[0].id);
-          await transaction.commit();
-          return assistidoCriado;
-        }
-        
-        throw new Error('Não foi possível criar o assistido');
-      }
     } catch (error) {
       await transaction.rollback();
+      console.error('Erro ao criar assistido:', error);
       throw error;
     }
   }
 
+  /**
+   * Atualiza assistido existente
+   */
   static async update(id, { 
     nome, 
     dataNascimento, 
     sexo, 
     cartaoSus = null, 
     rg = null, 
-    endereco = null, 
-    bairro = null, 
-    cep = null, 
-    cidade = null, 
-    contato = null, 
-    problemasSaude = null, 
-    pai = null, 
-    mae = null 
+    endereco = null,
+    numero = null,
+    complemento = null,
+    contatos = null,
+    filiacao = null,
+    problemasSaude = null
   }) {
     const transaction = await sequelize.transaction();
+    
     try {
-      const assistido = await Assistido.findByPk(id);
-
+      const assistido = await Assistido.findByPk(id, { transaction });
       if (!assistido) {
-        await transaction.commit();
-        return null;
+        throw new Error('Assistido não encontrado');
       }
 
-      await assistido.update({ 
-        nome, 
-        dataNascimento, 
-        sexo, 
-        cartaoSus, 
-        rg, 
-        endereco, 
-        bairro, 
-        cep, 
-        cidade, 
-        contato, 
-        problemasSaude, 
-        pai, 
-        mae 
+      // 1. Atualizar ou criar novo endereço
+      let enderecoId = assistido.enderecoId;
+      if (endereco && endereco.cep) {
+        const enderecoModel = await EnderecoService.findOrCreate(endereco);
+        enderecoId = enderecoModel.id;
+      }
+
+      // 2. Atualizar dados básicos do assistido
+      await assistido.update({
+        nome,
+        dataNascimento,
+        sexo,
+        cartaoSus,
+        rg,
+        enderecoId,
+        numero,
+        complemento,
+        problemasSaude
       }, { transaction });
 
+      // 3. Atualizar contatos (se fornecidos)
+      if (contatos && Array.isArray(contatos)) {
+        if (contatos.length === 0) {
+          throw new Error('É obrigatório ter pelo menos um contato');
+        }
+        await ContatoAssistidoService.replaceAll(id, contatos, transaction);
+      }
+
+      // 4. Atualizar filiação (se fornecida)
+      if (filiacao) {
+        await FiliacaoAssistidoService.createFromObject(id, filiacao, transaction);
+      }
+
       await transaction.commit();
-      return assistido;
-    } catch (e) {
+
+      // Retornar assistido atualizado com relacionamentos
+      return await this.getById(id);
+      
+    } catch (error) {
       await transaction.rollback();
-      throw e;
+      console.error('Erro ao atualizar assistido:', error);
+      throw error;
     }
   }
 
-  static async remove(id) {
-    const transaction = await sequelize.transaction();
-    try {
-      const assistido = await Assistido.findByPk(id);
-      if (!assistido) {
-        await transaction.commit();
-        return null;
-      }
-
-      // Remove documentos relacionados
-      await Documento.destroy({
-        where: { assistido_id: id },
-        transaction
-      });
-
-      // Remove presencas relacionadas
-      await sequelize.models.Presenca.destroy({
-        where: { id_assistido: id },
-        transaction
-      });
-
-      // Removemos a limpeza de responsáveis pois a tabela não existe mais
-
-      // Remove o assistido
-      await assistido.destroy({ transaction });
-      await transaction.commit();
-      return true;
-    } catch (e) {
-      await transaction.rollback();
-      throw e;
+  /**
+   * Remove assistido
+   */
+  static async delete(id) {
+    const assistido = await Assistido.findByPk(id);
+    if (!assistido) {
+      throw new Error('Assistido não encontrado');
     }
+    
+    await assistido.destroy();
+    return true;
+  }
+
+  /**
+   * Conta total de assistidos
+   */
+  static async count() {
+    return await Assistido.count();
   }
 }

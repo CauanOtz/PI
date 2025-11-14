@@ -1,13 +1,11 @@
 import { jest } from '@jest/globals';
 import DocumentoService from '../../src/services/documento.service.js';
 import Documento from '../../src/models/Documento.model.js';
-import Aluno from '../../src/models/Aluno.model.js';
-import ResponsavelAluno from '../../src/models/ResponsavelAluno.model.js';
+import Assistido from '../../src/models/Assistido.model.js';
 import fs from 'fs';
 
 jest.mock('../../src/models/Documento.model.js');
-jest.mock('../../src/models/Aluno.model.js');
-jest.mock('../../src/models/ResponsavelAluno.model.js');
+jest.mock('../../src/models/Assistido.model.js');
 jest.mock('fs');
 
 describe('DocumentoService', () => {
@@ -23,9 +21,7 @@ describe('DocumentoService', () => {
        Documento.update = jest.fn();
        Documento.findByPk = jest.fn();
        
-       Aluno.findByPk = jest.fn();
-       
-       ResponsavelAluno.findOne = jest.fn();
+       Assistido.findByPk = jest.fn();
        
        fs.existsSync = jest.fn(() => true);
        fs.unlinkSync = jest.fn();
@@ -43,18 +39,6 @@ describe('DocumentoService', () => {
             const result = await service.verificarPermissao({ id: 1, role: 'admin' }, 1);
             expect(result).toBe(true);
         });
-
-        it('retorna true quando existe vínculo', async () => {
-            ResponsavelAluno.findOne.mockResolvedValue({ id: 1 });
-            const result = await service.verificarPermissao({ id: 1, role: 'responsavel' }, 1);
-            expect(result).toBe(true);
-        });
-
-        it('retorna false quando não existe vínculo', async () => {
-            ResponsavelAluno.findOne.mockResolvedValue(null);
-            const result = await service.verificarPermissao({ id: 1, role: 'responsavel' }, 1);
-            expect(result).toBe(false);
-        });
     });
 
     describe('adicionar', () => {
@@ -65,18 +49,18 @@ describe('DocumentoService', () => {
         };
 
         it('retorna erro quando não há arquivo', async () => {
-            const result = await service.adicionar({ alunoId: 1 });
+            const result = await service.adicionar({ assistidoId: 1 });
             expect(result.error).toBe(true);
             expect(result.status).toBe(400);
         });
 
         it('retorna erro quando aluno não existe', async () => {
-            Aluno.findByPk.mockResolvedValue(null);
+            Assistido.findByPk.mockResolvedValue(null);
             fs.existsSync.mockReturnValue(true);
             fs.unlinkSync.mockImplementation(() => {});
 
             const result = await service.adicionar({ 
-                alunoId: 1, 
+                assistidoId: 1, 
                 arquivo: mockArquivo 
             });
 
@@ -91,11 +75,11 @@ describe('DocumentoService', () => {
                 nome: 'test.pdf'
             };
 
-            Aluno.findByPk.mockResolvedValue({ id: 1 });
+            Assistido.findByPk.mockResolvedValue({ id: 1 });
             Documento.create.mockResolvedValue(mockDocumento);
 
             const result = await service.adicionar({
-                alunoId: 1,
+                assistidoId: 1,
                 arquivo: mockArquivo,
                 tipo: 'RG'
             });
@@ -110,7 +94,7 @@ describe('DocumentoService', () => {
 
     describe('listar', () => {
         it('retorna erro quando aluno não existe', async () => {
-            Aluno.findByPk.mockResolvedValue(null);
+            Assistido.findByPk.mockResolvedValue(null);
             const result = await service.listar(1);
             expect(result.error).toBe(true);
             expect(result.status).toBe(404);
@@ -122,7 +106,7 @@ describe('DocumentoService', () => {
                 { id: 2, nome: 'doc2.pdf' }
             ];
 
-            Aluno.findByPk.mockResolvedValue({ id: 1 });
+            Assistido.findByPk.mockResolvedValue({ id: 1 });
             Documento.findAll.mockResolvedValue(mockDocumentos);
 
             const result = await service.listar(1);
@@ -132,14 +116,14 @@ describe('DocumentoService', () => {
 
     describe('obter', () => {
         it('retorna erro quando aluno não existe', async () => {
-            Aluno.findByPk.mockResolvedValue(null);
+            Assistido.findByPk.mockResolvedValue(null);
             const result = await service.obter(1, 1);
             expect(result.error).toBe(true);
             expect(result.status).toBe(404);
         });
 
         it('retorna erro quando documento não existe', async () => {
-            Aluno.findByPk.mockResolvedValue({ id: 1 });
+            Assistido.findByPk.mockResolvedValue({ id: 1 });
             Documento.findOne.mockResolvedValue(null);
 
             const result = await service.obter(1, 1);
@@ -148,7 +132,7 @@ describe('DocumentoService', () => {
         });
 
         it('retorna erro quando arquivo não existe no servidor', async () => {
-            Aluno.findByPk.mockResolvedValue({ id: 1 });
+            Assistido.findByPk.mockResolvedValue({ id: 1 });
             Documento.findOne.mockResolvedValue({ 
                 id: 1, 
                 caminhoArquivo: '/test.pdf' 
@@ -166,7 +150,7 @@ describe('DocumentoService', () => {
                 caminhoArquivo: '/test.pdf' 
             };
             
-            Aluno.findByPk.mockResolvedValue({ id: 1 });
+            Assistido.findByPk.mockResolvedValue({ id: 1 });
             Documento.findOne.mockResolvedValue(mockDocumento);
             fs.existsSync.mockReturnValue(true);
 
@@ -177,17 +161,17 @@ describe('DocumentoService', () => {
 
     describe('atualizar', () => {
         it('retorna erro quando aluno não existe', async () => {
-            Aluno.findByPk.mockResolvedValue(null);
-            const result = await service.atualizar({ alunoId: 1, documentoId: 1 });
+            Assistido.findByPk.mockResolvedValue(null);
+            const result = await service.atualizar({ assistidoId: 1, documentoId: 1 });
             expect(result.error).toBe(true);
             expect(result.status).toBe(404);
         });
 
         it('retorna erro quando documento não existe', async () => {
-            Aluno.findByPk.mockResolvedValue({ id: 1 });
+            Assistido.findByPk.mockResolvedValue({ id: 1 });
             Documento.findOne.mockResolvedValue(null);
 
-            const result = await service.atualizar({ alunoId: 1, documentoId: 1 });
+            const result = await service.atualizar({ assistidoId: 1, documentoId: 1 });
             expect(result.error).toBe(true);
             expect(result.status).toBe(404);
         });
@@ -202,13 +186,13 @@ describe('DocumentoService', () => {
                 nome: 'new.pdf' 
             };
 
-            Aluno.findByPk.mockResolvedValue({ id: 1 });
+            Assistido.findByPk.mockResolvedValue({ id: 1 });
             Documento.findOne.mockResolvedValue(mockDocumento);
             Documento.update.mockResolvedValue([1]);
             Documento.findByPk.mockResolvedValue(mockDocumentoAtualizado);
 
             const result = await service.atualizar({
-                alunoId: 1,
+                assistidoId: 1,
                 documentoId: 1,
                 nome: 'new.pdf'
             });
@@ -219,14 +203,14 @@ describe('DocumentoService', () => {
 
     describe('excluir', () => {
         it('retorna erro quando aluno não existe', async () => {
-            Aluno.findByPk.mockResolvedValue(null);
+            Assistido.findByPk.mockResolvedValue(null);
             const result = await service.excluir(1, 1);
             expect(result.error).toBe(true);
             expect(result.status).toBe(404);
         });
 
         it('retorna erro quando documento não existe', async () => {
-            Aluno.findByPk.mockResolvedValue({ id: 1 });
+            Assistido.findByPk.mockResolvedValue({ id: 1 });
             Documento.findOne.mockResolvedValue(null);
 
             const result = await service.excluir(1, 1);
@@ -241,7 +225,7 @@ describe('DocumentoService', () => {
                 destroy: jest.fn()
             };
 
-            Aluno.findByPk.mockResolvedValue({ id: 1 });
+            Assistido.findByPk.mockResolvedValue({ id: 1 });
             Documento.findOne.mockResolvedValue(mockDocumento);
             fs.existsSync.mockReturnValue(true);
             fs.unlinkSync.mockImplementation(() => {});

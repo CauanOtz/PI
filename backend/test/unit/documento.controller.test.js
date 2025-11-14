@@ -53,7 +53,7 @@ describe('DocumentoController', () => {
                 originalname: 'test.pdf',
                 path: '/uploads/test.pdf'
             };
-            mockReq.params.alunoId = '1';
+            mockReq.params.assistidoId = '1';
             mockReq.body = { descricao: 'Test Doc' };
         });
 
@@ -91,7 +91,7 @@ describe('DocumentoController', () => {
 
     describe('listarDocumentos', () => {
         beforeEach(() => {
-            mockReq.params.alunoId = '1';
+            mockReq.params.assistidoId = '1';
         });
 
         it('retorna 403 quando usuário não tem permissão', async () => {
@@ -116,7 +116,7 @@ describe('DocumentoController', () => {
 
     describe('obterDocumento', () => {
         beforeEach(() => {
-            mockReq.params = { alunoId: '1', documentoId: '1' };
+            mockReq.params = { assistidoId: '1', documentoId: '1' };
         });
 
         it('retorna 403 quando usuário não tem permissão', async () => {
@@ -139,7 +139,7 @@ describe('DocumentoController', () => {
 
     describe('atualizarDocumento', () => {
         beforeEach(() => {
-            mockReq.params = { alunoId: '1', documentoId: '1' };
+            mockReq.params = { assistidoId: '1', documentoId: '1' };
             mockReq.body = { nome: 'updated.pdf' };
         });
 
@@ -165,7 +165,7 @@ describe('DocumentoController', () => {
 
     describe('excluirDocumento', () => {
         beforeEach(() => {
-            mockReq.params = { alunoId: '1', documentoId: '1' };
+            mockReq.params = { assistidoId: '1', documentoId: '1' };
         });
 
         it('retorna 403 quando usuário não tem permissão', async () => {
@@ -187,7 +187,7 @@ describe('DocumentoController', () => {
 
     describe('downloadDocumento', () => {
         beforeEach(() => {
-            mockReq.params = { alunoId: '1', documentoId: '1' };
+            mockReq.params = { assistidoId: '1', documentoId: '1' };
         });
 
         it('retorna 403 quando usuário não tem permissão', async () => {

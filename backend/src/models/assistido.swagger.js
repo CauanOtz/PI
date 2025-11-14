@@ -8,6 +8,7 @@
  *         - nome
  *         - dataNascimento
  *         - sexo
+ *         - contatos
  *       properties:
  *         nome:
  *           type: string
@@ -31,39 +32,77 @@
  *           maxLength: 20
  *           description: Número do RG (opcional)
  *         endereco:
- *           type: string
- *           maxLength: 255
- *           description: Logradouro e número (opcional)
- *         bairro:
- *           type: string
- *           maxLength: 100
- *           description: Bairro de residência (opcional)
- *         cep:
- *           type: string
- *           maxLength: 9
- *           pattern: "^\\d{5}-\\d{3}$"
- *           description: CEP no formato 12345-678 (opcional)
- *         cidade:
- *           type: string
- *           maxLength: 100
- *           description: Cidade de residência (opcional)
- *         contato:
+ *           type: object
+ *           description: Dados do endereço (opcional)
+ *           properties:
+ *             cep:
+ *               type: string
+ *               maxLength: 9
+ *               description: CEP no formato 12345-678
+ *             logradouro:
+ *               type: string
+ *               maxLength: 255
+ *               description: Nome da rua/avenida
+ *             bairro:
+ *               type: string
+ *               maxLength: 100
+ *               description: Bairro
+ *             cidade:
+ *               type: string
+ *               maxLength: 100
+ *               description: Cidade
+ *             estado:
+ *               type: string
+ *               maxLength: 2
+ *               description: UF (sigla do estado)
+ *         numero:
  *           type: string
  *           maxLength: 20
- *           pattern: "^\\(\\d{2}\\)\\s\\d{4,5}-\\d{4}$"
- *           description: Telefone no formato (DD) 99999-9999 ou (DD) 9999-9999 (opcional)
+ *           description: Número do imóvel (opcional)
+ *         complemento:
+ *           type: string
+ *           maxLength: 100
+ *           description: Complemento do endereço (opcional)
+ *         contatos:
+ *           type: array
+ *           minItems: 1
+ *           description: Lista de contatos (mínimo 1 obrigatório)
+ *           items:
+ *             type: object
+ *             required:
+ *               - telefone
+ *             properties:
+ *               telefone:
+ *                 type: string
+ *                 maxLength: 20
+ *                 description: Telefone no formato (DD) 99999-9999
+ *               nomeContato:
+ *                 type: string
+ *                 maxLength: 100
+ *                 description: Nome do contato
+ *               parentesco:
+ *                 type: string
+ *                 maxLength: 50
+ *                 description: Grau de parentesco
+ *               ordemPrioridade:
+ *                 type: integer
+ *                 description: Ordem de prioridade do contato
+ *         filiacao:
+ *           type: object
+ *           description: Dados de filiação (opcional)
+ *           properties:
+ *             mae:
+ *               type: string
+ *               maxLength: 100
+ *               description: Nome completo da mãe
+ *             pai:
+ *               type: string
+ *               maxLength: 100
+ *               description: Nome completo do pai
  *         problemasSaude:
  *           type: string
  *           maxLength: 1000
  *           description: Problemas de saúde, alergias ou condições especiais (opcional)
- *         pai:
- *           type: string
- *           maxLength: 100
- *           description: Nome completo do pai (opcional)
- *         mae:
- *           type: string
- *           maxLength: 100
- *           description: Nome completo da mãe (opcional)
  *     
  *     NovoAssistido:
  *       allOf:
@@ -75,14 +114,23 @@
  *             sexo: "Feminino"
  *             cartaoSus: "163704163610004"
  *             rg: "12.345.678-9"
- *             endereco: "Rua das Flores, 123"
- *             bairro: "Centro"
- *             cep: "12345-678"
- *             cidade: "São Paulo"
- *             contato: "(11) 98765-4321"
- *             problemasSaude: "Alergia a amendoim"
- *             pai: "João Oliveira"
- *             mae: "Ana Silva"
+ *             endereco:
+ *               cep: "01310-100"
+ *               logradouro: "Avenida Paulista"
+ *               bairro: "Bela Vista"
+ *               cidade: "São Paulo"
+ *               estado: "SP"
+ *             numero: "1578"
+ *             complemento: "Apto 501"
+ *             contatos:
+ *               - telefone: "(11) 98765-4321"
+ *                 nomeContato: "Ana Silva"
+ *                 parentesco: "Mãe"
+ *                 ordemPrioridade: 1
+ *             filiacao:
+ *               mae: "Ana Silva Santos"
+ *               pai: "João Pedro Santos"
+ *             problemasSaude: "Alergia a lactose"
  *     
  *     Assistido:
  *       allOf:

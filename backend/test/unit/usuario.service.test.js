@@ -5,6 +5,7 @@ const mockUsuario = {
   create: jest.fn(),
   findAndCountAll: jest.fn(),
   findByPk: jest.fn(),
+  count: jest.fn(),
 };
 
 jest.unstable_mockModule('../../src/models/Usuario.model.js', () => ({ default: mockUsuario }));

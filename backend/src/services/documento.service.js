@@ -1,7 +1,6 @@
 // src/services/documento.service.js
 import Documento from '../models/Documento.model.js';
 import Assistido from '../models/Assistido.model.js';
-import ResponsavelAssistido from '../models/ResponsavelAssistido.model.js';
 import fs from 'fs';
 
 class DocumentoService {
@@ -17,18 +16,8 @@ class DocumentoService {
                 return false;
             }
 
-            if (usuario.role === 'admin') {
-                return true;
-            }
-
-            const vinculo = await ResponsavelAssistido.findOne({
-                where: {
-                    id_usuario: usuario.id,
-                    id_assistido: parseInt(assistidoId, 10)
-                }
-            });
-
-            return !!vinculo;
+            // Apenas admins têm permissão (responsáveis não existem mais no novo esquema)
+            return usuario.role === 'admin';
         } catch (error) {
             console.error('Erro ao verificar permissão:', error);
             return false;

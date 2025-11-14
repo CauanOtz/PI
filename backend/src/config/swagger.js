@@ -123,53 +123,91 @@ const setupSwagger = (app) => {
               observacao: { type: 'string', nullable: true },
             },
           },
-          NotificacaoDTO: {
-            type: 'object',
-            properties: {
-              id: { type: 'integer' },
-              titulo: { type: 'string' },
-              mensagem: { type: 'string' },
-              tipo: { type: 'string', enum: ['info','alerta','urgente','sistema'] },
-              dataExpiracao: { type: 'string', format: 'date-time', nullable: true },
-              criadoPor: { type: 'string' },
-              createdAt: { type: 'string', format: 'date-time' },
-              updatedAt: { type: 'string', format: 'date-time' },
-            },
-          },
           Assistido: {
             type: 'object',
             example: {
-              "id": 1,
-              "nome": "Maria Silva Oliveira Santos",
+              "nome": "Maria Silva Oliveira",
               "dataNascimento": "2015-07-22",
               "sexo": "Feminino",
               "cartaoSus": "163704163610004",
               "rg": "12.345.678-9",
-              "endereco": "Rua das Flores, 123",
-              "bairro": "Centro",
-              "cep": "12345-678",
-              "cidade": "São Paulo",
-              "contato": "(11) 98765-4321",
-              "pai": "João Oliveira Santos",
-              "mae": "Ana Silva Oliveira",
-              "updatedAt": "2025-07-22T12:00:00Z"
+              "endereco": {
+                "cep": "01310-100",
+                "logradouro": "Avenida Paulista",
+                "bairro": "Bela Vista",
+                "cidade": "São Paulo",
+                "estado": "SP"
+              },
+              "numero": "1578",
+              "complemento": "Apto 501",
+              "contatos": [
+                {
+                  "telefone": "(11) 98765-4321",
+                  "nomeContato": "Ana Silva",
+                  "parentesco": "Mãe",
+                  "ordemPrioridade": 1
+                },
+                {
+                  "telefone": "(11) 91234-5678",
+                  "nomeContato": "João Santos",
+                  "parentesco": "Pai",
+                  "ordemPrioridade": 2
+                }
+              ],
+              "filiacao": {
+                "mae": "Ana Silva Santos",
+                "pai": "João Pedro Santos"
+              },
+              "problemasSaude": "Alergia a lactose"
             },
             properties: {
-              id: { type: 'integer' },
+              id: { type: 'integer', readOnly: true },
               nome: { type: 'string', maxLength: 100, minLength: 3 },
               dataNascimento: { type: 'string', format: 'date' },
               sexo: { type: 'string', enum: ['Feminino', 'Masculino'] },
               cartaoSus: { type: 'string', maxLength: 20, nullable: true },
               rg: { type: 'string', maxLength: 20, nullable: true },
-              endereco: { type: 'string', maxLength: 255, nullable: true },
-              bairro: { type: 'string', maxLength: 100, nullable: true },
-              cep: { type: 'string', maxLength: 9, nullable: true },
-              cidade: { type: 'string', maxLength: 100, nullable: true },
-              contato: { type: 'string', maxLength: 20, nullable: true },
-              pai: { type: 'string', maxLength: 100, nullable: true },
-              mae: { type: 'string', maxLength: 100, nullable: true },
-              updatedAt: { type: 'string', format: 'date-time' }
+              endereco: {
+                type: 'object',
+                nullable: true,
+                properties: {
+                  cep: { type: 'string', maxLength: 9 },
+                  logradouro: { type: 'string', maxLength: 255, nullable: true },
+                  bairro: { type: 'string', maxLength: 100, nullable: true },
+                  cidade: { type: 'string', maxLength: 100, nullable: true },
+                  estado: { type: 'string', maxLength: 2, nullable: true }
+                }
+              },
+              numero: { type: 'string', maxLength: 20, nullable: true },
+              complemento: { type: 'string', maxLength: 100, nullable: true },
+              contatos: {
+                type: 'array',
+                minItems: 1,
+                items: {
+                  type: 'object',
+                  required: ['telefone'],
+                  properties: {
+                    telefone: { type: 'string', maxLength: 20 },
+                    nomeContato: { type: 'string', maxLength: 100, nullable: true },
+                    parentesco: { type: 'string', maxLength: 50, nullable: true },
+                    observacao: { type: 'string', maxLength: 255, nullable: true },
+                    ordemPrioridade: { type: 'integer', default: 1 }
+                  }
+                }
+              },
+              filiacao: {
+                type: 'object',
+                nullable: true,
+                properties: {
+                  mae: { type: 'string', maxLength: 100, nullable: true },
+                  pai: { type: 'string', maxLength: 100, nullable: true }
+                }
+              },
+              problemasSaude: { type: 'string', nullable: true },
+              createdAt: { type: 'string', format: 'date-time', readOnly: true },
+              updatedAt: { type: 'string', format: 'date-time', readOnly: true }
             },
+            required: ['nome', 'dataNascimento', 'sexo', 'contatos']
           },
           // Envelopes padrao
           SuccessUsuario: {
@@ -245,26 +283,6 @@ const setupSwagger = (app) => {
                 type: 'object',
                 properties: {
                   presencas: { type: 'array', items: { $ref: '#/components/schemas/PresencaDTO' } },
-                },
-              },
-            },
-          },
-          SuccessNotificacao: {
-            type: 'object',
-            properties: {
-              sucesso: { type: 'boolean', example: true },
-              dados: { $ref: '#/components/schemas/NotificacaoDTO' },
-            },
-          },
-          SuccessNotificacoes: {
-            type: 'object',
-            properties: {
-              sucesso: { type: 'boolean', example: true },
-              dados: {
-                type: 'object',
-                properties: {
-                  notificacoes: { type: 'array', items: { $ref: '#/components/schemas/NotificacaoDTO' } },
-                  paginacao: { $ref: '#/components/schemas/PaginationDTO' },
                 },
               },
             },

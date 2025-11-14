@@ -5,22 +5,22 @@ import { sequelize } from '../config/database.js';
 import Assistido from './Assistido.model.js';
 import Usuario from './Usuario.model.js';
 import Documento from './Documento.model.js';
-import ResponsavelAssistido from './ResponsavelAssistido.model.js';
-import Notificacao from './Notificacao.model.js';
 import Presenca from './Presenca.model.js';
 import Atividade from './Atividade.model.js';
-import UsuarioNotificacao from './UsuarioNotificacao.model.js'; 
+import Endereco from './Endereco.model.js';
+import ContatoAssistido from './ContatoAssistido.model.js';
+import FiliacaoAssistido from './FiliacaoAssistido.model.js';
 
 // Initialize models
 const models = {
   Assistido,
   Usuario,
   Documento,
-  ResponsavelAssistido,
-  Notificacao,
   Presenca,
   Atividade,
-  UsuarioNotificacao,
+  Endereco,
+  ContatoAssistido,
+  FiliacaoAssistido,
 };
 
 Object.values(models).forEach(model => {
@@ -46,11 +46,11 @@ export {
   Assistido,
   Usuario,
   Documento,
-  ResponsavelAssistido,
-  Notificacao,
   Presenca,
   Atividade,
-  UsuarioNotificacao,
+  Endereco,
+  ContatoAssistido,
+  FiliacaoAssistido,
 };
 
 export default models;
