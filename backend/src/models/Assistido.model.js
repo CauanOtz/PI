@@ -82,18 +82,6 @@ import { validarCartaoSUS, formatarCartaoSUS } from '../utils/validacoes.js';
  *           description: Descrição de problemas de saúde, alergias ou condições especiais.
  *           example: "Alergia a amendoim"
  *           nullable: true
- *         pai:
- *           type: string
- *           maxLength: 100
- *           description: Nome completo do pai.
- *           example: "João Oliveira"
- *           nullable: true
- *         mae:
- *           type: string
- *           maxLength: 100
- *           description: Nome completo da mãe.
- *           example: "Maria Silva Oliveira"
- *           nullable: true
  *         created_at:
  *           type: string
  *           format: date-time
@@ -107,12 +95,6 @@ import { validarCartaoSUS, formatarCartaoSUS } from '../utils/validacoes.js';
  */
 
 const Assistido = sequelize.define('Assistido', {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-    field: 'id'
-  },
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -166,26 +148,6 @@ const Assistido = sequelize.define('Assistido', {
       isIn: {
         args: [['Feminino', 'Masculino']],
         msg: 'O sexo deve ser Feminino ou Masculino.'
-      }
-    }
-  },
-  pai: {
-    type: DataTypes.STRING(100),
-    allowNull: true,
-    validate: {
-      len: {
-        args: [0, 100],
-        msg: 'O nome do pai não pode ter mais de 100 caracteres.'
-      }
-    }
-  },
-  mae: {
-    type: DataTypes.STRING(100),
-    allowNull: true,
-    validate: {
-      len: {
-        args: [0, 100],
-        msg: 'O nome da mãe não pode ter mais de 100 caracteres.'
       }
     }
   },
