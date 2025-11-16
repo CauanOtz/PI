@@ -5,8 +5,8 @@ import { Input } from '../../components/ui/input';
 import { PlusIcon, SearchIcon, PencilIcon, TrashIcon } from 'lucide-react';
 import { DeleteConfirmationModal } from '../../components/modals/shared/DeleteConfirmationModal';
 import { listAtividades, createAtividade, updateAtividade, deleteAtividade, Atividade } from '../../services/atividade';
-import CreateAtividadeModal from '../../components/modals/atividades/CreateActivityModal';
-import EditAtividadeModal from '../../components/modals/atividades/EditActivityModal';
+import CreateAtividadeModal from '../../components/modals/activities/CreateActivityModal';
+import EditAtividadeModal from '../../components/modals/activities/EditActivityModal';
 import { toast } from 'sonner';
 
 export const Activity: React.FC = () => {

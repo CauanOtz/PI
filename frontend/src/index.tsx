@@ -15,7 +15,7 @@ import { Toaster } from 'sonner';
 import { AuthProvider } from "./context/AuthProvider";
 import PrivateRoute from "./routes/PrivateRoute";
 import { Users } from "./screens/Users/Users";
-import { Activity } from "./screens/Atividades/Activity";
+import { Activity } from "./screens/Activities/Activity";
 
 function App() {
   return (
