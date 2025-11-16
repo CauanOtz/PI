@@ -34,7 +34,7 @@ function App() {
             <Route path="/exams" element={<Exams />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/users" element={<Users />} />
-            <Route path="/atividades" element={<Activity />} />
+            <Route path="/activities" element={<Activity />} />
           </Route>
         </Routes>
       </AuthProvider>

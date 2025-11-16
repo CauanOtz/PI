@@ -36,7 +36,7 @@ export const SidebarSection = (): JSX.Element | null => {
     {
       icon: <BookMarked  className="w-4 h-4 text-indigo-400" />,
       label: "Atividades",
-      path: "/atividades",
+      path: "/activities",
     },
     {
       icon: <ClipboardCheckIcon className="w-4 h-4 text-yellow-400" />,
