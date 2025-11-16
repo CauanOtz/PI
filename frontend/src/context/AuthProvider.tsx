@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useMemo, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { isAuthenticated, login as authLogin, logout as authLogout, getUser, fetchMe } from "../services/auth";
 
 interface User {
@@ -23,6 +25,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authed, setAuthed] = useState<boolean>(isAuthenticated());
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // inicializa o estado de autenticação e carrega o usuário, se houver token
@@ -59,6 +62,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     init();
   }, []);
 
+  useEffect(() => {
+    const handler = (ev: Event) => {
+      try {
+        const detail = (ev as CustomEvent)?.detail || {};
+        const message = detail?.message;
+        // efetue logout local e redirecione com feedback
+        authLogout();
+        setAuthed(false);
+        setUser(null);
+        toast.error(message || "Sessão expirada. Faça login novamente.");
+        navigate("/");
+      } catch (e) {
+        console.error('Erro ao tratar evento session:expired', e);
+      }
+    };
+
+    window.addEventListener('session:expired', handler as EventListener);
+    return () => window.removeEventListener('session:expired', handler as EventListener);
+  }, [navigate]);
+
   const value = useMemo<AuthCtx>(() => ({
     authed,
     user,
@@ -67,17 +90,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       try {
         const data = await authLogin({ email, password });
-        setAuthed(true);
+
         if (data.user) {
           setUser(data.user);
+          setAuthed(true);
           return data;
         }
+
         try {
           const fetched = await fetchMe();
-          setUser(fetched || null);
-          return { ...data, user: fetched };
+          if (fetched) {
+            setUser(fetched);
+            setAuthed(true);
+            return { ...data, user: fetched };
+          }
+
+          // se não conseguimos obter o usuário, mantenha authed=false
+          setUser(null);
+          setAuthed(false);
+          return data;
         } catch (err) {
           setUser(null);
+          setAuthed(false);
           return data;
         }
       } finally {

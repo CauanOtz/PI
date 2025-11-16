@@ -13,7 +13,8 @@ export default function PrivateRoute() {
     return <Navigate to="/" replace state={{ from: location }} />;
   }
 
-  if (!user) return null;
+
+  if (!user) return <Navigate to="/" replace />;
 
   const isGuardian = user.role === 'responsavel';
 

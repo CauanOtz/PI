@@ -37,13 +37,13 @@ const router = Router();
  *         idAssistido:
  *           type: integer
  *           description: ID do assistido
- *         idAula:
+ *         idAtividade:
  *           type: integer
- *           description: ID da aula
+ *           description: ID da atividade
  *         status:
  *           type: string
- *           enum: [presente, falta]
- *           description: Status da Presença (presente ou falta)
+ *           enum: [presente, falta, atraso, falta_justificada]
+ *           description: Status da Presença
  *         data_registro:
  *           type: string
  *           format: date
@@ -61,12 +61,12 @@ const router = Router();
  *           description: Data da última atualização do registro
  *         assistido:
  *           $ref: '#/components/schemas/Assistido'
- *         aula:
- *           $ref: '#/components/schemas/Aula'
+ *         atividade:
+ *           $ref: '#/components/schemas/Atividade'
  *       example:
  *         id: 1
  *         idAssistido: 1
- *         idAula: 1
+ *         idAtividade: 1
  *         status: "presente"
  *         data_registro: "2024-07-30"
  *         observacao: "Chegou atrasado 15 minutos"
@@ -75,9 +75,9 @@ const router = Router();
  *         assistido:
  *           id: 1
  *           nome: "João Silva"
- *         aula:
+ *         atividade:
  *           id: 1
- *           titulo: "Aula de Matemática"
+ *           titulo: "Atividade de Matemática"
  *           data: "2024-07-30T19:00:00.000Z"
  */
 
@@ -104,16 +104,16 @@ const router = Router();
  *             type: object
  *             required:
  *               - idAssistido
- *               - idAula
+ *               - idAtividade
  *               - status
  *             properties:
  *               idAssistido:
  *                 type: integer
  *                 description: ID do assistido
  *                 example: 1
- *               idAula:
+ *               idAtividade:
  *                 type: integer
- *                 description: ID da aula
+ *                 description: ID da atividade
  *                 example: 1
  *               status:
  *                 type: string
@@ -166,10 +166,10 @@ router.post('/',
  *           type: integer
  *         description: Filtrar por ID do assistido
  *       - in: query
- *         name: idAula
+ *         name: idAtividade
  *         schema:
  *           type: integer
- *         description: Filtrar por ID da aula
+ *         description: Filtrar por ID da atividade
  *       - in: query
  *         name: dataInicio
  *         schema:
@@ -206,45 +206,33 @@ router.get('/',
   listarPresencas
 );
 
-router.get('/aulas/:idAula', 
+router.get('/atividades/:idAtividade', 
   autenticar, 
   validatePresencasPorAula,
-  listarPresencasPorAula
+  listarPresencasPorAtividade
 );
 
 router.get('/assistidos/:idAssistido', 
   autenticar, 
   validateHistoricoAssistido,
   listarHistoricoAssistido
-);
-
-router.get('/aulas/:idAula', 
-  autenticar, 
-  validatePresencasPorAula,
-  listarPresencasPorAula
-);
-
-router.get('/assistidos/:idAssistido', 
-  autenticar, 
-  validateHistoricoAssistido,
-  listarHistoricoAssistido
-);
+);;
 
 /**
  * @openapi
- * /presencas/aulas/{idAula}:
+ * /presencas/atividades/{idAtividade}:
  *   get:
- *     summary: Lista as Presenças de uma aula específica
+ *     summary: Lista as Presenças de uma atividade específica
  *     tags: [Presenças]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: idAula
+ *         name: idAtividade
  *         required: true
  *         schema:
  *           type: integer
- *         description: ID da aula
+ *         description: ID da atividade
  *       - in: query
  *         name: data
  *         schema:
@@ -253,17 +241,17 @@ router.get('/assistidos/:idAssistido',
  *         description: Data específica para filtrar as Presenças (opcional)
  *     responses:
  *       200:
- *         description: Lista de Presenças da aula
+ *         description: Lista de Presenças da atividade
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/SuccessPresencas'
  *       400:
- *         description: ID da aula inválido
+ *         description: ID da atividade inválido
  *       401:
  *         description: Não autorizado
  *       404:
- *         description: Aula não encontrada
+ *         description: Atividade não encontrada
  */
 
 /**
@@ -468,16 +456,16 @@ router.delete('/:id', validateIdParam('id'),
  *                   type: object
  *                   required:
  *                     - idAssistido
- *                     - idAula
+ *                     - idAtividade
  *                     - status
  *                   properties:
  *                     idAssistido:
  *                       type: integer
  *                       description: ID do assistido
  *                       example: 1
- *                     idAula:
+ *                     idAtividade:
  *                       type: integer
- *                       description: ID da aula
+ *                       description: ID da atividade
  *                       example: 1
  *                     status:
  *                       type: string

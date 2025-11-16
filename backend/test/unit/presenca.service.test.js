@@ -6,6 +6,7 @@ const mockPresenca = {
   findByPk: jest.fn(),
   findOne: jest.fn(),
   upsert: jest.fn(),
+  create: jest.fn(),
 };
 
 const mockAssistido = { findByPk: jest.fn() };
@@ -140,11 +141,11 @@ describe('PresencaService', () => {
     const items = [{ idAssistido:1, idAtividade:2, status:'presente', data_registro:'2025-01-01', observacao:null }];
     mockAssistido.findByPk.mockResolvedValue({ id: 1 });
     mockAtividade.findByPk.mockResolvedValue({ id: 2 });
-    mockPresenca.upsert.mockResolvedValue(undefined);
-    mockPresenca.findOne.mockResolvedValue({ id: 50 });
+    mockPresenca.findOne.mockResolvedValue(null);
+    mockPresenca.create.mockResolvedValue({ id: 50 });
     const res = await PresencaService.bulkRegister(items);
     expect(res).toHaveLength(1);
-    expect(mockPresenca.upsert).toHaveBeenCalled();
+    expect(mockPresenca.create).toHaveBeenCalled();
   });
 
   it('bulkRegister returns error entry when assistido missing', async () => {
@@ -152,7 +153,7 @@ describe('PresencaService', () => {
     mockAssistido.findByPk.mockResolvedValue(null);
     const res = await PresencaService.bulkRegister(items);
     expect(res).toHaveLength(1);
-    expect(res[0]).toEqual({ presenca: null, error: 'Assistido' });
+    expect(res[0]).toEqual({ presenca: null, error: 'Assistido não encontrado' });
   });
 
   it('bulkRegister returns error entry when atividade missing', async () => {
@@ -161,6 +162,6 @@ describe('PresencaService', () => {
     mockAtividade.findByPk.mockResolvedValue(null);
     const res = await PresencaService.bulkRegister(items);
     expect(res).toHaveLength(1);
-    expect(res[0]).toEqual({ presenca: null, error: 'Atividade' });
+    expect(res[0]).toEqual({ presenca: null, error: 'Atividade não encontrada' });
   });
 });

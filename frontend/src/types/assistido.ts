@@ -1,3 +1,25 @@
+// Normalized structure (3NF)
+export interface Endereco {
+  cep: string;
+  logradouro?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+}
+
+export interface Contato {
+  telefone: string;
+  nomeContato?: string;
+  parentesco?: string;
+  observacao?: string;
+  ordemPrioridade?: number;
+}
+
+export interface Filiacao {
+  mae?: string;
+  pai?: string;
+}
+
 export interface Assistido {
   id: number;
   nome: string;
@@ -5,14 +27,12 @@ export interface Assistido {
   sexo: 'Feminino' | 'Masculino';
   cartaoSus?: string;
   rg?: string;
-  endereco?: string;
-  bairro?: string;
-  cep?: string;
-  cidade?: string;
-  contato?: string;
+  endereco?: Endereco;
+  numero?: string;
+  complemento?: string;
+  contatos: Contato[];
+  filiacao?: Filiacao;
   problemasSaude?: string;
-  pai?: string;
-  mae?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -23,30 +43,20 @@ export interface AssistidoCreate {
   sexo: 'Feminino' | 'Masculino';
   cartaoSus?: string;
   rg?: string;
-  endereco?: string;
-  bairro?: string;
-  cep?: string;
-  cidade?: string;
-  contato?: string;
+  endereco?: Endereco;
+  numero?: string;
+  complemento?: string;
+  contatos: Contato[];
+  filiacao?: Filiacao;
   problemasSaude?: string;
-  pai?: string;
-  mae?: string;
 }
 
 export interface AssistidoUpdate extends Partial<AssistidoCreate> {
   id: number;
 }
 
-export interface AssistidoWithResponsaveis extends Assistido {
-  responsaveis: {
-    id: number;
-    nome: string;
-    email: string;
-  }[];
-}
-
 export interface AssistidosResponse {
-  assistidos: AssistidoWithResponsaveis[];
+  assistidos: Assistido[];
   paginacao: {
     total: number;
     paginaAtual: number;
@@ -60,7 +70,6 @@ export interface AssistidosResponse {
 export interface AssistidoPresenca {
   idAssistido: number | string;
   idAtividade: number | string;
-  idAula?: number | string; // Deprecated, use idAtividade
   status: 'presente' | 'falta' | 'atraso' | 'falta_justificada';
   data_registro?: string;
   observacao?: string;

@@ -14,6 +14,17 @@ http.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   
+  // Log para debug assistidos
+  if (config.url?.includes('/assistidos')) {
+    console.log(`🌐 [HTTP ${config.method?.toUpperCase()}] ${config.url}`);
+    console.log('🌐 [HTTP] config.data ANTES:', config.data);
+    console.log('🌐 [HTTP] config.data type:', typeof config.data);
+    if (config.data?.endereco) {
+      console.log('🌐 [HTTP] endereco type:', typeof config.data.endereco);
+      console.log('🌐 [HTTP] endereco value:', config.data.endereco);
+    }
+  }
+  
   // Log para debug - mostra o que está sendo enviado
   if (config.url?.includes('/presencas')) {
     console.log(`[HTTP ${config.method?.toUpperCase()}] ${config.url}`, config.data);
@@ -24,7 +35,7 @@ http.interceptors.request.use((config) => {
 
 http.interceptors.response.use(
   (res) => res,
-  (err) => {
+  (err: any) => {
     // Log detalhado de erros 400 para debug em produção
     if (err.response?.status === 400) {
       console.error('❌ Erro 400 - Bad Request:', {
@@ -32,10 +43,10 @@ http.interceptors.response.use(
         method: err.config?.method,
         data: err.config?.data,
         params: err.config?.params,
-        response: err.response?.data
+        response: err.response?.data,
       });
     }
-    
+
     // Log detalhado de erros 500 para debug em produção
     if (err.response?.status === 500) {
       console.error('❌ Erro 500 - Internal Server Error:', {
@@ -43,15 +54,26 @@ http.interceptors.response.use(
         method: err.config?.method,
         data: err.config?.data,
         params: err.config?.params,
-        response: err.response?.data
+        response: err.response?.data,
       });
     }
-    
+
     if (err.response?.status === 401) {
-      tokenStorage.clear();
-      userStorage.clear();
-      window.location.href = "/login";
+      const url = String(err.config?.url || "").toLowerCase();
+      if (url.includes('/usuarios/login')) {
+        return Promise.reject(err);
+      }
+
+      try {
+        tokenStorage.clear();
+        userStorage.clear();
+        const detail = { message: (err.response?.data as any)?.mensagem };
+        window.dispatchEvent(new CustomEvent('session:expired', { detail }));
+      } catch (e) {
+        console.error('Erro ao emitir evento session:expired', e);
+      }
     }
+
     return Promise.reject(err);
   }
 );

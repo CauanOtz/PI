@@ -1,10 +1,25 @@
 import { http } from "../lib/http";
 
-export interface BackendResponsavel {
-  id: number;
-  nome: string;
-  email?: string;
-  telefone?: string;
+// Normalized backend structure (3NF)
+export interface BackendEndereco {
+  cep: string;
+  logradouro?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+}
+
+export interface BackendContato {
+  telefone: string;
+  nomeContato?: string;
+  parentesco?: string;
+  observacao?: string;
+  ordemPrioridade?: number;
+}
+
+export interface BackendFiliacao {
+  mae?: string;
+  pai?: string;
 }
 
 export interface BackendAssistido {
@@ -14,21 +29,14 @@ export interface BackendAssistido {
   sexo: 'Feminino' | 'Masculino';
   cartaoSus?: string | null;
   rg?: string | null;
-  endereco?: string | null;
-  bairro?: string | null;
-  cep?: string | null;
-  cidade?: string | null;
-  contato?: string | null;
-  contatoEmergencia?: string | null;
+  endereco?: BackendEndereco | null;
+  numero?: string | null;
+  complemento?: string | null;
+  contatos: BackendContato[];
+  filiacao?: BackendFiliacao | null;
   problemasSaude?: string | null;
-  medicamentosAlergias?: string | null;
-  observacoes?: string | null;
-  pai?: string | null;
-  mae?: string | null;
   created_at?: string;
   updated_at?: string;
-  responsaveis?: BackendResponsavel[];
-  responsaveisIds?: number[];
 }
 
 export interface StudentsListResult {
@@ -57,16 +65,34 @@ export const studentsService = {
   },
 
   create(payload: Partial<BackendAssistido>) {
+    console.log('🔵 [students.service] create chamado');
+    console.log('🔵 [students.service] Payload:', JSON.stringify(payload, null, 2));
     // envia dados conforme backend espera (nome, idade, endereco, contato, ...)
     return http
       .post<{ sucesso: boolean; dados: BackendAssistido }>("/assistidos", payload)
-      .then((r) => r.data.dados);
+      .then((r) => {
+        console.log('🟢 [students.service] Resposta do backend:', r.data);
+        return r.data.dados;
+      })
+      .catch((err) => {
+        console.error('🔴 [students.service] Erro na requisição:', err);
+        throw err;
+      });
   },
 
   update(id: number, payload: Partial<BackendAssistido>) {
+    console.log('🔵 [students.service] update chamado para ID:', id);
+    console.log('🔵 [students.service] Payload:', JSON.stringify(payload, null, 2));
     return http
       .put<{ sucesso: boolean; dados: BackendAssistido }>(`/assistidos/${id}`, payload)
-      .then((r) => r.data.dados);
+      .then((r) => {
+        console.log('🟢 [students.service] Resposta do UPDATE:', r.data);
+        return r.data.dados;
+      })
+      .catch((err) => {
+        console.error('🔴 [students.service] Erro no UPDATE:', err);
+        throw err;
+      });
   },
 
   remove(id: number) {

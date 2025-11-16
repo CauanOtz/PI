@@ -82,18 +82,6 @@ import { validarCartaoSUS, formatarCartaoSUS } from '../utils/validacoes.js';
  *           description: Descrição de problemas de saúde, alergias ou condições especiais.
  *           example: "Alergia a amendoim"
  *           nullable: true
- *         pai:
- *           type: string
- *           maxLength: 100
- *           description: Nome completo do pai.
- *           example: "João Oliveira"
- *           nullable: true
- *         mae:
- *           type: string
- *           maxLength: 100
- *           description: Nome completo da mãe.
- *           example: "Maria Silva Oliveira"
- *           nullable: true
  *         created_at:
  *           type: string
  *           format: date-time
@@ -107,12 +95,6 @@ import { validarCartaoSUS, formatarCartaoSUS } from '../utils/validacoes.js';
  */
 
 const Assistido = sequelize.define('Assistido', {
-  id: {
-    type: DataTypes.INTEGER,
-    autoIncrement: true,
-    primaryKey: true,
-    field: 'id'
-  },
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
@@ -169,26 +151,6 @@ const Assistido = sequelize.define('Assistido', {
       }
     }
   },
-  pai: {
-    type: DataTypes.STRING(100),
-    allowNull: true,
-    validate: {
-      len: {
-        args: [0, 100],
-        msg: 'O nome do pai não pode ter mais de 100 caracteres.'
-      }
-    }
-  },
-  mae: {
-    type: DataTypes.STRING(100),
-    allowNull: true,
-    validate: {
-      len: {
-        args: [0, 100],
-        msg: 'O nome da mãe não pode ter mais de 100 caracteres.'
-      }
-    }
-  },
   cartaoSus: {
     type: DataTypes.STRING(20),
     allowNull: true,
@@ -218,66 +180,41 @@ const Assistido = sequelize.define('Assistido', {
       }
     }
   },
-  endereco: {
-    type: DataTypes.STRING(255),
+  enderecoId: {
+    type: DataTypes.INTEGER,
     allowNull: true,
-    validate: {
-      len: {
-        args: [0, 255],
-        msg: 'O endereço não pode ter mais de 255 caracteres.'
-      }
-    }
+    field: 'endereco_id',
+    references: {
+      model: 'enderecos',
+      key: 'id'
+    },
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE'
   },
-  bairro: {
-    type: DataTypes.STRING(100),
-    allowNull: true,
-    validate: {
-      len: {
-        args: [0, 100],
-        msg: 'O bairro não pode ter mais de 100 caracteres.'
-      }
-    }
-  },
-  cep: {
-    type: DataTypes.STRING(9),
-    allowNull: true,
-    validate: {
-      is: {
-        args: /^(\d{5}-?\d{3})?$/,
-        msg: 'Formato de CEP inválido. Use 12345-678.'
-      }
-    }
-  },
-  cidade: {
-    type: DataTypes.STRING(100),
-    allowNull: true,
-    validate: {
-      len: {
-        args: [0, 100],
-        msg: 'A cidade não pode ter mais de 100 caracteres.'
-      }
-    }
-  },
-  contato: {
+  numero: {
     type: DataTypes.STRING(20),
     allowNull: true,
     validate: {
-      is: {
-        args: /^(\(\d{2}\)\s?\d{4,5}-?\d{4}|\d{10,11})?$/,
-        msg: 'Formato de contato inválido. Use (DD) 99999-9999 ou (DD) 9999-9999.'
+      len: {
+        args: [0, 20],
+        msg: 'O número não pode ter mais de 20 caracteres.'
+      }
+    }
+  },
+  complemento: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    validate: {
+      len: {
+        args: [0, 100],
+        msg: 'O complemento não pode ter mais de 100 caracteres.'
       }
     }
   },
   problemasSaude: {
-    type: DataTypes.STRING(1000),
+    type: DataTypes.TEXT,
     allowNull: true,
-    field: 'problemas_saude',
-    validate: {
-      len: {
-        args: [0, 1000],
-        msg: 'A descrição dos problemas de saúde não pode ter mais de 1000 caracteres.'
-      }
-    }
+    field: 'problemas_saude'
   },
   created_at: {
     type: DataTypes.DATE,
@@ -306,6 +243,30 @@ const Assistido = sequelize.define('Assistido', {
 });
 
 Assistido.associate = (models) => {
+  // Association with Endereco
+  Assistido.belongsTo(models.Endereco, {
+    foreignKey: 'enderecoId',
+    as: 'endereco',
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE'
+  });
+
+  // Association with ContatoAssistido
+  Assistido.hasMany(models.ContatoAssistido, {
+    foreignKey: 'assistidoId',
+    as: 'contatos',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  });
+
+  // Association with FiliacaoAssistido
+  Assistido.hasMany(models.FiliacaoAssistido, {
+    foreignKey: 'assistidoId',
+    as: 'filiacao',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  });
+
   // Association with Documento
   Assistido.hasMany(models.Documento, {
     foreignKey: 'assistidoId',

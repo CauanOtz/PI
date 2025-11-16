@@ -20,7 +20,7 @@ module.exports = {
         nome: 'Administrador do Sistema',
         email: 'admin@escola.com',
         senha: hashedPassword,
-        cpf: '123.456.789-00',
+        cpf: '623.920.600-88',
         telefone: '(11) 99999-9999',
         role: 'admin',
         createdAt: new Date(),

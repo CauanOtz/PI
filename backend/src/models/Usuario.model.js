@@ -114,48 +114,10 @@ const Usuario = sequelize.define('Usuario', {
 });
 
 Usuario.associate = (models) => {
-
-
-  // Association with Assistido (many-to-many through ResponsavelAssistido)
-  Usuario.belongsToMany(models.Assistido, {
-    through: models.ResponsavelAssistido,
-    foreignKey: 'id_usuario',
-    otherKey: 'id_assistido',
-    as: 'assistidos',
-  });
-
-  // If you need to access the join table directly
-  Usuario.hasMany(models.ResponsavelAssistido, {
-    foreignKey: 'id_usuario',
-    as: 'responsavelAssistidos'
-  });
-
   // Association with Documento
   Usuario.hasMany(models.Documento, {
     foreignKey: 'usuarioId',
     as: 'documentos'
-  });
-
-  // Usuário pode ser o criador de várias notificações
-  Usuario.hasMany(models.Notificacao, {
-    foreignKey: 'criadoPor',
-    sourceKey: 'cpf',
-    as: 'notificacoesCriadas'
-  });
-
-  // Usuário pode receber muitas notificações via UsuarioNotificacao
-  Usuario.belongsToMany(models.Notificacao, {
-    through: models.UsuarioNotificacao,
-    foreignKey: 'cpfUsuario',
-    otherKey: 'notificacaoId',
-    sourceKey: 'cpf',
-    as: 'notificacoesRecebidas'
-  });
-
-  Usuario.hasMany(models.UsuarioNotificacao, {
-    foreignKey: 'cpfUsuario',
-    sourceKey: 'cpf',
-    as: 'usuarioNotificacoes'
   });
 };
 

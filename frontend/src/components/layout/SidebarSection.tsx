@@ -1,7 +1,6 @@
 import {
   FileTextIcon,
   HomeIcon,
-  SettingsIcon,
   SparklesIcon,
   PersonStanding,
   ClipboardCheckIcon,
@@ -23,7 +22,7 @@ export const SidebarSection = (): JSX.Element | null => {
   // Não renderiza a sidebar enquanto o usuário estiver sendo carregado
   if (loading || !user) return null;
 
-  const adminNavItems = [
+  const navItems = [
     {
       icon: <HomeIcon className="w-4 h-4 text-blue-400" />,
       label: "Dashboard",
@@ -37,7 +36,7 @@ export const SidebarSection = (): JSX.Element | null => {
     {
       icon: <BookMarked  className="w-4 h-4 text-indigo-400" />,
       label: "Atividades",
-      path: "/atividades",
+      path: "/activities",
     },
     {
       icon: <ClipboardCheckIcon className="w-4 h-4 text-yellow-400" />,
@@ -49,42 +48,7 @@ export const SidebarSection = (): JSX.Element | null => {
       label: "Documentos",
       path: "/files",
     },
-    // {
-    //   icon: <UsersIcon className="w-4 h-4 text-cyan-400" />,
-    //   label: "Usuários",
-    //   path: "/users",
-    // },
-    // {
-    //   icon: <SparklesIcon className="w-4 h-4 text-blue-300" />,
-    //   label: "Notificações",
-    //   path: "/notificacoes",
-    // },
-    // {
-    //   icon: <SettingsIcon className="w-4 h-4 text-orange-400" />,
-    //   label: "Configurações",
-    //   path: "/settings",
-    // },
   ];
-
-  const guardianNavItems = [
-    {
-      icon: <HomeIcon className="w-4 h-4 text-blue-400" />,
-      label: "Painel do Aluno",
-      path: "/guardian-dashboard",
-    },
-    {
-      icon: <SparklesIcon className="w-4 h-4 text-blue-300" />,
-      label: "Notificações",
-      path: "/minhas-notificacoes",
-    },
-    {
-      icon: <SettingsIcon className="w-4 h-4 text-orange-400" />,
-      label: "Configurações",
-      path: "/settings",
-    },
-  ];
-
-  const navItems = user.role === 'responsavel' ? guardianNavItems : adminNavItems;
 
   return (
     <>

@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "../../components/ui/button";
@@ -24,14 +24,9 @@ export const Login = () => {
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      const res = await login(data.email, data.password);
-      const userObj = res?.user || null;
+      await login(data.email, data.password);
       toast.success("Bem-vindo! Login realizado com sucesso.");
-      if (userObj?.role === "responsavel") {
-        navigate("/guardian-dashboard");
-      } else {
-        navigate("/dashboard");
-      }
+      navigate("/dashboard");
     } catch (err: any) {
       console.error(err);
       toast.error(err?.response?.data?.mensagem || "Falha ao entrar");

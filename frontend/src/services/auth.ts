@@ -12,8 +12,13 @@ export async function login({ email, password }: { email: string; password: stri
     console.log('Resposta do servidor:', res.data);
 
     if (!res.data || !res.data.sucesso || !res.data.dados) {
-      console.error('Resposta inválida do servidor');
-      throw new Error('Resposta inválida do servidor');
+      console.error('Resposta inválida do servidor', res.data);
+      // se o backend retornou uma estrutura válida com mensagem, garanta que
+      // a mensagem chegue ao componente (mantendo formato parecido com axios)
+  const msg = (res.data as any)?.mensagem || 'Credenciais inválidas';
+      const err: any = new Error(msg);
+      err.response = { data: res.data, status: res.status };
+      throw err;
     }
 
     const { usuario, token } = res.data.dados;

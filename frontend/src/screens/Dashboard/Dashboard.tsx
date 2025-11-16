@@ -17,12 +17,9 @@ import { Card } from "../../components/ui/card";
 import { toast } from "sonner";
 import { dashboardService } from "../../services/dashboard";
 // import { notificacaoService } from '../../services/notificacao';
-import { useAuth } from "../../context/AuthProvider";
 
 export const Dashboard = (): JSX.Element => {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  // const isAdmin = (user?.role === 'admin');
 
   const [totalAssistidos, setTotalAssistidos] = useState<number | null>(null);
   const [totalAtividades, setTotalAtividades] = useState<number | null>(null);
