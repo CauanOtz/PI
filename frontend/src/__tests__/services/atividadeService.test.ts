@@ -8,14 +8,14 @@ describe('atividade service', () => {
   beforeEach(() => { vi.clearAllMocks(); });
 
   it('listAtividades returns data', async () => {
-    (http.get as any).mockResolvedValue({ data: [{ id: 1 }] });
+    (http.get as any).mockResolvedValue({ data: { sucesso: true, dados: { atividades: [{ id: 1 }] } } });
     const data = await listAtividades();
     expect(http.get).toHaveBeenCalledWith('/atividades');
     expect(data.length).toBe(1);
   });
 
   it('createAtividade posts payload', async () => {
-    (http.post as any).mockResolvedValue({ data: { id: 2 } });
+    (http.post as any).mockResolvedValue({ data: { sucesso: true, dados: { id: 2 } } });
     const payload = { titulo: 'T', data: '2025-01-01', horario: '10:00' };
     const res = await createAtividade(payload);
     expect(http.post).toHaveBeenCalledWith('/atividades', payload);
@@ -23,10 +23,10 @@ describe('atividade service', () => {
   });
 
   it('updateAtividade puts partial data', async () => {
-    (http.put as any).mockResolvedValue({ data: { ok: true } });
+    (http.put as any).mockResolvedValue({ data: { sucesso: true, dados: { id: 9, descricao: 'Nova' } } });
     const out = await updateAtividade(9, { descricao: 'Nova' });
     expect(http.put).toHaveBeenCalledWith('/atividades/9', { descricao: 'Nova' });
-    expect(out.ok).toBe(true);
+    expect(out.descricao).toBe('Nova');
   });
 
   it('deleteAtividade calls delete', async () => {

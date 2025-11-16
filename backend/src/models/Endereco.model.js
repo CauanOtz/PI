@@ -10,7 +10,8 @@ const Endereco = sequelize.define('Endereco', {
   cep: {
     type: DataTypes.STRING(9),
     allowNull: false,
-    unique: true,
+    // Removido unique: true para permitir múltiplos endereços com mesmo CEP
+    // mas endereços completos diferentes (3FN por endereço completo)
     validate: {
       notEmpty: {
         msg: 'O CEP é obrigatório.'

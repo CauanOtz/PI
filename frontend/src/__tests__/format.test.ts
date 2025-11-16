@@ -6,7 +6,7 @@ describe('format utils', () => {
     expect(digitsOnly('123.a4-5')).toBe('12345');
   });
   it('formatCPF formats properly', () => {
-    expect(formatCPF('12345678900')).toBe('623.920.600-88');
+    expect(formatCPF('12345678900')).toBe('123.456.789-00');
   });
   it('formatDateTime returns dash for invalid', () => {
     expect(formatDateTime('invalid-date')).toBe('—');

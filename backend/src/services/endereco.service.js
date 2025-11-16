@@ -3,39 +3,37 @@ import { sequelize } from '../config/database.js';
 
 class EnderecoService {
   /**
-   * Busca ou cria um endereço baseado no CEP
+   * Busca ou cria um endereço baseado em TODOS os campos
+   * Só compartilha se o endereço completo for idêntico (mantém 3FN)
    * @param {Object} enderecoData - Dados do endereço { cep, logradouro, bairro, cidade, estado }
+   * @param {Transaction} transaction - Transação do Sequelize (opcional)
    * @returns {Promise<Endereco>}
    */
-  static async findOrCreate(enderecoData) {
+  static async findOrCreate(enderecoData, transaction = null) {
     try {
-      const [endereco, created] = await Endereco.findOrCreate({
-        where: { cep: enderecoData.cep },
+      const options = {
+        where: {
+          cep: enderecoData.cep,
+          logradouro: enderecoData.logradouro,
+          bairro: enderecoData.bairro,
+          cidade: enderecoData.cidade,
+          estado: enderecoData.estado
+        },
         defaults: {
+          cep: enderecoData.cep,
           logradouro: enderecoData.logradouro,
           bairro: enderecoData.bairro,
           cidade: enderecoData.cidade,
           estado: enderecoData.estado
         }
-      });
+      };
 
-      // Se não foi criado mas os dados são diferentes, atualiza
-      if (!created) {
-        const needsUpdate = 
-          (enderecoData.logradouro && endereco.logradouro !== enderecoData.logradouro) ||
-          (enderecoData.bairro && endereco.bairro !== enderecoData.bairro) ||
-          (enderecoData.cidade && endereco.cidade !== enderecoData.cidade) ||
-          (enderecoData.estado && endereco.estado !== enderecoData.estado);
-
-        if (needsUpdate) {
-          await endereco.update({
-            logradouro: enderecoData.logradouro || endereco.logradouro,
-            bairro: enderecoData.bairro || endereco.bairro,
-            cidade: enderecoData.cidade || endereco.cidade,
-            estado: enderecoData.estado || endereco.estado
-          });
-        }
+      // Se uma transação foi fornecida, usa ela
+      if (transaction) {
+        options.transaction = transaction;
       }
+
+      const [endereco, created] = await Endereco.findOrCreate(options);
 
       return endereco;
     } catch (error) {

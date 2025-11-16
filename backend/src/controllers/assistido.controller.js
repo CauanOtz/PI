@@ -489,6 +489,9 @@ export const criarAssistido = async (req, res, next) => {
 export const atualizarAssistido = async (req, res, next) => {
   try {
     const assistidoId = req.params.id;
+    console.log('🔵 [assistido.controller] UPDATE request para ID:', assistidoId);
+    console.log('🔵 [assistido.controller] req.body:', req.body);
+    
     const { 
       nome, 
       dataNascimento, 
@@ -502,6 +505,11 @@ export const atualizarAssistido = async (req, res, next) => {
       filiacao, // { mae, pai }
       problemasSaude
     } = req.body;
+
+    console.log('🔵 [assistido.controller] endereco extraído:', endereco);
+    console.log('🔵 [assistido.controller] typeof endereco:', typeof endereco);
+    console.log('🔵 [assistido.controller] contatos extraídos:', contatos);
+    console.log('🔵 [assistido.controller] filiacao extraída:', filiacao);
 
     const assistidoAtualizado = await AssistidoService.update(assistidoId, { 
       nome, 
@@ -523,9 +531,11 @@ export const atualizarAssistido = async (req, res, next) => {
     }
 
     const dto = AssistidoDTO.from(assistidoAtualizado);
+    console.log('🟢 [assistido.controller] DTO final:', JSON.stringify(dto, null, 2));
     res.status(200);
     res.json({ sucesso: true, dados: { assistido: dto } });
   } catch (error) {
+    console.error('🔴 [assistido.controller] Erro ao atualizar:', error);
     next(error);
   }
 };

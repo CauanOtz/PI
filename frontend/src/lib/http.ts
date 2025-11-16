@@ -14,6 +14,17 @@ http.interceptors.request.use((config) => {
     config.headers.Authorization = `Bearer ${token}`;
   }
   
+  // Log para debug assistidos
+  if (config.url?.includes('/assistidos')) {
+    console.log(`🌐 [HTTP ${config.method?.toUpperCase()}] ${config.url}`);
+    console.log('🌐 [HTTP] config.data ANTES:', config.data);
+    console.log('🌐 [HTTP] config.data type:', typeof config.data);
+    if (config.data?.endereco) {
+      console.log('🌐 [HTTP] endereco type:', typeof config.data.endereco);
+      console.log('🌐 [HTTP] endereco value:', config.data.endereco);
+    }
+  }
+  
   // Log para debug - mostra o que está sendo enviado
   if (config.url?.includes('/presencas')) {
     console.log(`[HTTP ${config.method?.toUpperCase()}] ${config.url}`, config.data);

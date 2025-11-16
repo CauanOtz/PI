@@ -1,21 +1,39 @@
 import { BackendAssistido } from "../../../services/students";
 
+// Normalized form data matching backend 3NF structure
+export interface ContatoFormData {
+  telefone: string;
+  nomeContato?: string;
+  parentesco?: string;
+  observacao?: string;
+  ordemPrioridade?: number;
+}
+
+export interface EnderecoFormData {
+  cep?: string;
+  logradouro?: string;
+  bairro?: string;
+  cidade?: string;
+  estado?: string;
+}
+
+export interface FiliacaoFormData {
+  mae?: string;
+  pai?: string;
+}
+
 export interface AssistidoFormData {
   nome: string;
   dataNascimento: string;
   sexo: 'Feminino' | 'Masculino';
   cartaoSus?: string;
   rg?: string;
-  endereco?: string;
-  bairro?: string;
-  cep?: string;
-  cidade?: string;
-  contato?: string;
-  contatoEmergencia?: string;
+  endereco?: EnderecoFormData;
+  numero?: string;
+  complemento?: string;
+  contatos: ContatoFormData[];
+  filiacao?: FiliacaoFormData;
   problemasSaude?: string;
-  observacoes?: string;
-  pai?: string;
-  mae?: string;
 }
 
 export interface CreateAssistidoModalProps {

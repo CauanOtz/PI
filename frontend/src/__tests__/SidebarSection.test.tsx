@@ -35,14 +35,10 @@ describe('SidebarSection (admin)', () => {
     setup('/dashboard');
     const labels = [
       'Dashboard',
-      'Presença',
-      'Atividades',
       'Assistidos',
-      'Usuários',
-      'Calendário',
-      'Relatório',
-      'Notificações',
-      'Configurações',
+      'Atividades',
+      'Presenças',
+      'Documentos',
     ];
     labels.forEach(label => {
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
@@ -51,37 +47,15 @@ describe('SidebarSection (admin)', () => {
 
   it('highlights active route', () => {
     setup('/attendance');
-    const attendanceBtn = screen.getByRole('button', { name: 'Presença' });
+    const attendanceBtn = screen.getByRole('button', { name: 'Presenças' });
     expect(attendanceBtn.className).toContain('bg-projectsecondary-300');
   });
 });
 
-describe('SidebarSection (guardian)', () => {
-  beforeEach(() => { vi.clearAllMocks(); });
-
-  it('renders only guardian nav items', async () => {
-    vi.resetModules();
-    vi.doMock('../context/AuthProvider', () => {
-      const logout = vi.fn();
-      return {
-        useAuth: () => ({ user: { id: 2, nome: 'Resp', role: 'responsavel' }, loading: false, logout }),
-      };
-    });
-    const { SidebarSection: GuardianSidebar } = await import('../components/layout/SidebarSection');
-
-    render(
-      <MemoryRouter initialEntries={['/guardian-dashboard']}>
-        <Routes>
-          <Route path="*" element={<GuardianSidebar />} />
-        </Routes>
-      </MemoryRouter>
-    );
-
-    ['Painel do Aluno', 'Notificações', 'Configurações'].forEach(label => {
-      expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
-    });
-    ['Dashboard','Presença','Atividades','Assistidos','Usuários','Calendário','Relatório'].forEach(label => {
-      expect(screen.queryByRole('button', { name: label })).toBeNull();
-    });
+describe('SidebarSection (no guardian role)', () => {
+  it('does not have guardian-specific routes', () => {
+    setup('/dashboard');
+    expect(screen.queryByRole('button', { name: 'Painel do Aluno' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Notificações' })).toBeNull();
   });
 });

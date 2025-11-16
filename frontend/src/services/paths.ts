@@ -4,8 +4,8 @@ export const API = {
     logout: "/usuarios/logout",
     me: "/usuarios/me",
   },
-  alunos: "/alunos",
-  aulas: "/aulas",
+  assistidos: "/assistidos",
+  atividades: "/atividades",
   presencas: "/presencas",
   documentos: "/documentos",
 };

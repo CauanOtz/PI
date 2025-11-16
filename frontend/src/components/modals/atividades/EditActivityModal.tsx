@@ -10,7 +10,7 @@ const schema = z.object({
   titulo: z.string().min(3, 'Título muito curto'),
   data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data inválida (YYYY-MM-DD)'),
   horario: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)(:([0-5]\d))?$/, 'Horário inválido'),
-  descricao: z.string().optional(),
+  descricao: z.string().nullable().optional(),
 });
 
 type Form = z.infer<typeof schema>;

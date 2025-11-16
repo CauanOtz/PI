@@ -121,8 +121,8 @@ export default class UsuarioService {
   static async authenticate(email, senha) {
     const usuario = await Usuario.findOne({ where: { email }, attributes: { include: ['senha'] } });
     if (!usuario) return null;
-    const senhaValida = await usuario.verificarSenha ? await usuario.verificarSenha(senha) : false;
-    // model has verificarSenha sync - ensure boolean
+    // verificarSenha é síncrono (usa bcrypt.compareSync)
+    const senhaValida = usuario.verificarSenha ? usuario.verificarSenha(senha) : false;
     if (!senhaValida) return null;
     const token = signToken({ id: usuario.id, email: usuario.email, role: usuario.role });
     const usuarioSemSenha = usuario.get({ plain: true });

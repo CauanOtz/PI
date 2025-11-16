@@ -48,11 +48,54 @@ const rgValidation = body('rg')
   .trim()
   .isLength({ max: 20 }).withMessage('O RG não pode ter mais de 20 caracteres.');
 
+// Validações para endereço normalizado (objeto)
 const enderecoValidation = body('endereco')
+  .optional()
+  .custom((value) => {
+    // Se fornecido, deve ser um objeto
+    if (value && typeof value !== 'object') {
+      throw new Error('O endereço deve ser um objeto.');
+    }
+    return true;
+  });
+
+const enderecoCepValidation = body('endereco.cep')
   .optional({ checkFalsy: true })
   .trim()
-  .isLength({ max: 255 }).withMessage('O endereço não pode ter mais de 255 caracteres.');
+  .isLength({ max: 20 }).withMessage('O CEP não pode ter mais de 20 caracteres.');
 
+const enderecoLogradouroValidation = body('endereco.logradouro')
+  .optional({ checkFalsy: true })
+  .trim()
+  .isLength({ max: 255 }).withMessage('O logradouro não pode ter mais de 255 caracteres.');
+
+const enderecoBairroValidation = body('endereco.bairro')
+  .optional({ checkFalsy: true })
+  .trim()
+  .isLength({ max: 100 }).withMessage('O bairro não pode ter mais de 100 caracteres.');
+
+const enderecoCidadeValidation = body('endereco.cidade')
+  .optional({ checkFalsy: true })
+  .trim()
+  .isLength({ max: 100 }).withMessage('A cidade não pode ter mais de 100 caracteres.');
+
+const enderecoEstadoValidation = body('endereco.estado')
+  .optional({ checkFalsy: true })
+  .trim()
+  .isLength({ max: 2 }).withMessage('O estado deve ter 2 caracteres (UF).');
+
+// Validação para numero e complemento (campos diretos no assistido)
+const numeroValidation = body('numero')
+  .optional({ checkFalsy: true })
+  .trim()
+  .isLength({ max: 20 }).withMessage('O número não pode ter mais de 20 caracteres.');
+
+const complementoValidation = body('complemento')
+  .optional({ checkFalsy: true })
+  .trim()
+  .isLength({ max: 100 }).withMessage('O complemento não pode ter mais de 100 caracteres.');
+
+// Validações antigas removidas (não usadas mais)
 const bairroValidation = body('bairro')
   .optional({ checkFalsy: true })
   .trim()
@@ -67,6 +110,21 @@ const cidadeValidation = body('cidade')
   .optional({ checkFalsy: true })
   .trim()
   .isLength({ max: 100 }).withMessage('A cidade não pode ter mais de 100 caracteres.');
+
+// Validações para contatos (array)
+const contatosValidation = body('contatos')
+  .optional()
+  .isArray().withMessage('Contatos deve ser um array.');
+
+// Validações para filiação (objeto)
+const filiacaoValidation = body('filiacao')
+  .optional()
+  .custom((value) => {
+    if (value && typeof value !== 'object') {
+      throw new Error('A filiação deve ser um objeto.');
+    }
+    return true;
+  });
 
 const contatoValidation = body('contato')
   .optional({ checkFalsy: true })
@@ -97,13 +155,16 @@ export const validateCreateAssistido = [
   cartaoSusValidation,
   rgValidation,
   enderecoValidation,
-  bairroValidation,
-  cepValidation,
-  cidadeValidation,
-  contatoValidation,
+  enderecoCepValidation,
+  enderecoLogradouroValidation,
+  enderecoBairroValidation,
+  enderecoCidadeValidation,
+  enderecoEstadoValidation,
+  numeroValidation,
+  complementoValidation,
+  contatosValidation,
+  filiacaoValidation,
   problemasSaudeValidation,
-  paiValidation,
-  maeValidation,
   handleValidationErrors,
 ];
 
@@ -128,13 +189,16 @@ export const validateUpdateAssistido = [
   cartaoSusValidation,
   rgValidation,
   enderecoValidation,
-  bairroValidation,
-  cepValidation,
-  cidadeValidation,
-  contatoValidation,
+  enderecoCepValidation,
+  enderecoLogradouroValidation,
+  enderecoBairroValidation,
+  enderecoCidadeValidation,
+  enderecoEstadoValidation,
+  numeroValidation,
+  complementoValidation,
+  contatosValidation,
+  filiacaoValidation,
   problemasSaudeValidation,
-  paiValidation,
-  maeValidation,
   handleValidationErrors,
 ];
 
