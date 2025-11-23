@@ -20,8 +20,8 @@
 2. Clique em **Executar instância (Launch Instance)**
 3. Preencha as opções:
    - **Nome:** `DiarioDeClasse`
-   - **Imagem (AMI):** `Ubuntu Server 22.04 LTS` (recomendado para Docker Compose)
-   - **Tipo de instância:** `t2.medium` (mínimo recomendado para PostgreSQL + Backend + Frontend)
+   - **Imagem (AMI):** `AMI do Amazon Linux 2023 kernel-6.1` 
+   - **Tipo de instância:** `t3.micro` 
    - **Par de chaves:** selecione `vockey`
    - **Armazenamento:** `20 GB` (para comportar banco de dados e imagens Docker)
    - **Configurações de rede:**
