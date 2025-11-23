@@ -1,1 +1,50 @@
 node_modules
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+backend/.env
+backend/.env.aws
+backend/.env.production
+frontend/.env
+frontend/.env.local
+
+# Database
+*.sqlite
+*.db
+dev.sqlite
+
+# Uploads
+backend/uploads/**
+!backend/uploads/.gitkeep
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# Build
+dist/
+build/
+.cache/
+
+# Temporary files
+*.tmp
+*.temp

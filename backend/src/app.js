@@ -35,6 +35,16 @@ app.get('/', (req, res) => {
   res.status(200).json({ message: 'Bem-vindo à API do Diário de Classe!' });
 });
 
+// Health check endpoint para monitoramento
+app.get('/api/v2/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+    database: process.env.DB_DIALECT || 'sqlite'
+  });
+});
+
 // Aqui você importará e usará suas rotas principais
 // O prefixo /api/v1 é um exemplo, ajuste conforme sua necessidade e o que foi configurado no swagger.js
 // app.use('/api/v1', mainRoutes);

@@ -1,0 +1,47 @@
+FROM node:20-slim
+
+# Definir variáveis de ambiente padrão
+ENV NODE_ENV=production \
+    PORT=3001
+
+WORKDIR /app
+
+# Instalar dependências do sistema necessárias para PostgreSQL
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3 \
+    pkg-config \
+    postgresql-client \
+ && rm -rf /var/lib/apt/lists/*
+
+# Copiar arquivos de dependências
+COPY package.json package-lock.json ./
+
+# Instalar dependências de produção
+RUN npm ci --omit=dev
+
+# Copiar arquivos de configuração
+COPY .sequelizerc ./
+COPY config ./config
+
+# Copiar código fonte
+COPY src ./src
+COPY migrations ./migrations
+COPY models ./models
+
+# Criar diretórios necessários
+RUN mkdir -p uploads/documentos
+
+# Volume para arquivos enviados
+VOLUME ["/app/uploads"]
+
+# Expor porta da aplicação
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD node -e "require('http').get('http://localhost:3001/api/v2/health', (r) => r.statusCode === 200 ? process.exit(0) : process.exit(1))" || exit 1
+
+# Comando de inicialização
+CMD ["npm", "start"]

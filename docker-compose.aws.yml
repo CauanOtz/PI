@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:14-alpine
+    container_name: ang-postgres
+    environment:
+      POSTGRES_DB: ang_database
+      POSTGRES_USER: ang_user
+      POSTGRES_PASSWORD: ang_secure_password_2025
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=pt_BR.UTF-8 --lc-ctype=pt_BR.UTF-8"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - ang-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ang_user -d ang_database"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.aws
+    container_name: ang-backend
+    env_file:
+      - ./backend/.env.aws
+    environment:
+      NODE_ENV: production
+      PORT: 3001
+      DB_DIALECT: postgres
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ang_database
+      DB_USER: ang_user
+      DB_PASSWORD: ang_secure_password_2025
+      DB_SSL: "false"
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
+    volumes:
+      - backend-uploads:/app/uploads
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ang-network
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo 'Aguardando PostgreSQL estar pronto...' &&
+        sleep 5 &&
+        echo 'Executando migrações...' &&
+        npm run migrate:prod &&
+        echo 'Iniciando servidor...' &&
+        npm start
+      "
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${BACKEND_URL:-http://localhost:3001}/api/v2
+    container_name: ang-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    networks:
+      - ang-network
+    restart: unless-stopped
+
+networks:
+  ang-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+  backend-uploads:
+    driver: local
