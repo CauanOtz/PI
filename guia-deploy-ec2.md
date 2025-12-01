@@ -1,165 +1,149 @@
-# 🚀 Guia Completo de Deploy – Projeto PI (Frontend + Backend) na AWS EC2
+# 🚀 Guia Rápido — Deploy (EC2 + Docker Compose + PostgreSQL)
 
-## 📘 Sumário
-1. [Criação da Instância EC2](#1-criação-da-instância-ec2)
-2. [Conexão via Vockey](#2-conexão-via-vockey)
-3. [Instalação de Dependências](#3-instalação-de-dependências)
-4. [Clonagem do Repositório](#4-clonagem-do-repositório)
-5. [Build e Execução do Backend](#5-build-e-execução-do-backend)
-6. [Build e Execução do Frontend](#6-build-e-execução-do-frontend)
-7. [Configuração das Portas (Segurança EC2)](#7-configuração-das-portas-segurança-ec2)
-8. [Comandos Úteis](#8-comandos-úteis)
-9. [Verificação Final](#9-verificação-final)
+Este guia fornece passos reprodutíveis para executar toda a stack em uma instância EC2 recém-criada.
 
----
+Pré-requisitos (recomendado):
+- Use **Ubuntu 22.04 LTS** ou **Amazon Linux 2023**. Para Amazon Linux, veja a seção específica abaixo.
+- Instância com pelo menos **2 GB RAM** (ex.: `t3.small` ou `t3.medium`) ou adicione swap. Builds do frontend em instâncias muito pequenas (t3.micro) frequentemente falham.
+- Abra as portas do security group: **22 (SSH)**, **8080 (frontend)**, **3001 (backend)**. Não deixe **5432** aberto ao público.
 
-## 1️⃣ Criação da Instância EC2
-
-1. Acesse o console da **AWS** → [EC2 Dashboard](https://console.aws.amazon.com/ec2/)
-2. Clique em **Executar instância (Launch Instance)**
-3. Preencha as opções:
-   - **Nome:** `DiarioDeClasse`
-   - **Imagem (AMI):** `Amazon Linux 2023`
-   - **Tipo de instância:** `t2.micro (gratuito)`
-   - **Par de chaves:** selecione `vockey`
-   - **Configurações de rede:**
-     - Marque “Atribuir IP público automaticamente”
-     - Em “Firewall (grupo de segurança)”, crie um novo grupo com:
-       - Porta **22** → SSH
-       - Porta **80** → HTTP
-       - Porta **3001** → Backend
-   - Clique em **Executar instância**
-
-4. Após criada, copie o **endereço IPv4 público**, que será usado para acessar o site.
+Checklist (executar nesta ordem numa instância limpa):
+1. Conecte-se à instância (EC2 Instance Connect / chave SSH).
+2. Instale Docker, Docker Compose e Git (comandos abaixo — escolha a seção do SO).
+3. Clone o repositório e troque para a branch `feature/aws-postgresql-deploy`.
+4. Copie `.env.aws.example` para `backend/.env.aws` e edite com o IP público da instância (Elastic IP recomendado).
+5. Build e start com Docker Compose.
+6. Se alterar env, recrie o container do backend e, se necessário, reconstrua o frontend.
 
 ---
 
-## 2️⃣ Conexão via Vockey
+Instalação rápida (exemplos)
 
-1. No painel EC2, selecione a instância → clique em **Conectar**
-2. Escolha a aba **Conectar via EC2 Instance Connect (Vockey)**
-3. Clique em **Conectar** e aguarde abrir o terminal diretamente no navegador
+- Ubuntu (recomendado):
 
-Pronto! Você já está dentro da sua instância 🎯
+```powershell
+sudo apt-get update -y; sudo apt-get upgrade -y
+sudo apt-get install -y git curl docker.io
+sudo systemctl enable --now docker
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+sudo usermod -aG docker $USER
+exit  # reconecte para aplicar a nova group membership
+```
 
----
+- Amazon Linux 2023:
 
-## 3️⃣ Instalação de Dependências
-
-Atualize o sistema e instale Docker e Git:
-
-```bash
-sudo yum update -y
-sudo yum install -y docker git
-sudo systemctl start docker
-sudo systemctl enable docker
+```powershell
+sudo dnf update -y; sudo dnf install -y git curl docker
+sudo systemctl enable --now docker
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
 sudo usermod -aG docker ec2-user
+exit  # reconecte para aplicar a nova group membership
 ```
 
-> ⚠️ Após isso, **digite `exit` e reconecte via Vockey** para aplicar as permissões do Docker.
+Adicionar swap temporário (se RAM for limitada):
+
+```powershell
+sudo fallocate -l 2G /swapfile
+sudo chmod 600 /swapfile
+sudo mkswap /swapfile
+sudo swapon /swapfile
+free -h
+```
 
 ---
 
-## 4️⃣ Clonagem do Repositório
-
-Clone o projeto do GitHub e entre na pasta:
+1) Clonar repositório e mudar branch
 
 ```bash
-git clone https://github.com/CauanOtz/PI.git
+git clone -b feature/aws-postgresql-deploy https://github.com/CauanOtz/PI.git
 cd PI
-ls
 ```
 
-Você deve ver:
-```
-backend  frontend
-```
-
----
-
-## 5️⃣ Build e Execução do Backend
+2) Configurar env do backend
 
 ```bash
 cd backend
-sudo docker build -t pi-backend:1.0 .
-sudo docker run -d --name backend -p 3001:3001 pi-backend:1.0
-sudo docker ps
+cp .env.aws.example .env.aws
+# Edite as linhas de CORS/URL: FRONT_ORIGIN, FRONTEND_URL, BACKEND_ORIGIN, SWAGGER_SERVER_URL
+nano .env.aws
+# Salve e saia (Ctrl+O, Enter, Ctrl+X)
+cd ..
 ```
 
-Verifique se aparece algo como:
-```
-pi-backend:1.0   0.0.0.0:3001->3001/tcp
-```
+Importante: após alterar `backend/.env.aws` é necessário recriar o container do backend para que o novo `env_file` seja carregado.
 
----
-
-## 6️⃣ Build e Execução do Frontend
+3) Build e start com Docker Compose
 
 ```bash
-cd ../frontend
-sudo docker build -t pi-frontend:1.0 .
-sudo docker run -d --name frontend -p 80:80 pi-frontend:1.0
-sudo docker ps
+docker-compose -f docker-compose.aws.yml build --no-cache
+docker-compose -f docker-compose.aws.yml up -d
 ```
 
-Verifique se aparece:
+4) Verificar serviços
+
+```bash
+docker-compose -f docker-compose.aws.yml ps
+docker-compose -f docker-compose.aws.yml logs -f backend
 ```
-pi-frontend:1.0   0.0.0.0:80->80/tcp
+
+Se você atualizou `backend/.env.aws`, recrie apenas o backend:
+
+```bash
+docker-compose -f docker-compose.aws.yml up -d --no-deps --force-recreate backend
+docker exec -it ang-backend printenv | grep -E 'FRONT|CORS|SWAGGER|BACKEND'
 ```
 
-> 💡 Se precisar, edite o `Dockerfile` do frontend e substitua a linha do `VITE_API_BASE_URL` pelo IP público da sua instância:
-> ```dockerfile
-> ARG VITE_API_BASE_URL=http://<SEU_IP_PUBLICO>:3001/api/v2
-> ```
+5) Rebuild do frontend (apenas se for necessário)
+
+Se o frontend foi construído com a URL da API errada, reconstrua e reinicie apenas o frontend:
+
+```bash
+docker-compose -f docker-compose.aws.yml build --no-cache frontend
+docker-compose -f docker-compose.aws.yml up -d --no-deps --force-recreate frontend
+```
+
+6) Health checks e acesso pelo navegador
+
+```bash
+curl http://localhost:3001/api/v2/health
+# No navegador: http://<EC2_PUBLIC_IP>:8080  e  http://<EC2_PUBLIC_IP>:3001/api-docs
+```
+
+Diagnóstico — problemas comuns
+- CORS: verifique `backend/.env.aws` e confirme que `FRONT_ORIGIN` ou `FRONTEND_URL` contém exatamente `http://<EC2_PUBLIC_IP>:8080`. Depois, recrie o container do backend.
+- docker-compose/buildx: se houver erro sobre buildx, instale a versão mais recente do Docker Compose (via curl acima) ou use `docker compose` (com espaço) se disponível.
+- Vite travando em "transforming": sinal de memória insuficiente. Soluções: usar instância maior (t3.small/medium), adicionar swap ou construir o frontend localmente e enviar a imagem pronta.
+- Aplicar alterações de env: use `docker-compose up -d --no-deps --force-recreate backend` (restart não recarrega `env_file`).
+
+Comandos úteis (diagnóstico):
+
+```bash
+docker --version
+docker-compose --version
+docker-compose -f docker-compose.aws.yml ps
+docker-compose -f docker-compose.aws.yml logs -f backend
+docker-compose -f docker-compose.aws.yml logs -f postgres
+docker-compose -f docker-compose.aws.yml logs -f frontend
+docker exec -it ang-postgres psql -U ang_user -d ang_database -c "SELECT 1;"
+docker exec ang-postgres psql -U ang_user -d ang_database -c "SELECT * FROM \"SequelizeMeta\";"
+docker stats
+docker system df
+```
+
+Segurança — regras do security group
+- Regras inbound mínimas: 22 (SSH), 8080 (frontend), 3001 (backend). Mantenha 5432 fechado ao mundo.
+
+Credenciais admin (seed):
+- Email: `admin@ang.com`
+- Password: `Admin@123` (troque após o primeiro login)
 
 ---
 
-## 7️⃣ Configuração das Portas (Segurança EC2)
+Próximos passos que eu posso ajudar a executar:
+- (A) Inserir o IP público exato da instância em `backend/.env.aws` no repositório e commitar (preciso da sua confirmação e do IP).
+- (B) Fornecer um script de cópia/edição + os comandos exatos para você executar na instância EC2 (recomendado sem expor o IP no repo).
 
-1. Acesse o **painel EC2 → Instâncias → Aba Segurança**
-2. Clique no **grupo de segurança** (ex: `launch-wizard-2`)
-3. Vá em **Editar regras de entrada**
-4. Adicione as seguintes regras:
+**Créditos**: Projeto Integrator – Diário de Classe (Cauan Ortiz, Davi Ryan K. Lima, Matheus H. Schopp)
 
-| Tipo | Protocolo | Porta | Origem | Descrição |
-|------|-----------|--------|--------|------------|
-| SSH | TCP | 22 | 0.0.0.0/0 | Acesso remoto |
-| HTTP | TCP | 80 | 0.0.0.0/0 | Frontend |
-| Custom TCP | TCP | 3001 | 0.0.0.0/0 | Backend API |
-
-Depois clique em **Salvar regras** ✅
-
----
-
-## 8️⃣ Comandos Úteis
-
-| Ação | Comando |
-|------|----------|
-| Ver containers ativos | `sudo docker ps` |
-| Ver logs | `sudo docker logs -f <nome>` |
-| Parar container | `sudo docker stop <nome>` |
-| Remover container | `sudo docker rm <nome>` |
-| Recriar container | `sudo docker restart <nome>` |
-| Limpar imagens não usadas | `sudo docker system prune -a -f` |
-
----
-
-## 9️⃣ Verificação Final
-
-Abra no navegador:
-
-- **Frontend:** `http://<SEU_IP_PUBLICO>`  
-  → Deve exibir a tela de login.  
-- **Backend (Swagger):** `http://<SEU_IP_PUBLICO>:3001/api-docs`  
-  → Deve abrir a interface da API.  
-
-Se ambos abrirem, o deploy foi concluído com sucesso 🎉
-
----
-
-## 🏁 Créditos
-
-**Projeto Integrador – Diário de Classe**  
-Desenvolvido por: *Cauan Otz, Davi Ryan Konuma Lima e equipe*  
-Infraestrutura: *AWS EC2 com Docker (Amazon Linux 2023)*  
-Repositório: [https://github.com/CauanOtz/PI](https://github.com/CauanOtz/PI)
