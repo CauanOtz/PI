@@ -22,7 +22,7 @@
 - **Autenticação:** JWT (JSON Web Tokens)
 - **Documentação:** Swagger
 - **Ferramentas de desenvolvimento:** Docker, Git, ESLint, Prettier.
-- 
+ 
 # Arquitetura da Solução
 
 - **API / Backend:** Node.js com Express, seguindo arquitetura MSC (Model-Service-Controller)
